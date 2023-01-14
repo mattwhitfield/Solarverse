@@ -9,6 +9,8 @@
         public MeterPoint? OutgoingMeter { get; set; }
 
         public BatterySettings? Battery { get; set; }
+
+        public string SolcastSiteId { get; set; }
     }
 
     public class BatterySettings

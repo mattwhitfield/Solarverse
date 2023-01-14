@@ -4,7 +4,7 @@ using System.Net.Http.Headers;
 
 namespace Solarverse.Core.Integration.Solcast
 {
-    public class SolcastClient
+    public class SolcastClient : ISolcastClient
     {
         private readonly HttpClient _httpClient;
 

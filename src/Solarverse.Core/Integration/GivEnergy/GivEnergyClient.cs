@@ -6,7 +6,7 @@ using System.Net.Http.Headers;
 
 namespace Solarverse.Core.Integration.GivEnergy
 {
-    public class GivEnergyClient
+    public class GivEnergyClient : IGivEnergyClient
     {
         private readonly HttpClient _httpClient;
 
@@ -69,7 +69,7 @@ namespace Solarverse.Core.Integration.GivEnergy
         public async Task<int> GetSettingId(string settingName)
         {
             var allSettings = await GetAllSettings();
-            
+
             var setting = allSettings.FirstOrDefault(x => string.Equals(x.Name, settingName, StringComparison.OrdinalIgnoreCase));
             if (setting == null)
             {

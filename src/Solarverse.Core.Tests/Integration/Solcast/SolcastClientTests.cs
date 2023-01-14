@@ -32,7 +32,7 @@ namespace Solarverse.Core.Tests.Integration.Solcast
         public async Task CanCallGetForecastSet()
         {
             // Arrange
-            var siteId = "835c-aa5e-6257-df6d";
+            var siteId = ConfigurationProvider.Configuration.SolcastSiteId;
 
             // Act
             var result = await _testClass.GetForecastSet(siteId);

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Solarverse.Core.Integration.Octopus
 {
-    public class OctopusClient
+    public class OctopusClient : IOctopusClient
     {
         private readonly HttpClient _httpClient;
 
@@ -15,13 +15,13 @@ namespace Solarverse.Core.Integration.Octopus
         public OctopusClient(string key)
         {
             _httpClient = new HttpClient();
-            
+
             var authenticationString = key + ":";
             var base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.ASCII.GetBytes(authenticationString));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
         }
 
-        public async Task<AgileRates> GetIncomingAgileRates(string productCode, string mpan)
+        public async Task<AgileRates> GetAgileRates(string productCode, string mpan)
         {
             var gsp = await GetGridSupplyPoint(mpan);
             if (string.IsNullOrWhiteSpace(gsp))
@@ -35,7 +35,7 @@ namespace Solarverse.Core.Integration.Octopus
 
         private async Task<string> GetRatesUriForTariffAndGridSupplyPoint(string productCode, string gridSupplyPoint)
         {
-            if (!_products.TryGetValue(productCode, out var product)) 
+            if (!_products.TryGetValue(productCode, out var product))
             {
                 product = await _httpClient.Get<Product>($"https://api.octopus.energy/v1/products/{productCode}/");
 

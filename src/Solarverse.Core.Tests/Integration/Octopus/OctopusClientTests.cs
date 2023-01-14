@@ -26,7 +26,7 @@ namespace Solarverse.Core.Tests.Integration.Octopus
         {
             // Act
             var incoming = ConfigurationProvider.Configuration.IncomingMeter;
-            var result = await _testClass.GetIncomingAgileRates(incoming.TariffName, incoming.MPAN);
+            var result = await _testClass.GetAgileRates(incoming.TariffName, incoming.MPAN);
 
             // Assert
         }
