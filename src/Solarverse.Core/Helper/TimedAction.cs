@@ -2,13 +2,6 @@
 
 namespace Solarverse.Core.Helper
 {
-    public enum TimedActionResult
-    {
-        NotDue,
-        Succeeded,
-        Failed,
-    }
-
     public class TimedAction
     {
         private readonly ILogger _logger;

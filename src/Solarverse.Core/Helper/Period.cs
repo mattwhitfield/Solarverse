@@ -5,6 +5,10 @@
         private readonly TimeSpan _period;
         private readonly TimeSpan _offset;
 
+        public Period(TimeSpan period)
+            : this(period, TimeSpan.Zero)
+        { }
+
         public Period(TimeSpan period, TimeSpan offset)
         {
             _period = period;
@@ -18,12 +22,12 @@
 
         public DateTime GetNext(DateTime last)
         {
-            var current = last.Date;
-            while (current + _offset <= last)
+            var next = last.Date + _offset;
+            while (next <= last)
             {
-                current += _period;
+                next += _period;
             }
-            return current + _offset;
+            return next;
         }
     }
 }

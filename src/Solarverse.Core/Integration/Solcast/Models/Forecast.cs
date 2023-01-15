@@ -17,7 +17,6 @@ namespace Solarverse.Core.Integration.Solcast.Models
         public DateTime PeriodEnd { get; set; }
 
         [JsonProperty("period")]
-        public string PeriodType { get; set; }
+        public string? PeriodType { get; set; }
     }
-
 }

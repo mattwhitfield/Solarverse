@@ -1,26 +1,24 @@
 ﻿using Microsoft.Extensions.Logging;
+using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
-using Solarverse.Core.Integration.Octopus.Models;
-using Solarverse.Core.Services;
+using Solarverse.Core.Integration;
+using Solarverse.Core.Models;
 
-namespace Solarverse.Core
+namespace Solarverse.Core.Control
 {
-    public class ControlLoop
+    public class ControlLoop : IControlLoop
     {
         private readonly ILogger<ControlLoop> _logger;
         private readonly IIntegrationProvider _integrationProvider;
-        private readonly IDataUpdateService _dataUpdateService;
+        private readonly ICurrentDataService _dataUpdateService;
         private readonly IControlPlanFactory _controlPlanFactory;
         private readonly IControlPlanExecutor _controlPlanExecutor;
 
-        private TimedAction _currentStatus;
-        private TimedAction _getAgileRates;
-        private TimedAction _getSolcastData;
-        //private readonly TimedAction 
+        private readonly List<TimedAction> _actions = new List<TimedAction>();
 
         public ControlLoop(ILogger<ControlLoop> logger,
             IIntegrationProvider integrationProvider,
-            IDataUpdateService dataUpdateService,
+            ICurrentDataService dataUpdateService,
             IControlPlanFactory controlPlanFactory,
             IControlPlanExecutor controlPlanExecutor)
         {
@@ -31,31 +29,48 @@ namespace Solarverse.Core
             _controlPlanExecutor = controlPlanExecutor;
 
             var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
-            _currentStatus = new TimedAction(_logger, currentStatusPeriod, UpdateCurrentStatus, "Update current status");
+            _actions.Add(new TimedAction(_logger, currentStatusPeriod, UpdateCurrentStatus, "Update current inverter status"));
 
-            var getAgileRatesPeriod = new Period(TimeSpan.FromDays(1), TimeSpan.FromHours(17));
-            _getAgileRates = new TimedAction(_logger, getAgileRatesPeriod, UpdateAgileRates, "Update agile rates");
+            var getTariffRatesPeriod = new Period(TimeSpan.FromDays(1), TimeSpan.FromHours(17));
+            _actions.Add(new TimedAction(_logger, getTariffRatesPeriod, UpdateAgileRates, "Update energy tariff rates"));
 
-            var getSolcastDataPeriod = new Period(TimeSpan.FromHours(6), TimeSpan.Zero);
-            _getSolcastData = new TimedAction(_logger, getSolcastDataPeriod, UpdateSolcastData, "Update Solcast data");
+            var getSolarForecastDataPeriod = new Period(TimeSpan.FromHours(6));
+            _actions.Add(new TimedAction(_logger, getSolarForecastDataPeriod, UpdateSolcastData, "Update solar forecast data"));
+
+            var executePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromSeconds(15));
+            _actions.Add(new TimedAction(_logger, executePeriod, ExecuteControlPlan, "Execute control plan"));
+
+            var dataCleanupPeriod = new Period(TimeSpan.FromHours(0.5));
+            _actions.Add(new TimedAction(_logger, dataCleanupPeriod, CleanUpData, "Cleaning up old data"));
+        }
+
+        public Task<bool> CleanUpData()
+        {
+            _dataUpdateService.Cull(TimeSpan.FromDays(7));
+            return Task.FromResult(true);
         }
 
         public async Task Run(CancellationToken cancellation)
         {
             while (!cancellation.IsCancellationRequested)
             {
-                await _currentStatus.Run(DateTime.UtcNow);
-                await _getAgileRates.Run(DateTime.UtcNow);
-                await _getSolcastData.Run(DateTime.UtcNow);
+                foreach (var action in _actions)
+                {
+                    await action.Run(DateTime.UtcNow);
 
-                await Task.Delay(1000);
+                    if (cancellation.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                }
+
+                await Task.Delay(1000, cancellation);
             }
         }
 
         public async Task<bool> UpdateCurrentStatus()
         {
-            // todo
-            var currentState = await _integrationProvider.GivEnergyClient.GetCurrentState();
+            var currentState = await _integrationProvider.InverterClient.GetCurrentState();
 
             if (currentState != null)
             {
@@ -66,6 +81,11 @@ namespace Solarverse.Core
             }
 
             return false;
+        }
+
+        public Task<bool> ExecuteControlPlan()
+        {
+            return _controlPlanExecutor.ExecutePlan();
         }
 
         public async Task<bool> UpdateAgileRates()
@@ -85,14 +105,14 @@ namespace Solarverse.Core
             return false;
         }
 
-        private async Task<bool> UpdateAgileRates(Models.MeterPoint? meter, Action<AgileRates> process)
+        private async Task<bool> UpdateAgileRates(Models.MeterPointConfiguration? meter, Action<IList<TariffRate>> process)
         {
             if (meter?.TariffName == null || meter.MPAN == null)
             {
                 return true;
             }
 
-            var agileRates = await _integrationProvider.OctopusClient.GetAgileRates(
+            var agileRates = await _integrationProvider.EnergySupplierClient.GetTariffRates(
                 meter.TariffName, meter.MPAN);
 
             if (agileRates != null)
@@ -106,8 +126,7 @@ namespace Solarverse.Core
 
         public async Task<bool> UpdateSolcastData()
         {
-            var siteId = ConfigurationProvider.Configuration.SolcastSiteId;
-            var forecast = await _integrationProvider.SolcastClient.GetForecastSet(siteId);
+            var forecast = await _integrationProvider.SolarForecastClient.GetForecast();
 
             if (forecast != null)
             {

@@ -1,12 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Integration.GivEnergy.Models;
-using System;
+using Solarverse.Core.Models;
 using System.Net.Http.Headers;
 
 namespace Solarverse.Core.Integration.GivEnergy
 {
-    public class GivEnergyClient : IGivEnergyClient
+    public class GivEnergyClient : IInverterClient
     {
         private readonly HttpClient _httpClient;
 
@@ -14,11 +14,16 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         private List<Setting> _settings = new List<Setting>();
 
-        public GivEnergyClient(string key)
+        public GivEnergyClient(Configuration configuration)
         {
             _httpClient = new HttpClient();
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+            if (string.IsNullOrEmpty(configuration.ApiKeys?.GivEnergy))
+            {
+                throw new InvalidOperationException("GivEnergy API key was not configured");
+            }
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configuration.ApiKeys.GivEnergy);
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
@@ -41,11 +46,21 @@ namespace Solarverse.Core.Integration.GivEnergy
             return _inverterSerial;
         }
 
-        public async Task<CurrentState> GetCurrentState()
+        public async Task<InverterCurrentState> GetCurrentState()
         {
             var inverterSerial = await FindInverterSerial();
 
-            return await _httpClient.Get<CurrentState>($"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/system-data/latest");
+            var currentState = await _httpClient.Get<CurrentState>($"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/system-data/latest");
+
+            if (currentState.Data?.Solar == null || currentState.Data?.Battery == null)
+            {
+                throw new InvalidDataException("Current state query from GivEnergy API was not complete");
+            }
+
+            // TODO - read registers to determine this
+            var controlAction = ControlAction.Hold;
+
+            return new InverterCurrentState(currentState.Data.Time, currentState.Data.Solar.Power, currentState.Data.Battery.Percent, controlAction);
         }
 
         public async Task<IEnumerable<Setting>> GetAllSettings()
@@ -123,6 +138,47 @@ namespace Solarverse.Core.Integration.GivEnergy
             }
 
             return setting?.Data;
+        }
+
+        public Task<HouseholdConsumption> GetHouseholdConsumptionFor(DateTime date)
+        {
+            // TODO
+            throw new NotImplementedException();
+        }
+
+        public Task Charge(DateTime until)
+        {
+            // TODO
+            // set charge from -> datetime.utcnow
+            // set charge to -> until
+            // set enable charge
+            // disable discharge
+            throw new NotImplementedException();
+        }
+
+        public Task Hold()
+        {
+            // disable charge
+            // disable discharge
+            // disable eco
+            throw new NotImplementedException();
+        }
+
+        public Task Discharge()
+        {
+            // disable charge
+            // disable discharge
+            // enable eco
+            throw new NotImplementedException();
+        }
+
+        public Task Export(DateTime until)
+        {
+            // set discharge from -> datetime.utcnow
+            // set discharge to -> until
+            // disable charge
+            // enable discharge
+            throw new NotImplementedException();
         }
     }
 }

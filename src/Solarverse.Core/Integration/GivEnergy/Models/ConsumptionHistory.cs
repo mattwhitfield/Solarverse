@@ -2,9 +2,9 @@
 
 namespace Solarverse.Core.Integration.GivEnergy.Models
 {
-    public class SettingMutation
+    public class ConsumptionHistory
     {
         [JsonProperty("data")]
-        public SettingMutationValues? Data { get; set; }
+        public List<ConsumptionDataPoint>? DataPoints { get; set; }
     }
 }

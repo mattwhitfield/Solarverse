@@ -1,27 +1,33 @@
 ﻿using Solarverse.Core.Helper;
 using Solarverse.Core.Integration.Octopus.Models;
+using Solarverse.Core.Models;
 using System.Net.Http.Headers;
 using System.Text;
 
 namespace Solarverse.Core.Integration.Octopus
 {
-    public class OctopusClient : IOctopusClient
+    public class OctopusClient : IEnergySupplierClient
     {
         private readonly HttpClient _httpClient;
 
         private readonly Dictionary<string, Product> _products = new Dictionary<string, Product>();
         private readonly Dictionary<string, string> _gridSupplyPointsByMpan = new Dictionary<string, string>();
 
-        public OctopusClient(string key)
+        public OctopusClient(Configuration configuration)
         {
             _httpClient = new HttpClient();
 
-            var authenticationString = key + ":";
+            if (string.IsNullOrEmpty(configuration.ApiKeys?.Octopus))
+            {
+                throw new InvalidOperationException("Octopus API key was not configured");
+            }
+
+            var authenticationString = configuration.ApiKeys.Octopus + ":";
             var base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.ASCII.GetBytes(authenticationString));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
         }
 
-        public async Task<AgileRates> GetAgileRates(string productCode, string mpan)
+        public async Task<IList<TariffRate>> GetTariffRates(string productCode, string mpan)
         {
             var gsp = await GetGridSupplyPoint(mpan);
             if (string.IsNullOrWhiteSpace(gsp))
@@ -30,7 +36,14 @@ namespace Solarverse.Core.Integration.Octopus
             }
 
             var ratesUri = await GetRatesUriForTariffAndGridSupplyPoint(productCode, gsp);
-            return await _httpClient.Get<AgileRates>(ratesUri);
+            var rates = await _httpClient.Get<AgileRates>(ratesUri);
+
+            if (rates.Rates == null)
+            {
+                throw new InvalidDataException("Data returned from Octopus client is invalid");
+            }
+
+            return rates.Rates.Select(x => x.ToTariffRate()).ToList();
         }
 
         private async Task<string> GetRatesUriForTariffAndGridSupplyPoint(string productCode, string gridSupplyPoint)

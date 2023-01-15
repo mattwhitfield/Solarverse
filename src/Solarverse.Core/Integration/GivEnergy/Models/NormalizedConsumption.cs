@@ -1,30 +1,5 @@
-﻿using Newtonsoft.Json;
-using System.Diagnostics;
-
-namespace Solarverse.Core.Integration.GivEnergy.Models
+﻿namespace Solarverse.Core.Integration.GivEnergy.Models
 {
-    [DebuggerDisplay("Time = {Time}, Consumption = {Today?.Consumption}")]
-    public class ConsumptionDataPoint
-    {
-        [JsonProperty("time")]
-        public DateTime Time { get; set; }
-
-        [JsonProperty("today")]
-        public Today? Today { get; set; }
-    }
-
-    public class ConsumptionHistory
-    {
-        [JsonProperty("data")]
-        public List<ConsumptionDataPoint>? DataPoints { get; set; }
-    }
-
-    public class Today
-    {
-        [JsonProperty("consumption")]
-        public double Consumption { get; set; }
-    }
-
     public class NormalizedConsumption
     {
         public NormalizedConsumption(IEnumerable<NormalizedConsumption> source, DateTime date)
@@ -139,19 +114,5 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
         public bool IsValid { get; } = true;
 
         public List<NormalizedConsumptionDataPoint> DataPoints { get; } = new List<NormalizedConsumptionDataPoint>();
-    }
-
-    [DebuggerDisplay("Time = {Time}, Consumption = {Consumption}")]
-    public class NormalizedConsumptionDataPoint
-    {
-        public NormalizedConsumptionDataPoint(DateTime time, double consumption)
-        {
-            Time = time;
-            Consumption = consumption;
-        }
-
-        public DateTime Time { get; }
-
-        public double Consumption { get; }
     }
 }

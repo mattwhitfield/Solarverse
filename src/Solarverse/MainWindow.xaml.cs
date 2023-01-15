@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using ScottPlot;
-using Solarverse.Core;
+using Solarverse.Core.Data;
 using Solarverse.Core.Integration.GivEnergy.Models;
 using Solarverse.Core.Integration.Octopus.Models;
 using Solarverse.Core.Integration.Solcast.Models;
@@ -8,17 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Solarverse
 {
@@ -79,14 +69,14 @@ namespace Solarverse
 
             if (agileRates?.Rates != null)
             {
-                timeSeries.AddPointsFrom(agileRates.Rates, x => x.ValidFrom, x => x.Value, (val, pt) => pt.AgileRatePence = val);
+                timeSeries.AddPointsFrom(agileRates.Rates, x => x.ValidFrom, x => x.Value, (val, pt) => pt.IncomingRate = val);
             }
 
             AddPlot(WpfPlot1.Plot, timeSeries, x => x.ConsumptionForecastKwh);
             AddPlot(WpfPlot1.Plot, timeSeries, x => x.PVForecastKwh);
             AddPlot(WpfPlot1.Plot, timeSeries, x => x.ExcessPowerKwh);
 
-            AddPlot(WpfPlot2.Plot, timeSeries, x => x.AgileRatePence);
+            AddPlot(WpfPlot2.Plot, timeSeries, x => x.IncomingRate);
             AddPlot(WpfPlot2.Plot, timeSeries, x => x.CostWithoutStorage);
 
             WpfPlot1.AxesChanged += WpfPlot1_AxesChanged;
