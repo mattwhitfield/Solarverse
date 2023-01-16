@@ -28,14 +28,14 @@ namespace Solarverse.Core.Control
             _controlPlanFactory = controlPlanFactory;
             _controlPlanExecutor = controlPlanExecutor;
 
-            var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
-            _actions.Add(new TimedAction(_logger, currentStatusPeriod, UpdateCurrentStatus, "Update current inverter status"));
-
             var getTariffRatesPeriod = new Period(TimeSpan.FromDays(1), TimeSpan.FromHours(17));
             _actions.Add(new TimedAction(_logger, getTariffRatesPeriod, UpdateAgileRates, "Update energy tariff rates"));
 
             var getSolarForecastDataPeriod = new Period(TimeSpan.FromHours(6));
             _actions.Add(new TimedAction(_logger, getSolarForecastDataPeriod, UpdateSolcastData, "Update solar forecast data"));
+
+            var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
+            _actions.Add(new TimedAction(_logger, currentStatusPeriod, UpdateCurrentStatus, "Update current inverter status"));
 
             var executePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromSeconds(15));
             _actions.Add(new TimedAction(_logger, executePeriod, ExecuteControlPlan, "Execute control plan"));

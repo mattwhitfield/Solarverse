@@ -7,8 +7,8 @@ namespace Solarverse.Core.Integration
         Task<HouseholdConsumption> GetHouseholdConsumptionFor(DateTime date);
         Task<InverterCurrentState> GetCurrentState();
         Task Charge(DateTime until);
-        Task Hold();
-        Task Discharge();
+        Task Hold(DateTime until);
+        Task Discharge(DateTime until);
         Task Export(DateTime until);
     }
 }

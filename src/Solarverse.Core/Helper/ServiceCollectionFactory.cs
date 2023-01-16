@@ -6,7 +6,6 @@ using Solarverse.Core.Integration;
 using Solarverse.Core.Integration.GivEnergy;
 using Solarverse.Core.Integration.Octopus;
 using Solarverse.Core.Integration.Solcast;
-using Solarverse.Core.Models;
 
 namespace Solarverse.Core.Helper
 {
@@ -37,7 +36,6 @@ namespace Solarverse.Core.Helper
             collection.AddSingleton<IEnergySupplierClient, OctopusClient>();
             collection.AddSingleton<ICurrentDataService, CurrentDataService>();
             collection.AddTransient<IControlPlanExecutor, ControlPlanExecutor>();
-            collection.AddTransient<IInverterActionProvider, GivEnergyActionProvider>();
             collection.AddTransient<IControlPlanFactory, ControlPlanFactory>();
             collection.AddTransient<IIntegrationProvider, IntegrationProvider>();
             return collection;

@@ -29,7 +29,15 @@ namespace Solarverse.Core.Integration.Octopus
 
         public async Task<IList<TariffRate>> GetTariffRates(string productCode, string mpan)
         {
-            var gsp = await GetGridSupplyPoint(mpan);
+            // workaround - bug in octopus API means you can't look up a GSP for
+            // an outgoing MPAN
+            string gspMpan = mpan;
+            if (gspMpan == ConfigurationProvider.Configuration.OutgoingMeter?.MPAN)
+            {
+                gspMpan = ConfigurationProvider.Configuration.IncomingMeter?.MPAN ?? string.Empty;
+            }
+
+            var gsp = await GetGridSupplyPoint(gspMpan);
             if (string.IsNullOrWhiteSpace(gsp))
             {
                 throw new InvalidOperationException($"Could not find grid supply point for the specified mpan '{mpan}'");
