@@ -159,10 +159,10 @@ namespace Solarverse
         {
             // TODO - do better here - show a UI, then run this in a task and call
             //      - back into the UI thread to quit
-            e.Cancel = true;
-            Task.Run(() => _viewModel.Stop()).ContinueWith(_ => {
-                Dispatcher.Invoke(new Action(Close));
-            });
+            //e.Cancel = true;
+            //Task.Run(() => _viewModel.Stop()).ContinueWith(_ => {
+            //    Dispatcher.Invoke(new Action(Close));
+            //});
             //e.Cancel = true;
             //Task.Factory.StartNew(async () =>
             //{
