@@ -55,38 +55,6 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy
         }
 
         [Fact]
-        public async Task CanCallGetAllSettings()
-        {
-            // Act
-            var result = await _testClass.GetAllSettings();
-
-            // Assert
-            throw new NotImplementedException("Create or modify test");
-        }
-
-        [Fact]
-        public async Task CanCallGetSettingId()
-        {
-            // Arrange
-            var settingName = "TestValue1615646181";
-
-            // Act
-            var result = await _testClass.GetSettingId(settingName);
-
-            // Assert
-            throw new NotImplementedException("Create or modify test");
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public async Task CannotCallGetSettingIdWithInvalidSettingName(string value)
-        {
-            await FluentActions.Invoking(() => _testClass.GetSettingId(value)).Should().ThrowAsync<ArgumentNullException>();
-        }
-
-        [Fact]
         public async Task CanCallReadSetting()
         {
             // Arrange
@@ -117,20 +85,6 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy
         public async Task CannotCallSetSettingWithNullValue()
         {
             await FluentActions.Invoking(() => _testClass.SetSetting(138087233, default(object))).Should().ThrowAsync<ArgumentNullException>();
-        }
-
-        [Fact]
-        public async Task SetSettingPerformsMapping()
-        {
-            // Arrange
-            var id = 363410666;
-            var value = new object();
-
-            // Act
-            var result = await _testClass.SetSetting(id, value);
-
-            // Assert
-            result.Value.Should().BeSameAs(value);
         }
 
         [Fact]

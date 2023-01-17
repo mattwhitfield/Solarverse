@@ -7,6 +7,7 @@
     Title="MainWindow"
     Width="800"
     Height="450"
+    Closing="Window_Closing"
     mc:Ignorable="d">
     <Grid>
         <Grid.RowDefinitions>

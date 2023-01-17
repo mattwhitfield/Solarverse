@@ -11,6 +11,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace Solarverse
@@ -151,6 +153,22 @@ namespace Solarverse
 
             WpfPlot1.Plot.YAxis.LockLimits(true);
             WpfPlot2.Plot.YAxis.LockLimits(true);
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // TODO - do better here - show a UI, then run this in a task and call
+            //      - back into the UI thread to quit
+            e.Cancel = true;
+            Task.Run(() => _viewModel.Stop()).ContinueWith(_ => {
+                Dispatcher.Invoke(new Action(Close));
+            });
+            //e.Cancel = true;
+            //Task.Factory.StartNew(async () =>
+            //{
+            //    await _viewModel.Stop();
+            //    _ = Dispatcher.BeginInvoke(new Action(() => { Application.Current.Shutdown(); }));
+            //});
         }
     }
 }

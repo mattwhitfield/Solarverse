@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Data\CacheModels\Transforms\" />
     <Folder Include="Logging\" />
   </ItemGroup>
 

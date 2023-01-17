@@ -35,6 +35,7 @@ namespace Solarverse.Core.Helper
             collection.AddSingleton<ISolarForecastClient, SolcastClient>();
             collection.AddSingleton<IEnergySupplierClient, OctopusClient>();
             collection.AddSingleton<ICurrentDataService, CurrentDataService>();
+            collection.AddSingleton<IDataStore, FileDataStore>();
             collection.AddTransient<IControlPlanExecutor, ControlPlanExecutor>();
             collection.AddTransient<IControlPlanFactory, ControlPlanFactory>();
             collection.AddTransient<IIntegrationProvider, IntegrationProvider>();

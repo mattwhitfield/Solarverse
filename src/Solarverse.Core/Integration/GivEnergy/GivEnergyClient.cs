@@ -151,45 +151,8 @@ namespace Solarverse.Core.Integration.GivEnergy
                 powerLimitTask.Result);
         }
 
-        public async Task<IEnumerable<Setting>> GetAllSettings()
-        {
-            if (!_settings.Any())
-            {
-                var inverterSerial = await FindInverterSerial();
-
-                var allSettings = await _httpClient.Get<AllSettings>($"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/settings");
-                if (allSettings?.Settings == null)
-                {
-                    throw new InvalidOperationException("Could not read inverter settings");
-                }
-
-                _settings.AddRange(allSettings.Settings);
-            }
-
-            return _settings;
-        }
-
-        public async Task<int> GetSettingId(string settingName)
-        {
-            var allSettings = await GetAllSettings();
-
-            var setting = allSettings.FirstOrDefault(x => string.Equals(x.Name, settingName, StringComparison.OrdinalIgnoreCase));
-            if (setting == null)
-            {
-                throw new InvalidOperationException($"Could not find the setting with the name '{settingName}'");
-            }
-
-            return setting.Id;
-        }
-
         public async Task<object?> ReadSetting(int id)
         {
-            var allSettings = await GetAllSettings();
-            if (!allSettings.Any(x => x.Id == id))
-            {
-                throw new InvalidOperationException($"Could not find the setting with the ID {id}");
-            }
-
             var inverterSerial = await FindInverterSerial();
 
             var setting = await _httpClient.Post<SettingValueData>($"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/settings/{id}/read");
@@ -199,12 +162,6 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         public async Task<SettingMutationValues?> SetSetting(int id, object value)
         {
-            var allSettings = await GetAllSettings();
-            if (!allSettings.Any(x => x.Id == id))
-            {
-                throw new InvalidOperationException($"Could not find the setting with the ID {id}");
-            }
-
             var inverterSerial = await FindInverterSerial();
 
             int attempts = 0;
