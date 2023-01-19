@@ -24,14 +24,19 @@ namespace Solarverse.Core.Data
             return _dataPoints.OrderBy(point => point.Key).Select(point => new RenderedTimeSeriesPoint(point.Key, value(point.Value))).ToList();
         }
 
-        internal bool Cull(TimeSpan deleteOlderThan)
+        public IList<DateTime> GetDates()
+        {
+            return _dataPoints.Select(x => x.Key.Date).Distinct().ToList();
+        }
+
+        public bool Cull(TimeSpan deleteOlderThan)
         {
             var olderPoints = _dataPoints.Keys.Where(x => x < DateTime.UtcNow.Subtract(deleteOlderThan)).ToList();
             olderPoints.Each(key => _dataPoints.Remove(key));
             return olderPoints.Any();
         }
 
-        internal bool TryGetDataPointFor(DateTime currentPeriod, out TimeSeriesPoint? currentDataPoint)
+        public bool TryGetDataPointFor(DateTime currentPeriod, out TimeSeriesPoint? currentDataPoint)
         {
             if (_dataPoints.TryGetValue(currentPeriod, out var current))
             {
@@ -41,6 +46,34 @@ namespace Solarverse.Core.Data
 
             currentDataPoint = default;
             return false;
+        }
+
+        public DateTime? GetMaximumDate() => GetMaximumDate(_ => true);
+
+        public DateTime? GetMaximumDate(Func<TimeSeriesPoint, bool> predicate)
+        {
+            var eligible = _dataPoints.Where(x => predicate(x.Value)).Select(x => x.Key);
+            if (!eligible.Any())
+            {
+                return null;
+            }
+
+            return eligible.Max();
+        }
+
+        public DateTime GetMinimumDate()
+        {
+            if (!_dataPoints.Any())
+            {
+                return DateTime.MinValue;
+            }
+
+            return _dataPoints.Keys.Min();
+        }
+
+        internal void Set(Action<TimeSeriesPoint> action)
+        {
+            _dataPoints.Values.Each(action);
         }
     }
 }

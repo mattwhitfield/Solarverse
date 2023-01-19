@@ -2,6 +2,7 @@
 using Serilog;
 using Solarverse.Core.Control;
 using Solarverse.Core.Data;
+using Solarverse.Core.Data.Prediction;
 using Solarverse.Core.Integration;
 using Solarverse.Core.Integration.GivEnergy;
 using Solarverse.Core.Integration.Octopus;
@@ -37,6 +38,7 @@ namespace Solarverse.Core.Helper
             collection.AddSingleton<ICurrentDataService, CurrentDataService>();
             collection.AddSingleton<IDataStore, FileDataStore>();
             collection.AddTransient<IControlPlanExecutor, ControlPlanExecutor>();
+            collection.AddTransient<IPredictionFactory, PredictionFactory>();
             collection.AddTransient<IControlPlanFactory, ControlPlanFactory>();
             collection.AddTransient<IIntegrationProvider, IntegrationProvider>();
             return collection;

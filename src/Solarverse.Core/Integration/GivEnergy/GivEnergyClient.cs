@@ -49,13 +49,22 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         private async Task<BoolSetting> GetBoolSetting(int id)
         {
-            var settingValue = await ReadSetting(id);
-            if (settingValue is bool b)
+            while (true)
             {
-                return new BoolSetting(id, b);
-            }
+                var settingValue = await ReadSetting(id);
+                if (settingValue is bool b)
+                {
+                    return new BoolSetting(id, b);
+                }
 
-            throw new InvalidOperationException($"Could not read setting {id} as a boolean");
+                if (settingValue is int i && i == -1)
+                {
+                    await Task.Delay(500);
+                    continue;
+                }
+
+                throw new InvalidOperationException($"Could not read setting {id} as a boolean");
+            }
         }
 
         private async Task<IntSetting> GetIntSetting(int id)
@@ -75,26 +84,35 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         private async Task<TimeSetting> GetTimeSetting(int id)
         {
-            var settingValue = await ReadSetting(id);
-            if (settingValue is string s)
+            while (true)
             {
-                if (string.IsNullOrWhiteSpace(s))
+                var settingValue = await ReadSetting(id);
+                if (settingValue is null)
                 {
                     return new TimeSetting(id, null);
                 }
 
-                if (TimeSpan.TryParseExact(s, "hh\\:mm", CultureInfo.InvariantCulture, out var time))
+                if (settingValue is string s)
                 {
-                    return new TimeSetting(id, time);
-                }
-            }
+                    if (string.IsNullOrWhiteSpace(s))
+                    {
+                        return new TimeSetting(id, null);
+                    }
 
-            if (settingValue is null)
-            {
+                    if (TimeSpan.TryParseExact(s, "hh\\:mm", CultureInfo.InvariantCulture, out var time))
+                    {
+                        return new TimeSetting(id, time);
+                    }
+                }
+
+                if (settingValue is int i && i == -1)
+                {
+                    await Task.Delay(500);
+                    continue;
+                }
+
                 return new TimeSetting(id, null);
             }
-
-            throw new InvalidOperationException($"Could not read setting {id} as a TimeSpan");
         }
 
         public async Task<InverterCurrentState> GetCurrentState()
@@ -199,44 +217,109 @@ namespace Solarverse.Core.Integration.GivEnergy
                 normalized.DataPoints.Select(x => new HouseholdConsumptionDataPoint(x.Time, x.Consumption)));
         }
 
-        public Task Charge(DateTime until)
+        public async Task SetSettingIfRequired(int settingId, Func<CurrentSettingValues, bool> shouldSet, object value)
         {
-            // TODO
-            // if charge from is later than DateTime.UtcNow
-            //   set charge from -> datetime.utcnow
-            // set charge to -> until
-            // set enable charge
-            // disable discharge
-            throw new NotImplementedException();
+            if (_currentSettings == null || shouldSet(_currentSettings))
+            {
+                // TODO - enable when we're happy
+                //await SetSetting(settingId, value);
+            }
         }
 
-        public Task Hold(DateTime until)
+        public async Task Charge(DateTime until)
         {
-            // TODO
-            // disable charge
-            // disable discharge
-            // disable eco
-            throw new NotImplementedException();
+            // set start time if it's currently later than now or not set
+            await SetSettingIfRequired(
+                SettingIds.Charge.StartTime,
+                x => !x.ChargeSettings.StartTime.Value.HasValue || x.ChargeSettings.StartTime.Value.Value > DateTime.UtcNow.TimeOfDay,
+                DateTime.UtcNow.ToString("HH:mm"));
+
+            // set until if it's not what we want or not set
+            await SetSettingIfRequired(
+                SettingIds.Charge.EndTime,
+                x => !x.ChargeSettings.EndTime.Value.HasValue || x.ChargeSettings.EndTime.Value.Value != until.TimeOfDay,
+                until.ToString("HH:mm"));
+
+            // enable charge if it's not enabled
+            await SetSettingIfRequired(
+                SettingIds.Charge.Enabled,
+                x => !x.ChargeSettings.Enabled.Value,
+                true);
+
+            // disable discharge if it's enabled
+            await SetSettingIfRequired(
+                SettingIds.Discharge.Enabled,
+                x => x.DischargeSettings.Enabled.Value,
+                false);
         }
 
-        public Task Discharge(DateTime until)
+        public async Task Hold(DateTime until)
         {
-            // TODO
-            // disable charge
-            // disable discharge
-            // enable eco
-            throw new NotImplementedException();
+            // disable charge if it's enabled
+            await SetSettingIfRequired(
+                SettingIds.Charge.Enabled,
+                x => x.ChargeSettings.Enabled.Value,
+                false);
+
+            // disable discharge if it's enabled
+            await SetSettingIfRequired(
+                SettingIds.Discharge.Enabled,
+                x => x.DischargeSettings.Enabled.Value,
+                false);
+
+            // disable eco if it's enabled
+            await SetSettingIfRequired(
+                SettingIds.EcoMode,
+                x => x.EcoModeEnabled.Value,
+                false);
         }
 
-        public Task Export(DateTime until)
+        public async Task Discharge(DateTime until)
         {
-            // TODO
-            // if discharge from is later than DateTime.UtcNow
-            //   set discharge from -> datetime.utcnow
-            // set discharge to -> until
-            // disable charge
-            // enable discharge
-            throw new NotImplementedException();
+            // disable charge if it's enabled
+            await SetSettingIfRequired(
+                SettingIds.Charge.Enabled,
+                x => x.ChargeSettings.Enabled.Value,
+                false);
+
+            // disable discharge if it's enabled
+            await SetSettingIfRequired(
+                SettingIds.Discharge.Enabled,
+                x => x.DischargeSettings.Enabled.Value,
+                false);
+
+            // enable eco if it's enabled
+            await SetSettingIfRequired(
+                SettingIds.EcoMode,
+                x => !x.EcoModeEnabled.Value,
+                true);
+        }
+
+        public async Task Export(DateTime until)
+        {
+            // set start time if it's currently later than now or not set
+            await SetSettingIfRequired(
+                SettingIds.Discharge.StartTime,
+                x => !x.DischargeSettings.StartTime.Value.HasValue || x.DischargeSettings.StartTime.Value.Value > DateTime.UtcNow.TimeOfDay,
+                DateTime.UtcNow.ToString("HH:mm"));
+
+            // set until if it's not what we want or not set
+            await SetSettingIfRequired(
+                SettingIds.Discharge.EndTime,
+                x => !x.DischargeSettings.EndTime.Value.HasValue || x.DischargeSettings.EndTime.Value.Value != until.TimeOfDay,
+                until.ToString("HH:mm"));
+
+            // enable charge if it's not enabled
+            await SetSettingIfRequired(
+                SettingIds.Discharge.Enabled,
+                x => !x.DischargeSettings.Enabled.Value,
+                true);
+
+            // disable charge if it's enabled
+            await SetSettingIfRequired(
+                SettingIds.Charge.Enabled,
+                x => x.ChargeSettings.Enabled.Value,
+                false);
         }
     }
 }

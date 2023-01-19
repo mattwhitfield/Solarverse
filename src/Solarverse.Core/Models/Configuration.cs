@@ -2,13 +2,15 @@
 {
     public class Configuration
     {
-        public ApiKeys? ApiKeys { get; set; }
+        public ApiKeys ApiKeys { get; } = new ApiKeys();
 
-        public MeterPointConfiguration? IncomingMeter { get; set; }
+        public MeterPointConfiguration IncomingMeter { get; } = new MeterPointConfiguration();
 
-        public MeterPointConfiguration? OutgoingMeter { get; set; }
+        public MeterPointConfiguration OutgoingMeter { get; } = new MeterPointConfiguration();
 
-        public BatterySettings? Battery { get; set; }
+        public BatterySettings Battery { get; } = new BatterySettings();
+
+        public PredictionSettings Prediction { get; } = new PredictionSettings();
 
         public string? SolcastSiteId { get; set; }
     }

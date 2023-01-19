@@ -13,6 +13,6 @@ namespace Solarverse.Core.Models
 
         public DateTime Time { get; }
 
-        public double Consumption { get; }
+        public double Consumption { get; set; }
     }
 }

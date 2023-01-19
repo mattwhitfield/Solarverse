@@ -127,7 +127,9 @@ namespace Solarverse
             var renderedSeries = timeSeries.GetSeries(value);
             var dataX = renderedSeries.Select(x => x.Time.ToOADate()).ToArray();
             var dataY = renderedSeries.Select(x => x.Value ?? double.NaN).ToArray();
-            plot.AddScatter(dataX, dataY).OnNaN = ScottPlot.Plottable.ScatterPlot.NanBehavior.Gap;
+            var scatter = plot.AddScatter(dataX, dataY);
+            scatter.OnNaN = ScottPlot.Plottable.ScatterPlot.NanBehavior.Gap;
+            scatter.MarkerShape = MarkerShape.none;
         }
 
         public void UpdateTimeSeries(TimeSeries series)
@@ -137,6 +139,7 @@ namespace Solarverse
             WpfPlot1.Plot.YAxis.LockLimits(false);
             WpfPlot2.Plot.YAxis.LockLimits(false);
 
+            AddPlot(WpfPlot1.Plot, series, x => x.ActualConsumptionKwh);
             AddPlot(WpfPlot1.Plot, series, x => x.ConsumptionForecastKwh);
             AddPlot(WpfPlot1.Plot, series, x => x.PVForecastKwh);
             AddPlot(WpfPlot1.Plot, series, x => x.ExcessPowerKwh);
@@ -145,7 +148,8 @@ namespace Solarverse
             AddPlot(WpfPlot2.Plot, series, x => x.OutgoingRate);
             AddPlot(WpfPlot2.Plot, series, x => x.CostWithoutStorage);
 
-            WpfPlot1.Plot.XAxis.DateTimeFormat(true);
+            WpfPlot1.Plot.XAxis.TickLabelFormat(x => DateTime.FromOADate(x).ToString("dd/MM\nHH:mm"));
+
             WpfPlot2.Plot.XAxis.DateTimeFormat(true);
 
             WpfPlot1.Refresh();
@@ -155,20 +159,21 @@ namespace Solarverse
             WpfPlot2.Plot.YAxis.LockLimits(true);
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        bool closing = false;
+        private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // TODO - do better here - show a UI, then run this in a task and call
-            //      - back into the UI thread to quit
-            //e.Cancel = true;
-            //Task.Run(() => _viewModel.Stop()).ContinueWith(_ => {
-            //    Dispatcher.Invoke(new Action(Close));
-            //});
-            //e.Cancel = true;
-            //Task.Factory.StartNew(async () =>
-            //{
-            //    await _viewModel.Stop();
-            //    _ = Dispatcher.BeginInvoke(new Action(() => { Application.Current.Shutdown(); }));
-            //});
+            if (closing)
+            {
+                return;
+            }
+            closing = true;
+
+            // TODO - show a 'closing' UI
+
+            e.Cancel = true;
+
+            await _viewModel.Stop();
+            Close();
         }
     }
 }

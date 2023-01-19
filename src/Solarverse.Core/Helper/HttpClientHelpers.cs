@@ -4,7 +4,7 @@ namespace Solarverse.Core.Helper
 {
     internal static class HttpClientHelpers
     {
-        // TODO - add logging
+        // TODO - add logging and cancellation
 
         public static async Task<T> Get<T>(this HttpClient client, string url) where T : class
         {

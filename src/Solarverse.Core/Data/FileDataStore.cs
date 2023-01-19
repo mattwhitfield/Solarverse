@@ -60,7 +60,7 @@ namespace Solarverse.Core.Data
                 x => x.ToCache(),
                 x => x.FromCache(),
                 x => x.IsValid,
-                UpdatePeriods.ConsumptionUpdates,
+                UpdatePeriods.ConsumptionCacheUpdates,
                 date,
                 "Household");
         }

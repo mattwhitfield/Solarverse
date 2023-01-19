@@ -11,6 +11,8 @@ namespace Solarverse.Core.Data
         InverterCurrentState CurrentState { get; }
         TimeSeries TimeSeries { get; }
         void Cull(TimeSpan deleteOlderThan);
+        void Update(HouseholdConsumption consumption);
+        void Update(PredictedConsumption consumption);
         void Update(InverterCurrentState currentState);
         void Update(SolarForecast forecast);
         void UpdateIncomingRates(IList<TariffRate> incomingRates);

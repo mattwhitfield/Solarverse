@@ -2,22 +2,6 @@
 {
     public class NormalizedConsumption
     {
-        public NormalizedConsumption(IEnumerable<NormalizedConsumption> source, DateTime date)
-        {
-            var validSources = source.Where(x => x.IsValid).ToList();
-
-            if (validSources.Count == 0)
-            {
-                IsValid = false;
-                return;
-            }
-
-            for (int i = 0; i < 48; i++)
-            {
-                DataPoints.Add(new NormalizedConsumptionDataPoint(date.AddMinutes((validSources[0].DataPoints[i].Time - validSources[0].DataPoints[i].Time.Date).TotalMinutes), validSources.Sum(x => x.DataPoints[i].Consumption) / validSources.Count));
-            }
-        }
-
         public NormalizedConsumption(ConsumptionHistory history)
         {
             if (history.DataPoints == null || !history.DataPoints.Any())

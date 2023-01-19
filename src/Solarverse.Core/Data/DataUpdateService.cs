@@ -1,4 +1,5 @@
-﻿using Solarverse.Core.Models;
+﻿using Solarverse.Core.Helper;
+using Solarverse.Core.Models;
 
 namespace Solarverse.Core.Data
 {
@@ -25,6 +26,32 @@ namespace Solarverse.Core.Data
         {
             CurrentState = currentState;
             CurrentStateUpdated?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void Update(PredictedConsumption consumption)
+        {
+            if (!consumption.DataPoints.Any())
+            {
+                return;
+            }
+
+            // a little hack to make the first 'predicted' consumption point line up with the 'actual' graph
+            var min = consumption.DataPoints.Min(x => x.Time);
+            if (TimeSeries.TryGetDataPointFor(min, out var point) && point != null)
+            {
+                consumption.DataPoints.Where(x => x.Time == min).Each(x => x.Consumption = point.ActualConsumptionKwh.GetValueOrDefault(x.Consumption));
+            }
+
+            TimeSeries.Set(x => x.ConsumptionForecastKwh = null);
+            TimeSeries.AddPointsFrom(consumption.DataPoints, x => x.Time, x => x.Consumption, (val, pt) => pt.ConsumptionForecastKwh = val);
+            TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void Update(HouseholdConsumption consumption)
+        {
+            var min = TimeSeries.GetMinimumDate();
+            TimeSeries.AddPointsFrom(consumption.DataPoints.Where(x => x.Time >= min), x => x.Time, x => x.Consumption, (val, pt) => pt.ActualConsumptionKwh = val);
+            TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
         }
 
         public void Update(SolarForecast forecast)

@@ -6,7 +6,5 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
     {
         [JsonProperty("data")]
         public CurrentStateData? Data { get; set; }
-
-        // TODO - add currently set registers
     }
 }

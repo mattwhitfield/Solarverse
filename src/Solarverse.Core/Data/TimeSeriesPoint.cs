@@ -6,6 +6,8 @@
 
         public double? ConsumptionForecastKwh { get; set; }
 
+        public double? ActualConsumptionKwh { get; set; }
+
         public double? IncomingRate { get; set; }
 
         public double? OutgoingRate { get; set; }
