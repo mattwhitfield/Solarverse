@@ -148,8 +148,7 @@ namespace Solarverse
             AddPlot(WpfPlot2.Plot, series, x => x.OutgoingRate);
             AddPlot(WpfPlot2.Plot, series, x => x.CostWithoutStorage);
 
-            WpfPlot1.Plot.XAxis.TickLabelFormat(x => DateTime.FromOADate(x).ToString("dd/MM\nHH:mm"));
-
+            WpfPlot1.Plot.XAxis.DateTimeFormat(true);
             WpfPlot2.Plot.XAxis.DateTimeFormat(true);
 
             WpfPlot1.Refresh();
