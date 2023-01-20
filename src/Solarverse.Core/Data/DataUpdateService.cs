@@ -51,6 +51,7 @@ namespace Solarverse.Core.Data
         {
             var min = TimeSeries.GetMinimumDate();
             TimeSeries.AddPointsFrom(consumption.DataPoints.Where(x => x.Time >= min), x => x.Time, x => x.Consumption, (val, pt) => pt.ActualConsumptionKwh = val);
+            TimeSeries.AddPointsFrom(consumption.DataPoints.Where(x => x.Time >= min), x => x.Time, x => x.Solar, (val, pt) => pt.PVActualKwh = val);
             TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
         }
 

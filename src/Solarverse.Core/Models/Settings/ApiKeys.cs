@@ -1,4 +1,4 @@
-﻿namespace Solarverse.Core.Models
+﻿namespace Solarverse.Core.Models.Settings
 {
     public class ApiKeys
     {

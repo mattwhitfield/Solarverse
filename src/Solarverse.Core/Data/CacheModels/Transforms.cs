@@ -10,13 +10,13 @@ namespace Solarverse.Core.Data.CacheModels.Transforms
             return new HouseholdConsumption(
                 true,
                 source.ContainsInterpolatedPoints,
-                source.DataPoints.Select(x => new HouseholdConsumptionDataPoint(x.Time, x.Consumption)));
+                source.DataPoints.Select(x => new HouseholdConsumptionDataPoint(x.Time, x.Consumption, x.Solar, x.Import, x.Export, x.Charge, x.Discharge)));
         }
 
         public static HouseholdConsumptionCache ToCache(this HouseholdConsumption source)
         {
             var cache = new HouseholdConsumptionCache { ContainsInterpolatedPoints = source.ContainsInterpolatedPoints };
-            source.DataPoints.Each(x => cache.DataPoints.Add(new HouseholdConsumptionDataPointCache { Time = x.Time, Consumption = x.Consumption }));
+            source.DataPoints.Each(x => cache.DataPoints.Add(new HouseholdConsumptionDataPointCache { Time = x.Time, Consumption = x.Consumption, Solar = x.Solar, Import = x.Import, Export = x.Export, Charge = x.Charge, Discharge = x.Discharge }));
             return cache;
         }
 

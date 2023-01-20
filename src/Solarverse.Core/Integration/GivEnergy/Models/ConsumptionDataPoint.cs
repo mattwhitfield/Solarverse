@@ -1,9 +1,7 @@
 ﻿using Newtonsoft.Json;
-using System.Diagnostics;
 
 namespace Solarverse.Core.Integration.GivEnergy.Models
 {
-    [DebuggerDisplay("Time = {Time}, Consumption = {Today?.Consumption}")]
     public class ConsumptionDataPoint
     {
         [JsonProperty("time")]

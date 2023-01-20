@@ -7,6 +7,4 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
         [JsonProperty("data")]
         public List<CommunicationsDevice>? CommunicationsDevices { get; set; }
     }
-
-
 }

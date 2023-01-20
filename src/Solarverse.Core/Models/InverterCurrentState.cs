@@ -1,7 +1,8 @@
-﻿using Solarverse.Core.Data;
+﻿using System.Diagnostics;
 
 namespace Solarverse.Core.Models
 {
+    [DebuggerDisplay("UpdateTime = {UpdateTime}, CurrentSolarPower = {CurrentSolarPower}, BatteryPercent = {BatteryPercent}, MaxDischargeRateKw = {MaxDischargeRateKw}, MaxChargeRateKw = {MaxChargeRateKw}")]
     public class InverterCurrentState
     {
         public static InverterCurrentState Default =>

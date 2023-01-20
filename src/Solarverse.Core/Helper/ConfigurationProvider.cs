@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Solarverse.Core.Models;
+using Solarverse.Core.Models.Settings;
 
 namespace Solarverse.Core.Helper
 {

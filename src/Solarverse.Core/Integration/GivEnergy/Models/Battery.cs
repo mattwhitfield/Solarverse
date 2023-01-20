@@ -13,6 +13,4 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
         [JsonProperty("temperature")]
         public double Temperature { get; set; }
     }
-
-
 }

@@ -1,5 +1,8 @@
-﻿namespace Solarverse.Core.Models
+﻿using System.Diagnostics;
+
+namespace Solarverse.Core.Models
 {
+    [DebuggerDisplay("IsValid = {IsValid}, DataPoints: {DataPoints.Count}")]
     public class SolarForecast
     {
         public SolarForecast(bool isValid, IEnumerable<SolarForecastPoint> dataPoints)

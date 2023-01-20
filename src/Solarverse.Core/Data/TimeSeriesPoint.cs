@@ -4,6 +4,8 @@
     {
         public double? PVForecastKwh { get; set; }
 
+        public double? PVActualKwh { get; set; }
+
         public double? ConsumptionForecastKwh { get; set; }
 
         public double? ActualConsumptionKwh { get; set; }

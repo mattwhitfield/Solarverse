@@ -3,7 +3,6 @@
 namespace Solarverse.Core.Models
 {
     [DebuggerDisplay("Time = {Time}, PVEstimate = {PVEstimate}")]
-
     public class SolarForecastPoint
     {
         public SolarForecastPoint(DateTime time, double pVEstimate)

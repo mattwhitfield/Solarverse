@@ -2,7 +2,6 @@
 
 namespace Solarverse.Core.Integration.GivEnergy.Models
 {
-    // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
     public class Array
     {
         [JsonProperty("array")]
@@ -17,6 +16,4 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
         [JsonProperty("power")]
         public int Power { get; set; }
     }
-
-
 }

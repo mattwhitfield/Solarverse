@@ -1,5 +1,8 @@
-﻿namespace Solarverse.Core.Models
+﻿using System.Diagnostics;
+
+namespace Solarverse.Core.Models
 {
+    [DebuggerDisplay("IsValid = {IsValid}, DataPoints: {DataPoints.Count}")]
     public class PredictedConsumption
     {
         private List<HouseholdConsumptionDataPoint> _dataPoints = new List<HouseholdConsumptionDataPoint>();
@@ -27,8 +30,21 @@
             for (int i = 0; i < 48; i++)
             {
                 var projectionDate = date.Add(validSources[0].DataPoints[i].Time.TimeOfDay);
-                var pointValue = validSources.Sum(x => x.DataPoints[i].Consumption) / validSources.Count;
-                DataPoints.Add(new HouseholdConsumptionDataPoint(projectionDate, pointValue));
+                var pointConsumptionValue = validSources.Sum(x => x.DataPoints[i].Consumption) / validSources.Count;
+                var pointSolarValue = validSources.Sum(x => x.DataPoints[i].Solar) / validSources.Count;
+                var pointImportValue = validSources.Sum(x => x.DataPoints[i].Import) / validSources.Count;
+                var pointExportValue = validSources.Sum(x => x.DataPoints[i].Export) / validSources.Count;
+                var pointChargeValue = validSources.Sum(x => x.DataPoints[i].Charge) / validSources.Count;
+                var pointDischargeValue = validSources.Sum(x => x.DataPoints[i].Discharge) / validSources.Count;
+
+                DataPoints.Add(new HouseholdConsumptionDataPoint(
+                    projectionDate,
+                    pointConsumptionValue,
+                    pointSolarValue,
+                    pointImportValue,
+                    pointExportValue,
+                    pointChargeValue,
+                    pointDischargeValue));
             }
         }
 

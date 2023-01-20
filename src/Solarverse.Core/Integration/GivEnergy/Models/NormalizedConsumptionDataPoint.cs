@@ -2,17 +2,31 @@
 
 namespace Solarverse.Core.Integration.GivEnergy.Models
 {
-    [DebuggerDisplay("Time = {Time}, Consumption = {Consumption}")]
     public class NormalizedConsumptionDataPoint
     {
-        public NormalizedConsumptionDataPoint(DateTime time, double consumption)
+        public NormalizedConsumptionDataPoint(DateTime time, double consumption, double solar, double import, double export, double charge, double discharge)
         {
             Time = time;
             Consumption = consumption;
+            Solar = solar;
+            Import = import;
+            Export = export;
+            Charge = charge;
+            Discharge = discharge;
         }
 
         public DateTime Time { get; }
 
         public double Consumption { get; }
+
+        public double Solar { get; }
+
+        public double Import { get; }
+
+        public double Export { get; }
+
+        public double Charge { get; }
+
+        public double Discharge { get; }
     }
 }

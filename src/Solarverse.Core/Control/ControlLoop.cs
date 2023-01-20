@@ -4,6 +4,7 @@ using Solarverse.Core.Data.Prediction;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Integration;
 using Solarverse.Core.Models;
+using Solarverse.Core.Models.Settings;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Solarverse.Core.Control
@@ -41,11 +42,12 @@ namespace Solarverse.Core.Control
             var getSolarForecastDataPeriod = UpdatePeriods.SolarForecastUpdates;
             _actions.Add(new TimedAction(_logger, getSolarForecastDataPeriod, UpdateSolcastData, "Update solar forecast data"));
 
-            var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
-            _actions.Add(new TimedAction(_logger, currentStatusPeriod, UpdateCurrentStatus, "Update current inverter status"));
+            // TODO - re-enable
+            //var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
+            //_actions.Add(new TimedAction(_logger, currentStatusPeriod, UpdateCurrentStatus, "Update current inverter status"));
 
-            var executePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromSeconds(15));
-            _actions.Add(new TimedAction(_logger, executePeriod, ExecuteControlPlan, "Execute control plan"));
+            //var executePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromSeconds(15));
+            //_actions.Add(new TimedAction(_logger, executePeriod, ExecuteControlPlan, "Execute control plan"));
 
             var consumptionUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(1));
             _actions.Add(new TimedAction(_logger, consumptionUpdatePeriod, GetConsumptionData, "Get consumption data"));

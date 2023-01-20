@@ -1,5 +1,8 @@
-﻿namespace Solarverse.Core.Models
+﻿using System.Diagnostics;
+
+namespace Solarverse.Core.Models
 {
+    [DebuggerDisplay("IsValid = {IsValid}, DataPoints: {DataPoints.Count}")]
     public class HouseholdConsumption
     {
         public HouseholdConsumption(bool isValid, bool containsInterpolatedPoints, IEnumerable<HouseholdConsumptionDataPoint> dataPoints)

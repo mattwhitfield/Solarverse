@@ -5,7 +5,7 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy
     using FluentAssertions;
     using Solarverse.Core.Helper;
     using Solarverse.Core.Integration.GivEnergy;
-    using Solarverse.Core.Models;
+    using Solarverse.Core.Models.Settings;
     using Xunit;
 
     public class GivEnergyClientTests

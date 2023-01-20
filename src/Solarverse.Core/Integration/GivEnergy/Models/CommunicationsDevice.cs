@@ -13,6 +13,4 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
         [JsonProperty("inverter")]
         public Inverter? Inverter { get; set; }
     }
-
-
 }

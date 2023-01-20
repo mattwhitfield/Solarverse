@@ -1,7 +1,7 @@
-﻿using Solarverse.Core.Data;
-using Solarverse.Core.Helper;
+﻿using Solarverse.Core.Helper;
 using Solarverse.Core.Integration.GivEnergy.Models;
 using Solarverse.Core.Models;
+using Solarverse.Core.Models.Settings;
 using System.Globalization;
 using System.Net.Http.Headers;
 
@@ -13,7 +13,6 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         private string? _inverterSerial;
         private CurrentSettingValues? _currentSettings;
-        private readonly List<Setting> _settings = new();
 
         public GivEnergyClient(Configuration configuration)
         {
@@ -214,7 +213,7 @@ namespace Solarverse.Core.Integration.GivEnergy
             return new HouseholdConsumption(
                 normalized.IsValid,
                 normalized.ContainsInterpolatedPoints,
-                normalized.DataPoints.Select(x => new HouseholdConsumptionDataPoint(x.Time, x.Consumption)));
+                normalized.DataPoints.Select(x => new HouseholdConsumptionDataPoint(x.Time, x.Consumption, x.Solar, x.Import, x.Export, x.Charge, x.Discharge)));
         }
 
         public async Task SetSettingIfRequired(int settingId, Func<CurrentSettingValues, bool> shouldSet, object value)

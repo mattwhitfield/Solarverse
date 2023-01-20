@@ -13,6 +13,4 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
         [JsonProperty("battery")]
         public Battery? Battery { get; set; }
     }
-
-
 }

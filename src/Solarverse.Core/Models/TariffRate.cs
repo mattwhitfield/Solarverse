@@ -1,5 +1,8 @@
-﻿namespace Solarverse.Core.Models
+﻿using System.Diagnostics;
+
+namespace Solarverse.Core.Models
 {
+    [DebuggerDisplay("ValidFrom = {ValidFrom}, ValidTo = {ValidTo}, Value = {Value}")]
     public class TariffRate
     {
         public TariffRate(double value, DateTime validFrom, DateTime validTo)

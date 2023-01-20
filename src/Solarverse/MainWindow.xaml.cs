@@ -124,9 +124,14 @@ namespace Solarverse
 
         private void AddPlot(Plot plot, TimeSeries timeSeries, Func<TimeSeriesPoint, double?> value)
         {
+            AddPlot(plot, timeSeries, value, _ => true);
+        }
+
+        private void AddPlot(Plot plot, TimeSeries timeSeries, Func<TimeSeriesPoint, double?> value, Func<DateTime, bool> timeFilter)
+        {
             var renderedSeries = timeSeries.GetSeries(value);
-            var dataX = renderedSeries.Select(x => x.Time.ToOADate()).ToArray();
-            var dataY = renderedSeries.Select(x => x.Value ?? double.NaN).ToArray();
+            var dataX = renderedSeries.Where(x => timeFilter(x.Time)).Select(x => x.Time.ToOADate()).ToArray();
+            var dataY = renderedSeries.Where(x => timeFilter(x.Time)).Select(x => x.Value ?? double.NaN).ToArray();
             var scatter = plot.AddScatter(dataX, dataY);
             scatter.OnNaN = ScottPlot.Plottable.ScatterPlot.NanBehavior.Gap;
             scatter.MarkerShape = MarkerShape.none;
@@ -139,9 +144,11 @@ namespace Solarverse
             WpfPlot1.Plot.YAxis.LockLimits(false);
             WpfPlot2.Plot.YAxis.LockLimits(false);
 
+            var maxTimeWithPvActual = series.GetSeries(x => x.PVActualKwh).Where(x => x.Value.HasValue).Select(x => x.Time).DefaultIfEmpty(DateTime.MinValue).Max();
             AddPlot(WpfPlot1.Plot, series, x => x.ActualConsumptionKwh);
             AddPlot(WpfPlot1.Plot, series, x => x.ConsumptionForecastKwh);
-            AddPlot(WpfPlot1.Plot, series, x => x.PVForecastKwh);
+            AddPlot(WpfPlot1.Plot, series, x => x.PVActualKwh);
+            AddPlot(WpfPlot1.Plot, series, x => x.PVForecastKwh, x => x >= maxTimeWithPvActual);
             AddPlot(WpfPlot1.Plot, series, x => x.ExcessPowerKwh);
 
             AddPlot(WpfPlot2.Plot, series, x => x.IncomingRate);
