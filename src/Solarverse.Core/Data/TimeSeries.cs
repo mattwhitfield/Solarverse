@@ -1,4 +1,5 @@
 ﻿using Solarverse.Core.Helper;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Solarverse.Core.Data
 {
@@ -36,7 +37,7 @@ namespace Solarverse.Core.Data
             return olderPoints.Any();
         }
 
-        public bool TryGetDataPointFor(DateTime currentPeriod, out TimeSeriesPoint? currentDataPoint)
+        public bool TryGetDataPointFor(DateTime currentPeriod, [NotNullWhen(returnValue: true)] out TimeSeriesPoint? currentDataPoint)
         {
             if (_dataPoints.TryGetValue(currentPeriod, out var current))
             {

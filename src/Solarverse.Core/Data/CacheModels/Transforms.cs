@@ -8,7 +8,7 @@ namespace Solarverse.Core.Data.CacheModels.Transforms
         public static HouseholdConsumption FromCache(this HouseholdConsumptionCache source)
         {
             return new HouseholdConsumption(
-                true,
+                source.DataPoints.All(x => x.Consumption >= 0),
                 source.ContainsInterpolatedPoints,
                 source.DataPoints.Select(x => new HouseholdConsumptionDataPoint(x.Time, x.Consumption, x.Solar, x.Import, x.Export, x.Charge, x.Discharge)));
         }

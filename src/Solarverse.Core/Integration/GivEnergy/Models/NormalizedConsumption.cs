@@ -13,7 +13,23 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
                 return;
             }
 
-            var datapoints = history.DataPoints;
+            var orderedPoints = history.DataPoints.OrderBy(x => x.Time).ToList();
+            int i = 0;
+            while (i < orderedPoints.Count - 1)
+            {
+                var current = orderedPoints[i].Today;
+                var next = orderedPoints[i + 1].Today;
+                if (current != null && next != null && current.Consumption > next.Consumption)
+                {
+                    orderedPoints.RemoveAt(i);
+                }
+                else
+                {
+                    i++;
+                }
+            }
+
+            var datapoints = orderedPoints;
             var cumulativePoints = GetCumulativePoints(datapoints);
 
             double lastConsumption = 0d,
