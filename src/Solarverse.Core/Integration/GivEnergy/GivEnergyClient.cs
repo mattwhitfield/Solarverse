@@ -213,7 +213,7 @@ namespace Solarverse.Core.Integration.GivEnergy
             return new HouseholdConsumption(
                 normalized.IsValid,
                 normalized.ContainsInterpolatedPoints,
-                normalized.DataPoints.Select(x => new HouseholdConsumptionDataPoint(x.Time, x.Consumption, x.Solar, x.Import, x.Export, x.Charge, x.Discharge)));
+                normalized.DataPoints.Select(x => new HouseholdConsumptionDataPoint(x.Time, x.Consumption, x.Solar, x.Import, x.Export, x.Charge, x.Discharge, x.BatteryPercentage)));
         }
 
         public async Task SetSettingIfRequired(int settingId, Func<CurrentSettingValues, bool> shouldSet, object value)

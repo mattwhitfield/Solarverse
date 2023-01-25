@@ -9,5 +9,8 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
 
         [JsonProperty("today")]
         public Today? Today { get; set; }
+
+        [JsonProperty("power")]
+        public Power? Power { get; set; }
     }
 }

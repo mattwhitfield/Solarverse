@@ -2,7 +2,7 @@
 
 namespace Solarverse.Core.Data.CacheModels
 {
-    [DebuggerDisplay("Time = {Time}, Consumption = {Consumption}, Solar = {Solar}, Import = {Import}, Export = {Export}, Charge = {Charge}, Discharge = {Discharge}")]
+    [DebuggerDisplay("Time = {Time}, Consumption = {Consumption}, Solar = {Solar}, Import = {Import}, Export = {Export}, Charge = {Charge}, Discharge = {Discharge}, BatteryPercentage = {BatteryPercentage}")]
     public class HouseholdConsumptionDataPointCache
     {
         public DateTime Time { get; set; }
@@ -18,5 +18,7 @@ namespace Solarverse.Core.Data.CacheModels
         public double Charge { get; set; }
 
         public double Discharge { get; set; }
+
+        public double BatteryPercentage { get; set; }
     }
 }

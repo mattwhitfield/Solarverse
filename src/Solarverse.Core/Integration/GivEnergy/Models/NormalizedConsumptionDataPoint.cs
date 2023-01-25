@@ -4,7 +4,7 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
 {
     public class NormalizedConsumptionDataPoint
     {
-        public NormalizedConsumptionDataPoint(DateTime time, double consumption, double solar, double import, double export, double charge, double discharge)
+        public NormalizedConsumptionDataPoint(DateTime time, double consumption, double solar, double import, double export, double charge, double discharge, double batteryPercentage)
         {
             Time = time;
             Consumption = consumption;
@@ -13,6 +13,7 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
             Export = export;
             Charge = charge;
             Discharge = discharge;
+            BatteryPercentage = batteryPercentage;
         }
 
         public DateTime Time { get; }
@@ -28,5 +29,7 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
         public double Charge { get; }
 
         public double Discharge { get; }
+
+        public double BatteryPercentage { get; }
     }
 }

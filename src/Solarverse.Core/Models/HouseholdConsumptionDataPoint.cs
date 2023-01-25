@@ -2,10 +2,10 @@
 
 namespace Solarverse.Core.Models
 {
-    [DebuggerDisplay("Time = {Time}, Consumption = {Consumption}, Solar = {Solar}, Import = {Import}, Export = {Export}, Charge = {Charge}, Discharge = {Discharge}")]
+    [DebuggerDisplay("Time = {Time}, Consumption = {Consumption}, Solar = {Solar}, Import = {Import}, Export = {Export}, Charge = {Charge}, Discharge = {Discharge}, BatteryPercentage = {BatteryPercentage}")]
     public class HouseholdConsumptionDataPoint
     {
-        public HouseholdConsumptionDataPoint(DateTime time, double consumption, double solar, double import, double export, double cahrge, double discharge)
+        public HouseholdConsumptionDataPoint(DateTime time, double consumption, double solar, double import, double export, double cahrge, double discharge, double batteryPercentage)
         {
             Time = time;
             Consumption = consumption;
@@ -14,6 +14,7 @@ namespace Solarverse.Core.Models
             Export = export;
             Charge = cahrge;
             Discharge = discharge;
+            BatteryPercentage = batteryPercentage;
         }
 
         public DateTime Time { get; }
@@ -29,5 +30,7 @@ namespace Solarverse.Core.Models
         public double Charge { get; set; }
 
         public double Discharge { get; set; }
+
+        public double BatteryPercentage { get; set; }
     }
 }

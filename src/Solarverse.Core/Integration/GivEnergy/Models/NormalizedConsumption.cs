@@ -53,7 +53,8 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
                     point.Import - lastImport,
                     point.Export - lastExport,
                     point.Charge - lastCharge,
-                    point.Discharge - lastDischarge));
+                    point.Discharge - lastDischarge,
+                    point.BatteryPercentage));
                 lastConsumption = point.Consumption;
                 lastSolar = point.Solar;
                 lastImport = point.Import;
@@ -63,7 +64,7 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
             }
         }
 
-        private NormalizedConsumptionDataPoint?[] GetCumulativePoints(List<ConsumptionDataPoint> datapoints)
+        private static NormalizedConsumptionDataPoint?[] GetCumulativePoints(List<ConsumptionDataPoint> datapoints)
         {
             var cumulativePoints = new NormalizedConsumptionDataPoint?[48];
             var date = datapoints[0].Time.Date;
@@ -72,12 +73,13 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
             {
                 cumulativePoints[dataPoint.Key] = new NormalizedConsumptionDataPoint(
                     date.AddMinutes(dataPoint.Key * 30),
-                    dataPoint.Max(x => x.Today?.Consumption ?? double.MaxValue),
-                    dataPoint.Max(x => x.Today?.Solar ?? double.MaxValue),
-                    dataPoint.Max(x => x.Today?.Grid?.Import ?? double.MaxValue),
-                    dataPoint.Max(x => x.Today?.Grid?.Export ?? double.MaxValue),
-                    dataPoint.Max(x => x.Today?.Battery?.Charge ?? double.MaxValue),
-                    dataPoint.Max(x => x.Today?.Battery?.Discharge ?? double.MaxValue));
+                    dataPoint.Max(x => x.Today?.Consumption ?? 0),
+                    dataPoint.Max(x => x.Today?.Solar ?? 0),
+                    dataPoint.Max(x => x.Today?.Grid?.Import ?? 0),
+                    dataPoint.Max(x => x.Today?.Grid?.Export ?? 0),
+                    dataPoint.Max(x => x.Today?.Battery?.Charge ?? 0),
+                    dataPoint.Max(x => x.Today?.Battery?.Discharge ?? 0),
+                    dataPoint.Max(x => x.Power?.Battery?.Percent ?? 0));
             }
 
             for (int i = 0; i < 48; i++)
@@ -111,14 +113,15 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
                         Interpolate(x => x.Import),
                         Interpolate(x => x.Export),
                         Interpolate(x => x.Charge),
-                        Interpolate(x => x.Discharge));
+                        Interpolate(x => x.Discharge),
+                        Interpolate(x => x.BatteryPercentage));
                 }
             }
 
             return cumulativePoints;
         }
 
-        private NormalizedConsumptionDataPoint? FindPrev(int currentIndex, NormalizedConsumptionDataPoint?[] source)
+        private static NormalizedConsumptionDataPoint? FindPrev(int currentIndex, NormalizedConsumptionDataPoint?[] source)
         {
             while (currentIndex >= 0)
             {
@@ -132,7 +135,7 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
             return null;
         }
 
-        private NormalizedConsumptionDataPoint? FindNext(int currentIndex, NormalizedConsumptionDataPoint?[] source)
+        private static NormalizedConsumptionDataPoint? FindNext(int currentIndex, NormalizedConsumptionDataPoint?[] source)
         {
             while (currentIndex < 48)
             {

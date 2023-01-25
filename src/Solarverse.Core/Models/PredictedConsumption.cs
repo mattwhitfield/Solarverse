@@ -44,7 +44,8 @@ namespace Solarverse.Core.Models
                     pointImportValue,
                     pointExportValue,
                     pointChargeValue,
-                    pointDischargeValue));
+                    pointDischargeValue,
+                    0)); // this is not where we predict battery percentages
             }
         }
 

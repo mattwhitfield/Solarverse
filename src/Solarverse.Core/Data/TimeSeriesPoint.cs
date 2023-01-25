@@ -2,11 +2,11 @@
 {
     public class TimeSeriesPoint
     {
-        public double? PVForecastKwh { get; set; }
+        public double? ForecastSolarKwh { get; set; }
 
-        public double? PVActualKwh { get; set; }
+        public double? ActualSolarKwh { get; set; }
 
-        public double? ConsumptionForecastKwh { get; set; }
+        public double? ForecastConsumptionKwh { get; set; }
 
         public double? ActualConsumptionKwh { get; set; }
 
@@ -14,12 +14,16 @@
 
         public double? OutgoingRate { get; set; }
 
+        public double? ActualBatteryPercentage { get; set; }
+
+        public double? ForecastBatteryPercentage { get; set; }
+
         public ControlAction? ControlAction { get; set; }
 
         public double? CostWithoutStorage => IncomingRate.HasValue && RequiredPowerKwh.HasValue ? IncomingRate.Value * Math.Max(RequiredPowerKwh.Value, 0) : null;
 
-        public double? RequiredPowerKwh => PVForecastKwh.HasValue && ConsumptionForecastKwh.HasValue ? ConsumptionForecastKwh.Value - PVForecastKwh.Value : null;
+        public double? RequiredPowerKwh => ForecastSolarKwh.HasValue && ForecastConsumptionKwh.HasValue ? ForecastConsumptionKwh.Value - ForecastSolarKwh.Value : null;
 
-        public double? ExcessPowerKwh => PVForecastKwh.HasValue && ConsumptionForecastKwh.HasValue ? PVForecastKwh.Value - ConsumptionForecastKwh.Value : null;
+        public double? ExcessPowerKwh => ForecastSolarKwh.HasValue && ForecastConsumptionKwh.HasValue ? ForecastSolarKwh.Value - ForecastConsumptionKwh.Value : null;
     }
 }

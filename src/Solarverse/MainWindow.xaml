@@ -14,110 +14,248 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <TextBlock
+            Grid.Row="1"
+            Grid.Column="0"
+            Margin="4"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontFamily="Segoe UI"
+            FontSize="20"
+            Text="Power">
+            <TextBlock.LayoutTransform>
+                <RotateTransform Angle="-90" />
+            </TextBlock.LayoutTransform>
+        </TextBlock>
+        <TextBlock
+            Grid.Row="2"
+            Grid.Column="0"
+            Margin="4"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontFamily="Segoe UI"
+            FontSize="20"
+            Text="Cost">
+            <TextBlock.LayoutTransform>
+                <RotateTransform Angle="-90" />
+            </TextBlock.LayoutTransform>
+        </TextBlock>
+        <TextBlock
+            Grid.Row="3"
+            Grid.Column="0"
+            Margin="4"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontFamily="Segoe UI"
+            FontSize="20"
+            Text="Plan">
+            <TextBlock.LayoutTransform>
+                <RotateTransform Angle="-90" />
+            </TextBlock.LayoutTransform>
+        </TextBlock>
+        <Grid Grid.Row="0" Grid.Column="1">
             <Border
                 HorizontalAlignment="Center"
                 BorderBrush="Gray"
                 BorderThickness="1"
                 CornerRadius="3">
-                <StackPanel Margin="4" Orientation="Horizontal">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
                     <TextBlock
                         x:Name="DateTimeLabel"
+                        Grid.Row="0"
+                        Grid.RowSpan="2"
+                        Grid.Column="0"
                         Margin="2,0"
-                        Text="-" />
-                    <Path
-                        Width="12"
-                        Height="12"
-                        Margin="6,0,0,0"
                         VerticalAlignment="Center"
-                        Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-                        Fill="DarkBlue"
-                        Stretch="Uniform" />
-                    <TextBlock Margin="2,0" Text="Consumption:" />
-                    <TextBlock
-                        x:Name="ConsumptionLabel"
-                        Margin="2,0"
+                        FontFamily="Segoe UI"
                         Text="-" />
-                    <Path
-                        Width="12"
-                        Height="12"
-                        Margin="6,0,0,0"
-                        VerticalAlignment="Center"
-                        Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-                        Fill="DarkGoldenrod"
-                        Stretch="Uniform" />
-                    <TextBlock Margin="2,0" Text="Solar:" />
-                    <TextBlock
-                        x:Name="SolarLabel"
-                        Margin="2,0"
-                        Text="-" />
-                    <Path
-                        Width="12"
-                        Height="12"
-                        Margin="6,0,0,0"
-                        VerticalAlignment="Center"
-                        Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-                        Fill="DarkGreen"
-                        Stretch="Uniform" />
-                    <TextBlock Margin="2,0" Text="Excess Power:" />
-                    <TextBlock
-                        x:Name="ExcessPowerLabel"
-                        Margin="2,0"
-                        Text="-" />
-                    <Path
-                        Width="12"
-                        Height="12"
-                        Margin="6,0,0,0"
-                        VerticalAlignment="Center"
-                        Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-                        Fill="Purple"
-                        Stretch="Uniform" />
-                    <TextBlock Margin="2,0" Text="Incoming Rate:" />
-                    <TextBlock
-                        x:Name="IncomingRateLabel"
-                        Margin="2,0"
-                        Text="-" />
-                    <Path
-                        Width="12"
-                        Height="12"
-                        Margin="6,0,0,0"
-                        VerticalAlignment="Center"
-                        Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-                        Fill="OrangeRed"
-                        Stretch="Uniform" />
-                    <TextBlock Margin="2,0" Text="Outgoing Rate:" />
-                    <TextBlock
-                        x:Name="OutgoingRateLabel"
-                        Margin="2,0"
-                        Text="-" />
-                    <Path
-                        Width="12"
-                        Height="12"
-                        Margin="6,0,0,0"
-                        VerticalAlignment="Center"
-                        Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-                        Fill="DarkRed"
-                        Stretch="Uniform" />
-                    <TextBlock Margin="2,0" Text="Projected Cost:" />
-                    <TextBlock
-                        x:Name="ProjectedCostLabel"
-                        Margin="2,0"
-                        Text="-" />
-                </StackPanel>
+                    <StackPanel
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Margin="4"
+                        Orientation="Horizontal">
+                        <Path
+                            Width="12"
+                            Height="12"
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
+                            Fill="DarkBlue"
+                            Stretch="Uniform" />
+                        <TextBlock
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="Consumption:" />
+                        <TextBlock
+                            x:Name="ConsumptionLabel"
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="-" />
+                        <Path
+                            Width="12"
+                            Height="12"
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
+                            Fill="DarkGoldenrod"
+                            Stretch="Uniform" />
+                        <TextBlock
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="Solar:" />
+                        <TextBlock
+                            x:Name="SolarLabel"
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="-" />
+                        <Path
+                            Width="12"
+                            Height="12"
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
+                            Fill="DarkGreen"
+                            Stretch="Uniform" />
+                        <TextBlock
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="Excess Power:" />
+                        <TextBlock
+                            x:Name="ExcessPowerLabel"
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="-" />
+                    </StackPanel>
+                    <StackPanel
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Margin="4"
+                        Orientation="Horizontal">
+                        <Path
+                            Width="12"
+                            Height="12"
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
+                            Fill="Purple"
+                            Stretch="Uniform" />
+                        <TextBlock
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="Incoming Rate:" />
+                        <TextBlock
+                            x:Name="IncomingRateLabel"
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="-" />
+                        <Path
+                            Width="12"
+                            Height="12"
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
+                            Fill="OrangeRed"
+                            Stretch="Uniform" />
+                        <TextBlock
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="Outgoing Rate:" />
+                        <TextBlock
+                            x:Name="OutgoingRateLabel"
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="-" />
+                        <Path
+                            Width="12"
+                            Height="12"
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
+                            Fill="DarkRed"
+                            Stretch="Uniform" />
+                        <TextBlock
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="Projected Cost:" />
+                        <TextBlock
+                            x:Name="ProjectedCostLabel"
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="-" />
+                        <Path
+                            Width="12"
+                            Height="12"
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
+                            Fill="Black"
+                            Stretch="Uniform" />
+                        <TextBlock
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="Projected Battery:" />
+                        <TextBlock
+                            x:Name="ProjectedBatteryPercentLabel"
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="-" />
+                        <Path
+                            Width="12"
+                            Height="12"
+                            Margin="6,0,0,0"
+                            VerticalAlignment="Center"
+                            Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
+                            Fill="Black"
+                            Stretch="Uniform" />
+                        <TextBlock
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="Scheduled action:" />
+                        <TextBlock
+                            x:Name="ScheduledActionLabel"
+                            Margin="2,0"
+                            FontFamily="Segoe UI"
+                            Text="-" />
+                    </StackPanel>
+                </Grid>
             </Border>
         </Grid>
         <WpfPlot
             Name="WpfPlot1"
             Grid.Row="1"
-            MouseEnter="wpfPlot1_MouseEnter"
-            MouseLeave="wpfPlot1_MouseLeave"
-            MouseMove="wpfPlot1_OnMouseMove" />
+            Grid.Column="1"
+            MouseEnter="WpfPlot1_MouseEnter"
+            MouseLeave="WpfPlot1_MouseLeave"
+            MouseMove="WpfPlot1_OnMouseMove" />
         <WpfPlot
             Name="WpfPlot2"
             Grid.Row="2"
-            MouseEnter="wpfPlot2_MouseEnter"
-            MouseLeave="wpfPlot2_MouseLeave"
-            MouseMove="wpfPlot2_OnMouseMove" />
+            Grid.Column="1"
+            MouseEnter="WpfPlot2_MouseEnter"
+            MouseLeave="WpfPlot2_MouseLeave"
+            MouseMove="WpfPlot2_OnMouseMove" />
+        <WpfPlot
+            Name="WpfPlot3"
+            Grid.Row="3"
+            Grid.Column="1"
+            MouseEnter="WpfPlot3_MouseEnter"
+            MouseLeave="WpfPlot3_MouseLeave"
+            MouseMove="WpfPlot3_OnMouseMove" />
     </Grid>
 </Window>

@@ -7,7 +7,7 @@ namespace Solarverse.Core.Data
     {
         private Dictionary<DateTime, TimeSeriesPoint> _dataPoints = new Dictionary<DateTime, TimeSeriesPoint>();
 
-        public void AddPointsFrom<T>(IEnumerable<T> points, Func<T, DateTime> dateTime, Func<T, double?> value, Action<double?, TimeSeriesPoint> set)
+        public void AddPointsFrom<TSource, TValue>(IEnumerable<TSource> points, Func<TSource, DateTime> dateTime, Func<TSource, TValue?> value, Action<TValue?, TimeSeriesPoint> set)
         {
             foreach (var point in points)
             {
@@ -23,6 +23,11 @@ namespace Solarverse.Core.Data
         public IList<RenderedTimeSeriesPoint> GetSeries(Func<TimeSeriesPoint, double?> value)
         {
             return _dataPoints.OrderBy(point => point.Key).Select(point => new RenderedTimeSeriesPoint(point.Key, value(point.Value))).ToList();
+        }
+
+        public IList<RenderedControlActionPoint> GetControlActions()
+        {
+            return _dataPoints.OrderBy(point => point.Key).Select(point => point.Value.ControlAction.HasValue ? new RenderedControlActionPoint(point.Key, point.Value.ControlAction.Value) : null).OfType<RenderedControlActionPoint>().ToList();
         }
 
         public IList<DateTime> GetDates()

@@ -42,8 +42,8 @@ namespace Solarverse.Core.Data
                 consumption.DataPoints.Where(x => x.Time == min).Each(x => x.Consumption = point.ActualConsumptionKwh.GetValueOrDefault(x.Consumption));
             }
 
-            TimeSeries.Set(x => x.ConsumptionForecastKwh = null);
-            TimeSeries.AddPointsFrom(consumption.DataPoints, x => x.Time, x => x.Consumption, (val, pt) => pt.ConsumptionForecastKwh = val);
+            TimeSeries.Set(x => x.ForecastConsumptionKwh = null);
+            TimeSeries.AddPointsFrom(consumption.DataPoints, x => x.Time, x => x.Consumption, (val, pt) => pt.ForecastConsumptionKwh = val);
             TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
         }
 
@@ -51,7 +51,8 @@ namespace Solarverse.Core.Data
         {
             var min = TimeSeries.GetMinimumDate();
             TimeSeries.AddPointsFrom(consumption.DataPoints.Where(x => x.Time >= min), x => x.Time, x => x.Consumption, (val, pt) => pt.ActualConsumptionKwh = val);
-            TimeSeries.AddPointsFrom(consumption.DataPoints.Where(x => x.Time >= min), x => x.Time, x => x.Solar, (val, pt) => pt.PVActualKwh = val);
+            TimeSeries.AddPointsFrom(consumption.DataPoints.Where(x => x.Time >= min), x => x.Time, x => x.Solar, (val, pt) => pt.ActualSolarKwh = val);
+            TimeSeries.AddPointsFrom(consumption.DataPoints.Where(x => x.Time >= min), x => x.Time, x => x.BatteryPercentage, (val, pt) => pt.ActualBatteryPercentage = val);
             TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
         }
 
@@ -59,7 +60,7 @@ namespace Solarverse.Core.Data
         {
             if (forecast.IsValid)
             {
-                TimeSeries.AddPointsFrom(forecast.DataPoints, x => x.Time, x => x.PVEstimate, (val, pt) => pt.PVForecastKwh = val);
+                TimeSeries.AddPointsFrom(forecast.DataPoints, x => x.Time, x => x.PVEstimate, (val, pt) => pt.ForecastSolarKwh = val);
                 TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -72,6 +73,12 @@ namespace Solarverse.Core.Data
 
         public void UpdateOutgoingRates(IList<TariffRate> outgoingRates)
         {
+            // TODO - this is testing only
+            var random = new Random();
+            TimeSeries.AddPointsFrom(outgoingRates, x => x.ValidFrom, x => x.Value, (val, pt) => pt.ForecastBatteryPercentage = val);
+            TimeSeries.AddPointsFrom(outgoingRates, x => x.ValidFrom, x => (ControlAction)random.Next(0, 4), (val, pt) => pt.ControlAction = val);
+
+
             TimeSeries.AddPointsFrom(outgoingRates, x => x.ValidFrom, x => x.Value, (val, pt) => pt.OutgoingRate = val);
             TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
         }
