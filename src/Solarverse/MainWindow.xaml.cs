@@ -135,6 +135,33 @@ namespace Solarverse
                 ProjectedCostLabel.Text = point.CostWithoutStorage.HasValue ? point.CostWithoutStorage.Value.ToString("N1") + "p" : "-";
                 DateTimeLabel.Text = date.ToString("dd/MM HH:mm");
                 ScheduledActionLabel.Text = point.ControlAction.HasValue ? point.ControlAction.Value.ToString() : "-";
+                if (point.ControlAction.HasValue)
+                {
+                    switch (point.ControlAction.Value)
+                    {
+                        case ControlAction.Charge:
+                            ScheduledActionPath.Data = Shapes.UpTriangle;
+                            ScheduledActionPath.Fill = System.Windows.Media.Brushes.Salmon;
+                            break;
+                        case ControlAction.Discharge:
+                            ScheduledActionPath.Data = Shapes.DownTriangle;
+                            ScheduledActionPath.Fill = System.Windows.Media.Brushes.MediumSeaGreen;
+                            break;
+                        case ControlAction.Export:
+                            ScheduledActionPath.Data = Shapes.DoubleDownTriangle;
+                            ScheduledActionPath.Fill = System.Windows.Media.Brushes.DodgerBlue;
+                            break;
+                        case ControlAction.Hold:
+                            ScheduledActionPath.Data = Shapes.Circle;
+                            ScheduledActionPath.Fill = System.Windows.Media.Brushes.Silver;
+                            break;
+                    }
+                }
+                else
+                {
+                    ScheduledActionPath.Data = Shapes.Circle;
+                    ScheduledActionPath.Fill = System.Windows.Media.Brushes.Black;
+                }
             }
             else
             {
@@ -147,6 +174,8 @@ namespace Solarverse
                 ProjectedCostLabel.Text = "-";
                 ProjectedBatteryPercentLabel.Text = "-";
                 ScheduledActionLabel.Text = "-";
+                ScheduledActionPath.Data = Shapes.Circle;
+                ScheduledActionPath.Fill = System.Windows.Media.Brushes.Black;
             }
 
             WpfPlot1.Refresh();
@@ -264,9 +293,9 @@ namespace Solarverse
             AddPlot(plot, timeSeries, value, color, isActual, _ => true);
         }
 
-        private static void AddPlot(Plot plot, TimeSeries timeSeries, Func<TimeSeriesPoint, double?> value, Color color, bool isActual, Func<DateTime, bool> timeFilter)
+        private static ScatterPlot AddPlot(Plot plot, TimeSeries timeSeries, Func<TimeSeriesPoint, double?> value, Color color, bool isActual, Func<DateTime, bool> timeFilter)
         {
-            var renderedSeries = timeSeries.GetSeries(value);
+            var renderedSeries = timeSeries.GetNullableSeries(value);
             var dataX = renderedSeries.Where(x => timeFilter(x.Time)).Select(x => x.Time.ToOADate()).ToArray();
             var dataY = renderedSeries.Where(x => timeFilter(x.Time)).Select(x => x.Value ?? double.NaN).ToArray();
             var scatter = plot.AddScatter(dataX, dataY);
@@ -274,6 +303,7 @@ namespace Solarverse
             scatter.LineStyle = isActual ? LineStyle.Solid : LineStyle.Dash;
             scatter.OnNaN = ScottPlot.Plottable.ScatterPlot.NanBehavior.Gap;
             scatter.MarkerShape = MarkerShape.none;
+            return scatter;
         }
 
         private static Crosshair AddAndConfigureCrosshair(Plot plot)
@@ -303,19 +333,20 @@ namespace Solarverse
             WpfPlot2.Plot.YAxis.LockLimits(false);
             WpfPlot3.Plot.YAxis.LockLimits(false);
 
-            var maxTimeWithPvActual = series.GetSeries(x => x.ActualSolarKwh).Where(x => x.Value.HasValue).Select(x => x.Time).DefaultIfEmpty(DateTime.MinValue).Max();
+            var maxTimeWithPvActual = series.GetNullableSeries(x => x.ActualSolarKwh).Where(x => x.Value.HasValue).Select(x => x.Time).DefaultIfEmpty(DateTime.MinValue).Max();
             AddPlot(WpfPlot1.Plot, series, x => x.ActualConsumptionKwh, Color.DarkBlue, true);
             AddPlot(WpfPlot1.Plot, series, x => x.ForecastConsumptionKwh, Color.DarkBlue, false);
             AddPlot(WpfPlot1.Plot, series, x => x.ActualSolarKwh, Color.DarkGoldenrod, true);
             AddPlot(WpfPlot1.Plot, series, x => x.ForecastSolarKwh, Color.DarkGoldenrod, false, x => x >= maxTimeWithPvActual);
-            AddPlot(WpfPlot1.Plot, series, x => x.ExcessPowerKwh, Color.DarkGreen, false);
+            AddPlot(WpfPlot1.Plot, series, x => x.ExcessPowerKwh, Color.Green, false);
 
             AddPlot(WpfPlot2.Plot, series, x => x.IncomingRate, Color.Purple, true);
             AddPlot(WpfPlot2.Plot, series, x => x.OutgoingRate, Color.OrangeRed, true);
-            AddPlot(WpfPlot2.Plot, series, x => x.CostWithoutStorage, Color.DarkRed, false);
+            AddPlot(WpfPlot2.Plot, series, x => x.CostWithoutStorage, Color.Red, false);
 
             AddPlot(WpfPlot3.Plot, series, x => x.ActualBatteryPercentage, Color.Black, true);
             AddPlot(WpfPlot3.Plot, series, x => x.ForecastBatteryPercentage, Color.Black, false, x => x >= maxTimeWithPvActual);
+            //AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / ConfigurationProvider.Configuration.Battery.CapacityKwh) * 100, Color.Black, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
 
             var controlActions = series.GetControlActions();
             foreach (var action in controlActions)

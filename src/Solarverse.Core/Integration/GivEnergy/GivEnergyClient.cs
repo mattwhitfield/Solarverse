@@ -126,6 +126,7 @@ namespace Solarverse.Core.Integration.GivEnergy
             }
 
             var ecoModeEnabled = await GetBoolSetting(SettingIds.EcoMode);
+            var batteryReserve = await GetIntSetting(SettingIds.Discharge.Reserve);
             var dischargeSettings = await GetBatterySettings(
                 SettingIds.Discharge.StartTime,
                 SettingIds.Discharge.EndTime,
@@ -150,7 +151,8 @@ namespace Solarverse.Core.Integration.GivEnergy
                 currentState.Data.Solar.Power,
                 currentState.Data.Battery.Percent,
                 maxDischargeRateKw,
-                maxChargeRateKw);
+                maxChargeRateKw,
+                batteryReserve.Value);
         }
 
         private async Task<BatteryModeSettingValues> GetBatterySettings(int startTimeSettingId, int endTimeSettingId, int enabledSettingId, int powerLimitSettingId)

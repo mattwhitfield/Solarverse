@@ -2,6 +2,13 @@
 {
     public class TimeSeriesPoint
     {
+        public TimeSeriesPoint(DateTime time)
+        {
+            Time = time;
+        }
+
+        public DateTime Time { get; }
+
         public double? ForecastSolarKwh { get; set; }
 
         public double? ActualSolarKwh { get; set; }
@@ -19,6 +26,8 @@
         public double? ForecastBatteryPercentage { get; set; }
 
         public ControlAction? ControlAction { get; set; }
+
+        public double? RequiredBatteryPowerKwh { get; set; }
 
         public double? CostWithoutStorage => IncomingRate.HasValue && RequiredPowerKwh.HasValue ? IncomingRate.Value * Math.Max(RequiredPowerKwh.Value, 0) : null;
 

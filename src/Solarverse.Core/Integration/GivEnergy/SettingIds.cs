@@ -20,6 +20,7 @@
             public const int EndTime = 54; // HH:mm
             public const int Enabled = 56; // true / false
             public const int PowerLimit = 73; // int
+            public const int Reserve = 71;
         }
     }
 }

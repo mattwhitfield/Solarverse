@@ -1,9 +1,10 @@
 ﻿using Solarverse.Core.Helper;
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Solarverse.Core.Data
 {
-    public class TimeSeries
+    public class TimeSeries : IEnumerable<TimeSeriesPoint>
     {
         private Dictionary<DateTime, TimeSeriesPoint> _dataPoints = new Dictionary<DateTime, TimeSeriesPoint>();
 
@@ -14,15 +15,31 @@ namespace Solarverse.Core.Data
                 var pointTime = dateTime(point);
                 if (!_dataPoints.TryGetValue(pointTime, out var dataPoint))
                 {
-                    _dataPoints[pointTime] = dataPoint = new TimeSeriesPoint();
+                    _dataPoints[pointTime] = dataPoint = new TimeSeriesPoint(pointTime);
                 }
                 set(value(point), dataPoint);
             }
         }
 
+        public IList<RenderedNullableTimeSeriesPoint> GetNullableSeries(Func<TimeSeriesPoint, double?> value)
+        {
+            return _dataPoints.OrderBy(point => point.Key).Select(point => new RenderedNullableTimeSeriesPoint(point.Key, value(point.Value))).ToList();
+        }
+
         public IList<RenderedTimeSeriesPoint> GetSeries(Func<TimeSeriesPoint, double?> value)
         {
-            return _dataPoints.OrderBy(point => point.Key).Select(point => new RenderedTimeSeriesPoint(point.Key, value(point.Value))).ToList();
+            var output = new List<RenderedTimeSeriesPoint>();
+
+            foreach (var point in _dataPoints.OrderBy(x => x.Key))
+            {
+                var pointValue = value(point.Value);
+                if (pointValue.HasValue)
+                {
+                    output.Add(new RenderedTimeSeriesPoint(point.Key, pointValue.Value));
+                }
+            }
+
+            return output;
         }
 
         public IList<RenderedControlActionPoint> GetControlActions()
@@ -67,19 +84,43 @@ namespace Solarverse.Core.Data
             return eligible.Max();
         }
 
-        public DateTime GetMinimumDate()
+        public DateTime? GetMinimumDate(Func<TimeSeriesPoint, bool> predicate)
         {
-            if (!_dataPoints.Any())
+            var eligible = _dataPoints.Where(x => predicate(x.Value)).Select(x => x.Key);
+            if (!eligible.Any())
             {
-                return DateTime.MinValue;
+                return null;
             }
 
-            return _dataPoints.Keys.Min();
+            return eligible.Min();
+        }
+
+        public DateTime? GetMinimumDate() => GetMinimumDate(_ => true);
+
+        internal bool Set(DateTime dateTime, Action<TimeSeriesPoint> action)
+        {
+            if (_dataPoints.TryGetValue(dateTime, out var point))
+            {
+                action(point);
+                return true;
+            }
+
+            return false;
         }
 
         internal void Set(Action<TimeSeriesPoint> action)
         {
             _dataPoints.Values.Each(action);
+        }
+
+        public IEnumerator<TimeSeriesPoint> GetEnumerator()
+        {
+            return _dataPoints.Values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

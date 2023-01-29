@@ -5,7 +5,6 @@ using Solarverse.Core.Helper;
 using Solarverse.Core.Integration;
 using Solarverse.Core.Models;
 using Solarverse.Core.Models.Settings;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Solarverse.Core.Control
 {
@@ -36,11 +35,18 @@ namespace Solarverse.Core.Control
             _controlPlanFactory = controlPlanFactory;
             _controlPlanExecutor = controlPlanExecutor;
             _predictionFactory = predictionFactory;
-            var getTariffRatesPeriod = UpdatePeriods.TariffUpdates;
-            _actions.Add(new TimedAction(_logger, getTariffRatesPeriod, UpdateTariffRates, "Update energy tariff rates"));
 
             var getSolarForecastDataPeriod = UpdatePeriods.SolarForecastUpdates;
             _actions.Add(new TimedAction(_logger, getSolarForecastDataPeriod, UpdateSolcastData, "Update solar forecast data"));
+
+            var getTariffRatesPeriod = UpdatePeriods.TariffUpdates;
+            _actions.Add(new TimedAction(_logger, getTariffRatesPeriod, UpdateTariffRates, "Update energy tariff rates"));
+
+            var consumptionUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(1));
+            _actions.Add(new TimedAction(_logger, consumptionUpdatePeriod, GetConsumptionData, "Get consumption data"));
+
+            var planUpdatePeriod = new Period(TimeSpan.FromHours(0.5));
+            _actions.Add(new TimedAction(_logger, planUpdatePeriod, UpdatePlan, "Update control plan"));
 
             // TODO - re-enable
             //var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
@@ -48,9 +54,6 @@ namespace Solarverse.Core.Control
 
             //var executePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromSeconds(15));
             //_actions.Add(new TimedAction(_logger, executePeriod, ExecuteControlPlan, "Execute control plan"));
-
-            var consumptionUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(1));
-            _actions.Add(new TimedAction(_logger, consumptionUpdatePeriod, GetConsumptionData, "Get consumption data"));
 
             var dataCleanupPeriod = new Period(TimeSpan.FromHours(0.5));
             _actions.Add(new TimedAction(_logger, dataCleanupPeriod, CleanUpData, "Cleaning up old data"));
@@ -144,12 +147,17 @@ namespace Solarverse.Core.Control
                 await UpdateTariffRates(incoming, _currentDataService.UpdateIncomingRates) &&
                 await UpdateTariffRates(outgoing, _currentDataService.UpdateOutgoingRates);
 
-            if (succeeded)
+            return succeeded;
+        }
+
+        public Task<bool> UpdatePlan()
+        {
+            if (_currentDataService.TimeSeries.Any(x => x.IncomingRate.HasValue && !x.ControlAction.HasValue))
             {
                 _controlPlanFactory.CreatePlan();
             }
 
-            return succeeded;
+            return Task.FromResult(true);
         }
 
         private async Task<bool> UpdateTariffRates(MeterPointConfiguration? meter, Action<IList<TariffRate>> process)

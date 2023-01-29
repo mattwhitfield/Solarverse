@@ -90,7 +90,7 @@
                         Grid.Column="1"
                         Margin="4"
                         Orientation="Horizontal">
-                        <Path
+                        <Path                            
                             Width="12"
                             Height="12"
                             Margin="6,0,0,0"
@@ -130,7 +130,7 @@
                             Margin="6,0,0,0"
                             VerticalAlignment="Center"
                             Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-                            Fill="DarkGreen"
+                            Fill="Green"
                             Stretch="Uniform" />
                         <TextBlock
                             Margin="2,0"
@@ -187,7 +187,7 @@
                             Margin="6,0,0,0"
                             VerticalAlignment="Center"
                             Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-                            Fill="DarkRed"
+                            Fill="Red"
                             Stretch="Uniform" />
                         <TextBlock
                             Margin="2,0"
@@ -216,6 +216,7 @@
                             FontFamily="Segoe UI"
                             Text="-" />
                         <Path
+                            x:Name="ScheduledActionPath"
                             Width="12"
                             Height="12"
                             Margin="6,0,0,0"

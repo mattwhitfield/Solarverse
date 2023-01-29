@@ -22,6 +22,11 @@ namespace Solarverse.Core.Data
             }
         }
 
+        public IDisposable LockForUpdate()
+        {
+            return new CurrentDataLock(this);
+        }
+
         public void Update(InverterCurrentState currentState)
         {
             CurrentState = currentState;
@@ -73,14 +78,24 @@ namespace Solarverse.Core.Data
 
         public void UpdateOutgoingRates(IList<TariffRate> outgoingRates)
         {
-            // TODO - this is testing only
-            var random = new Random();
-            TimeSeries.AddPointsFrom(outgoingRates, x => x.ValidFrom, x => x.Value, (val, pt) => pt.ForecastBatteryPercentage = val);
-            TimeSeries.AddPointsFrom(outgoingRates, x => x.ValidFrom, x => (ControlAction)random.Next(0, 4), (val, pt) => pt.ControlAction = val);
-
-
             TimeSeries.AddPointsFrom(outgoingRates, x => x.ValidFrom, x => x.Value, (val, pt) => pt.OutgoingRate = val);
             TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
+        }
+
+        private class CurrentDataLock : IDisposable
+        {
+            private readonly CurrentDataService _currentDataService;
+
+            public CurrentDataLock(CurrentDataService currentDataService)
+            {
+                _currentDataService = currentDataService;
+                GC.SuppressFinalize(this);
+            }
+
+            public void Dispose()
+            {
+                _currentDataService.TimeSeriesUpdated?.Invoke(_currentDataService, EventArgs.Empty);
+            }
         }
     }
 }

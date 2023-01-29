@@ -2,19 +2,20 @@
 
 namespace Solarverse.Core.Models
 {
-    [DebuggerDisplay("UpdateTime = {UpdateTime}, CurrentSolarPower = {CurrentSolarPower}, BatteryPercent = {BatteryPercent}, MaxDischargeRateKw = {MaxDischargeRateKw}, MaxChargeRateKw = {MaxChargeRateKw}")]
+    [DebuggerDisplay("UpdateTime = {UpdateTime}, CurrentSolarPower = {CurrentSolarPower}, BatteryPercent = {BatteryPercent}, MaxDischargeRateKw = {MaxDischargeRateKw}, MaxChargeRateKw = {MaxChargeRateKw}, BatteryReserve = {BatteryReserve}")]
     public class InverterCurrentState
     {
         public static InverterCurrentState Default =>
-            new InverterCurrentState(DateTime.MinValue, 0, 0, 0, 0);
+            new InverterCurrentState(DateTime.MinValue, 0, 0, 2.6, 2.6, 4);
 
-        public InverterCurrentState(DateTime updateTime, int currentSolarPower, int batteryPercent, double maxDischargeRateKw, double maxChargeRateKw)
+        public InverterCurrentState(DateTime updateTime, int currentSolarPower, int batteryPercent, double maxDischargeRateKw, double maxChargeRateKw, int batteryReserve)
         {
             UpdateTime = updateTime;
             CurrentSolarPower = currentSolarPower;
             BatteryPercent = batteryPercent;
             MaxDischargeRateKw = maxDischargeRateKw;
             MaxChargeRateKw = maxChargeRateKw;
+            BatteryReserve = batteryReserve;
         }
 
         public DateTime UpdateTime { get; }
@@ -26,5 +27,7 @@ namespace Solarverse.Core.Models
         public double MaxDischargeRateKw { get; }
 
         public double MaxChargeRateKw { get; }
+
+        public int BatteryReserve { get; }
     }
 }
