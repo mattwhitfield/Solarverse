@@ -70,7 +70,10 @@ namespace Solarverse.Core.Control
             }
 
             // now we want to set the 'required battery power' for the periods that we want to discharge
-            var allPointsReversed = _currentDataService.TimeSeries.OrderByDescending(x => x.Time).ToList();
+            var allPointsReversed = _currentDataService.TimeSeries
+                .OrderByDescending(x => x.Time)
+                .Where(x => !x.ActualConsumptionKwh.HasValue)
+                .ToList();
             if (!allPointsReversed.Any())
             {
                 return;
@@ -156,6 +159,26 @@ namespace Solarverse.Core.Control
             // evaluate the difference between forecast battery percentage and the required 
             // battery percentage
 
+            var adjustedCapacity = capacity * efficiency;
+            var carryForward = adjustedCapacity;
+            foreach (var point in allPoints.Where(x => !x.ActualConsumptionKwh.HasValue))
+            {
+                if (point.RequiredBatteryPowerKwh.HasValue)
+                {
+                    var spare = adjustedCapacity - point.RequiredBatteryPowerKwh.Value;
+                    if (spare < 0)
+                    {
+                        spare = 0;
+                    }
+                    if (spare < carryForward)
+                    {
+                        carryForward = spare;
+                    }
+                }
+
+                point.MaxCarryForwardChargeKwh = carryForward;
+            }
+
             var lastPoint = allPointsReversed.First();
             foreach (var point in allPointsReversed.Skip(1))
             {
@@ -178,26 +201,80 @@ namespace Solarverse.Core.Control
 
                         var numberOfChargePeriodsRequired = (int)Math.Ceiling(shortfallKwh / maxChargeKwhPerPeriod);
 
-                        // TODO - this is still not right
-                        // if the shortfall 'fits' above the gap at the top of the graph
-                        // between 'required' and 'capacity' then this methodology works
-                        // but if the gap isn't big enough, then we need some before and
-                        // some after the hump. so say the hump is a 75% charge, and we 
-                        // need 40% - then we should get 25% before the hump and 15% after.
-                        // maybe we could do this by marking 'spare capacity' - so we mark
-                        // forward from the start, and mark each point with the max charge
-                        // that can be carried forward. Then, at the start of a discharge
-                        // period, when we have the shortfall, then the amount we have to
-                        // charge now is the carry forward - the shortfall.
-                        // not sure how that will work with 'short' gaps
+                        // if we need more charge then we can carry forward, then we
+                        // need to add some charge afterwards. So the eligible points in 
+                        // this instance are the ones where the max carry forward hasn't changed
+                        if (point.MaxCarryForwardChargeKwh.HasValue && shortfallKwh > point.MaxCarryForwardChargeKwh)
+                        {
+                            var allPointsAfterMax = allPointsReversed
+                                .Where(x => x.Time <= point.Time)
+                                .TakeWhile(x => x.MaxCarryForwardChargeKwh == point.MaxCarryForwardChargeKwh)
+                                .ToList();
 
+                            var amountToChargeNow = shortfallKwh - point.MaxCarryForwardChargeKwh.Value;
+                            
+                            // now account for any points within the period where we're discharging
+                            var numberOfPeriodsAfterMax = (int)Math.Ceiling(amountToChargeNow / maxChargeKwhPerPeriod);
+
+                            var pointsAfterMax = allPointsAfterMax
+                                .Where(x => !x.ControlAction.HasValue)
+                                .ToList();
+
+                            // now find the points in there with the lowest incoming rate
+                            foreach (var targetPoint in pointsAfterMax.Where(x => x.IncomingRate.HasValue).OrderBy(x => x.IncomingRate))
+                            {
+                                if (numberOfPeriodsAfterMax > 0)
+                                {
+                                    targetPoint.ControlAction = ControlAction.Charge;
+                                    numberOfChargePeriodsRequired--;
+                                    numberOfPeriodsAfterMax--;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+
+                            // now account for any points after we have charged within the current set
+                            // where it is set to discharge, and add extra charge
+                            var minTimeWithChargeAction = allPointsAfterMax
+                                .Where(x => x.ControlAction == ControlAction.Charge)
+                                .Select(x => x.Time)
+                                .Min();
+
+                            // find any points that are discharging after our charge has started
+                            var kWhToAccountForDischarge = allPointsAfterMax
+                                .Where(x => x.Time > minTimeWithChargeAction)
+                                .Where(x => x.ControlAction == ControlAction.Discharge)
+                                .Select(x => x.RequiredPowerKwh ?? 0)
+                                .Sum();
+
+                            var extraChargePeriodsRequired = (int)Math.Ceiling(kWhToAccountForDischarge / maxChargeKwhPerPeriod);
+
+                            foreach (var targetPoint in pointsAfterMax.Where(x => x.IncomingRate.HasValue).OrderBy(x => x.IncomingRate))
+                            {
+                                if (targetPoint.ControlAction.HasValue)
+                                {
+                                    continue;
+                                }
+
+                                if (extraChargePeriodsRequired > 0)
+                                {
+                                    targetPoint.ControlAction = ControlAction.Charge;
+                                    extraChargePeriodsRequired--;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                        }
 
                         // find the points from now backwards, until there is a point
                         // where we don't have enough headroom, and then just the points
                         // that don't already have a control action
                         var pointsPrior = allPointsReversed
                             .Where(x => x.Time <= point.Time)
-                            .TakeWhile(x => !x.RequiredBatteryPowerKwh.HasValue || capacity - x.RequiredBatteryPowerKwh.Value >= shortfallKwh)
                             .Where(x => !x.ControlAction.HasValue)
                             .ToList();
 
