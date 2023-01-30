@@ -1,6 +1,7 @@
 ﻿using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Models;
+using System.Runtime.Serialization;
 
 namespace Solarverse.Core.Control
 {
@@ -46,7 +47,19 @@ namespace Solarverse.Core.Control
             {
                 foreach (var point in rate)
                 {
-                    _currentDataService.TimeSeries.Set(point.Time, x => x.ControlAction = ControlAction.Discharge);
+                    if (_currentDataService.TimeSeries.TryGetDataPointFor(point.Time, out var existing))
+                    {
+                        // don't set discharge when we have excess power
+                        if (existing.ExcessPowerKwh > 0)
+                        {
+                            continue;
+                        }
+                    }
+                    _currentDataService.TimeSeries.Set(point.Time, x =>
+                    {
+                        x.ControlAction = ControlAction.Discharge;
+                        x.IsDischargeTarget = true;
+                    });
                     dischargeTimesSet++;
                 }
 
@@ -82,10 +95,12 @@ namespace Solarverse.Core.Control
                 }
             }
 
+            var efficiency = ConfigurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.85;
+            var maxChargeKwhPerPeriod = _currentDataService.CurrentState.MaxChargeRateKw * 0.5 * efficiency;
+
             // now create a first pass 'projected battery charge' that just accounts for excess solar
             var allPoints = allPointsReversed.AsEnumerable().Reverse().ToList();
             var capacity = ConfigurationProvider.Configuration.Battery.CapacityKwh ?? 5;
-            var efficiency = ConfigurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.92;
             var singleDirectionEfficieny = 1 - ((1 - efficiency) / 2);
             void RecalculateForecast(List<TimeSeriesPoint> points)
             {
@@ -117,8 +132,7 @@ namespace Solarverse.Core.Control
                     }
                     else if (point.ControlAction == ControlAction.Charge)
                     {
-                        var maxCharge = _currentDataService.CurrentState.MaxChargeRateKw * 0.5;
-                        currentPointCharge = maxCharge * efficiency;
+                        currentPointCharge = maxChargeKwhPerPeriod;
                     }
                     var currentPointPercent = ((currentPointCharge - currentPointDischarge) / capacity) * 100;
                     var thisPercentage = lastPercentage + currentPointPercent;
@@ -147,24 +161,57 @@ namespace Solarverse.Core.Control
             var lastPoint = allPointsReversed.First();
             foreach (var point in allPointsReversed.Skip(1))
             {
-                if (point.ControlAction != ControlAction.Discharge)
+                if (lastPoint.ControlAction == ControlAction.Discharge &&
+                    point.ControlAction != ControlAction.Discharge &&
+                    lastPoint.RequiredBatteryPowerKwh.HasValue)
                 {
                     var lastPointPercent = 
-                        (((lastPoint.RequiredBatteryPowerKwh / efficiency) / capacity) * 100) +
+                        (((lastPoint.RequiredBatteryPowerKwh.Value / efficiency) / capacity) * 100) +
                         _currentDataService.CurrentState.BatteryReserve;
+                    if (lastPointPercent > 100)
+                    {
+                        lastPointPercent = 100;
+                    }
+
                     if (point.ForecastBatteryPercentage < lastPointPercent)
                     {
-                        point.ControlAction = ControlAction.Charge;
-                        var maxCharge = _currentDataService.CurrentState.MaxChargeRateKw * 0.5 * efficiency;
-                        point.RequiredBatteryPowerKwh = lastPoint.RequiredBatteryPowerKwh - maxCharge;
-                        RecalculateForecast(allPoints);
+                        var shortfallPercent = lastPointPercent - (point.ForecastBatteryPercentage ?? 0);
+                        var shortfallKwh = capacity * shortfallPercent / 100;
+
+                        var numberOfChargePeriodsRequired = (int)Math.Ceiling(shortfallKwh / maxChargeKwhPerPeriod);
+
+                        // find the points from now backwards, until there is a point
+                        // where we don't have enough headroom, and then just the points
+                        // that don't already have a control action
+                        var pointsPrior = allPointsReversed
+                            .Where(x => x.Time <= point.Time)
+                            .TakeWhile(x => !x.RequiredBatteryPowerKwh.HasValue || capacity - x.RequiredBatteryPowerKwh.Value >= shortfallKwh)
+                            .Where(x => !x.ControlAction.HasValue)
+                            .ToList();
+
+                        // now find the points in there with the lowest incoming rate
+                        foreach (var targetPoint in pointsPrior.Where(x => x.IncomingRate.HasValue).OrderBy(x => x.IncomingRate))
+                        {
+                            if (numberOfChargePeriodsRequired > 0)
+                            {
+                                targetPoint.ControlAction = ControlAction.Charge;
+                                numberOfChargePeriodsRequired--;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
                     }
                 }
 
+
                 lastPoint = point;
             }
+            RecalculateForecast(allPoints);
 
-            // now set all remaining points to discharge
+            // now set all remaining points to discharge if there is excess power,
+            // or hold if there is not
             foreach (var point in allPoints)
             {
                 if (point.ActualConsumptionKwh.HasValue)
@@ -179,7 +226,8 @@ namespace Solarverse.Core.Control
 
                 if (!point.ControlAction.HasValue)
                 {
-                    point.ControlAction = ControlAction.Discharge;
+                    point.ControlAction = point.ExcessPowerKwh.HasValue && point.ExcessPowerKwh.Value > 0 ?
+                        ControlAction.Discharge : ControlAction.Hold;
                 }
             }
 

@@ -346,26 +346,34 @@ namespace Solarverse
 
             AddPlot(WpfPlot3.Plot, series, x => x.ActualBatteryPercentage, Color.Black, true);
             AddPlot(WpfPlot3.Plot, series, x => x.ForecastBatteryPercentage, Color.Black, false, x => x >= maxTimeWithPvActual);
-            //AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / ConfigurationProvider.Configuration.Battery.CapacityKwh) * 100, Color.Black, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
+            AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / ConfigurationProvider.Configuration.Battery.CapacityKwh) * 100, Color.DarkBlue, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
 
-            var controlActions = series.GetControlActions();
-            foreach (var action in controlActions)
+            foreach (var point in series)
             {
-                switch (action.Value)
+                var action = point.ControlAction;
+                if (action.HasValue)
                 {
-                    case ControlAction.Charge:
-                        WpfPlot3.Plot.AddMarker(action.Time.ToOADate(), 50, MarkerShape.filledTriangleUp, 8, Color.Salmon);
-                        break;
-                    case ControlAction.Hold:
-                        WpfPlot3.Plot.AddMarker(action.Time.ToOADate(), 50, MarkerShape.filledCircle, 8, Color.Silver);
-                        break;
-                    case ControlAction.Discharge:
-                        WpfPlot3.Plot.AddMarker(action.Time.ToOADate(), 50, MarkerShape.filledTriangleDown, 8, Color.MediumSeaGreen);
-                        break;
-                    case ControlAction.Export:
-                        WpfPlot3.Plot.AddMarker(action.Time.ToOADate(), 49.25, MarkerShape.filledTriangleDown, 8, Color.DodgerBlue);
-                        WpfPlot3.Plot.AddMarker(action.Time.ToOADate(), 50.75, MarkerShape.filledTriangleDown, 8, Color.DodgerBlue);
-                        break;
+                    switch (action.Value)
+                    {
+                        case ControlAction.Charge:
+                            WpfPlot3.Plot.AddMarker(point.Time.ToOADate(), 50, MarkerShape.filledTriangleUp, 8, Color.Salmon);
+                            break;
+                        case ControlAction.Hold:
+                            WpfPlot3.Plot.AddMarker(point.Time.ToOADate(), 50, MarkerShape.filledCircle, 8, Color.Silver);
+                            break;
+                        case ControlAction.Discharge:
+                            WpfPlot3.Plot.AddMarker(point.Time.ToOADate(), 50, MarkerShape.filledTriangleDown, 8, Color.MediumSeaGreen);
+                            break;
+                        case ControlAction.Export:
+                            WpfPlot3.Plot.AddMarker(point.Time.ToOADate(), 49.25, MarkerShape.filledTriangleDown, 8, Color.DodgerBlue);
+                            WpfPlot3.Plot.AddMarker(point.Time.ToOADate(), 50.75, MarkerShape.filledTriangleDown, 8, Color.DodgerBlue);
+                            break;
+                    }
+                }
+
+                if (point.IsDischargeTarget)
+                {
+                    WpfPlot3.Plot.AddMarker(point.Time.ToOADate(), 70, MarkerShape.asterisk, 8, Color.Red);
                 }
             }
 

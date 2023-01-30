@@ -27,6 +27,8 @@
 
         public ControlAction? ControlAction { get; set; }
 
+        public bool IsDischargeTarget { get; set; }
+
         public double? RequiredBatteryPowerKwh { get; set; }
 
         public double? CostWithoutStorage => IncomingRate.HasValue && RequiredPowerKwh.HasValue ? IncomingRate.Value * Math.Max(RequiredPowerKwh.Value, 0) : null;
