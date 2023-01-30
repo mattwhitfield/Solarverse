@@ -156,8 +156,6 @@ namespace Solarverse.Core.Control
             // evaluate the difference between forecast battery percentage and the required 
             // battery percentage
 
-            // TODO - this is overly simplistic - it should go search backwards until the next
-            // specified action, and then set charge for the points that are the cheapest
             var lastPoint = allPointsReversed.First();
             foreach (var point in allPointsReversed.Skip(1))
             {
@@ -179,6 +177,20 @@ namespace Solarverse.Core.Control
                         var shortfallKwh = capacity * shortfallPercent / 100;
 
                         var numberOfChargePeriodsRequired = (int)Math.Ceiling(shortfallKwh / maxChargeKwhPerPeriod);
+
+                        // TODO - this is still not right
+                        // if the shortfall 'fits' above the gap at the top of the graph
+                        // between 'required' and 'capacity' then this methodology works
+                        // but if the gap isn't big enough, then we need some before and
+                        // some after the hump. so say the hump is a 75% charge, and we 
+                        // need 40% - then we should get 25% before the hump and 15% after.
+                        // maybe we could do this by marking 'spare capacity' - so we mark
+                        // forward from the start, and mark each point with the max charge
+                        // that can be carried forward. Then, at the start of a discharge
+                        // period, when we have the shortfall, then the amount we have to
+                        // charge now is the carry forward - the shortfall.
+                        // not sure how that will work with 'short' gaps
+
 
                         // find the points from now backwards, until there is a point
                         // where we don't have enough headroom, and then just the points
