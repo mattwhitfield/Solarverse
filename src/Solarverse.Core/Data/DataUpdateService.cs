@@ -55,9 +55,15 @@ namespace Solarverse.Core.Data
         public void Update(HouseholdConsumption consumption)
         {
             var min = TimeSeries.GetMinimumDate();
-            TimeSeries.AddPointsFrom(consumption.DataPoints.Where(x => x.Time >= min), x => x.Time, x => x.Consumption, (val, pt) => pt.ActualConsumptionKwh = val);
-            TimeSeries.AddPointsFrom(consumption.DataPoints.Where(x => x.Time >= min), x => x.Time, x => x.Solar, (val, pt) => pt.ActualSolarKwh = val);
-            TimeSeries.AddPointsFrom(consumption.DataPoints.Where(x => x.Time >= min), x => x.Time, x => x.BatteryPercentage, (val, pt) => pt.ActualBatteryPercentage = val);
+
+            // TODO - testing
+            //var cutoff = new DateTime(2023, 1, 31, 18, 30, 0);
+            //var source = consumption.DataPoints.Where(x => x.Time < cutoff);
+            var source = consumption.DataPoints;
+
+            TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min), x => x.Time, x => x.Consumption, (val, pt) => pt.ActualConsumptionKwh = val);
+            TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min), x => x.Time, x => x.Solar, (val, pt) => pt.ActualSolarKwh = val);
+            TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min), x => x.Time, x => x.BatteryPercentage, (val, pt) => pt.ActualBatteryPercentage = val);
             TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
         }
 
@@ -80,6 +86,59 @@ namespace Solarverse.Core.Data
         {
             TimeSeries.AddPointsFrom(outgoingRates, x => x.ValidFrom, x => x.Value, (val, pt) => pt.OutgoingRate = val);
             TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void RecalculateForecast()
+        {
+            var efficiency = ConfigurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.85;
+            var maxChargeKwhPerPeriod = CurrentState.MaxChargeRateKw * 0.5 * efficiency;
+            var capacity = ConfigurationProvider.Configuration.Battery.CapacityKwh ?? 5;
+
+            var lastActual = TimeSeries.OrderBy(x => x.Time).LastOrDefault(x => x.ActualBatteryPercentage.HasValue);
+            var lastPercentage = lastActual?.ActualBatteryPercentage ?? 4;
+
+            foreach (var point in TimeSeries.Where(x => !x.ActualBatteryPercentage.HasValue).OrderBy(x => x.Time))
+            {
+                var currentPointCharge = point.ExcessPowerKwh ?? 0;
+                if (currentPointCharge < 0)
+                {
+                    currentPointCharge = 0;
+                }
+                currentPointCharge *= efficiency;
+
+                var currentPointDischarge = 0d;
+                if (point.ControlAction == ControlAction.Discharge)
+                {
+                    currentPointDischarge = point.RequiredPowerKwh ?? 0;
+                    if (currentPointDischarge < 0)
+                    {
+                        currentPointDischarge = 0;
+                    }
+                    currentPointDischarge /= efficiency;
+                }
+                else if (point.ControlAction == ControlAction.Export)
+                {
+                    var maxDischarge = CurrentState.MaxDischargeRateKw * 0.5;
+                    currentPointDischarge = maxDischarge * efficiency;
+                }
+                else if (point.ControlAction == ControlAction.Charge)
+                {
+                    currentPointCharge = maxChargeKwhPerPeriod;
+                }
+                var currentPointPercent = ((currentPointCharge - currentPointDischarge) / capacity) * 100;
+                var thisPercentage = lastPercentage + currentPointPercent;
+
+                if (thisPercentage < CurrentState.BatteryReserve)
+                {
+                    thisPercentage = CurrentState.BatteryReserve;
+                }
+                if (thisPercentage > 100)
+                {
+                    thisPercentage = 100;
+                }
+                point.ForecastBatteryPercentage = lastPercentage;
+                lastPercentage = thisPercentage;
+            }
         }
 
         private class CurrentDataLock : IDisposable

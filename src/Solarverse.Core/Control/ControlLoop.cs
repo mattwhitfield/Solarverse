@@ -154,7 +154,12 @@ namespace Solarverse.Core.Control
         {
             if (_currentDataService.TimeSeries.Any(x => x.IncomingRate.HasValue && !x.ControlAction.HasValue))
             {
-                _controlPlanFactory.CreatePlan();
+                if (_currentDataService.TimeSeries.Any(x => x.ActualBatteryPercentage.HasValue))
+                {
+                    _controlPlanFactory.CreatePlan();
+                    return Task.FromResult(true);
+                }
+                return Task.FromResult(false);
             }
 
             return Task.FromResult(true);

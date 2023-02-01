@@ -346,8 +346,8 @@ namespace Solarverse
 
             AddPlot(WpfPlot3.Plot, series, x => x.ActualBatteryPercentage, Color.Black, true);
             AddPlot(WpfPlot3.Plot, series, x => x.ForecastBatteryPercentage, Color.Black, false, x => x >= maxTimeWithPvActual);
-            //AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / ConfigurationProvider.Configuration.Battery.CapacityKwh) * 100, Color.DarkBlue, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
-            //AddPlot(WpfPlot3.Plot, series, x => (x.MaxCarryForwardChargeKwh / ConfigurationProvider.Configuration.Battery.CapacityKwh) * 100, Color.MediumPurple, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
+            AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / ConfigurationProvider.Configuration.Battery.CapacityKwh) * 100, Color.DarkBlue, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
+            AddPlot(WpfPlot3.Plot, series, x => (x.MaxCarryForwardChargeKwh / ConfigurationProvider.Configuration.Battery.CapacityKwh) * 100, Color.MediumPurple, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
 
             foreach (var point in series)
             {

@@ -18,5 +18,7 @@ namespace Solarverse.Core.Data
         void Update(SolarForecast forecast);
         void UpdateIncomingRates(IList<TariffRate> incomingRates);
         void UpdateOutgoingRates(IList<TariffRate> outgoingRates);
+        void RecalculateForecast();
+
     }
 }
