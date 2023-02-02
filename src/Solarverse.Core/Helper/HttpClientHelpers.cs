@@ -1,15 +1,17 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Solarverse.Core.Helper
 {
     internal static class HttpClientHelpers
     {
-        // TODO - add logging and cancellation
-
-        public static async Task<T> Get<T>(this HttpClient client, string url) where T : class
+        public static async Task<T> Get<T>(this HttpClient client, ILogger logger, string url) where T : class
         {
             int attempts = 0;
             TimeSpan delayTime = TimeSpan.FromSeconds(0.75);
+
+            logger.LogInformation($"Sending HTTP Get to {url}...");
+
             while (attempts < 10)
             {
                 using HttpResponseMessage response = await client.GetAsync(url);
@@ -21,23 +23,32 @@ namespace Solarverse.Core.Helper
                         var obj = JsonConvert.DeserializeObject<T>(content);
                         if (obj != null)
                         {
+                            logger.LogInformation($"HTTP Get to {url} succeeded, returning {typeof(T).GetFormattedName()}");
                             return obj;
                         }
                     }
                 }
 
                 attempts++;
-                await Task.Delay(delayTime);
-                delayTime *= 1.5;
+                if (attempts < 10)
+                {
+                    logger.LogWarning($"HTTP Get to {url} failed (attempt {attempts}) - waiting {delayTime}");
+                    await Task.Delay(delayTime);
+                    delayTime *= 1.5;
+                }
             }
 
             throw new InvalidOperationException("Could not get response from GET to " + url + " after 10 attempts");
         }
 
-        public static async Task<T> Post<T>(this HttpClient client, string url, object? body = null) where T : class
+        public static async Task<T> Post<T>(this HttpClient client, ILogger logger, string url, object? body = null) where T : class
         {
             int attempts = 0;
             TimeSpan delayTime = TimeSpan.FromSeconds(0.75);
+
+            var hasBody = body != null ? "with" : "without";
+            logger.LogInformation($"Sending HTTP Post to {url} {hasBody} body...");
+
             while (attempts < 10)
             {
                 HttpContent? postContent = null;
@@ -56,14 +67,20 @@ namespace Solarverse.Core.Helper
                         var obj = JsonConvert.DeserializeObject<T>(content);
                         if (obj != null)
                         {
+                            logger.LogInformation($"HTTP Post to {url} succeeded, returning {typeof(T).GetFormattedName()}");
+
                             return obj;
                         }
                     }
                 }
 
                 attempts++;
-                await Task.Delay(delayTime);
-                delayTime *= 1.5;
+                if (attempts < 10)
+                {
+                    logger.LogWarning($"HTTP Post to {url} failed (attempt {attempts}) - waiting {delayTime}");
+                    await Task.Delay(delayTime);
+                    delayTime *= 1.5;
+                }
             }
 
             throw new InvalidOperationException("Could not get response from POST to " + url + " after 10 attempts");

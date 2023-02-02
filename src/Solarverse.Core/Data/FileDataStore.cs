@@ -1,6 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Solarverse.Core.Control;
-using Solarverse.Core.Data.CacheModels;
 using Solarverse.Core.Data.CacheModels.Transforms;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Integration;
@@ -11,15 +11,17 @@ namespace Solarverse.Core.Data
     public class FileDataStore : IDataStore
     {
         private readonly IIntegrationProvider _integrationProvider;
+        private readonly ILogger<FileDataStore> _logger;
         private string _cacheRoot;
 
-        public FileDataStore(IIntegrationProvider integrationProvider)
+        public FileDataStore(IIntegrationProvider integrationProvider, ILogger<FileDataStore> logger)
         {
             _cacheRoot = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "Solarverse",
                 "Cache");
             _integrationProvider = integrationProvider;
+            _logger = logger;
         }
 
         private async Task<TData> Get<TData, TCache>(
@@ -35,18 +37,25 @@ namespace Solarverse.Core.Data
             var date = dataPeriod.GetLast(dateTime);
             var file = Path.Combine(folder, date.ToString("yyyyMMdd-HHmmss") + ".json");
 
+            _logger.LogInformation($"File path for {typeof(TData).GetFormattedName()} at {dateTime} is {file}");
+
             if (File.Exists(file))
             {
+                _logger.LogInformation($"File exists");
+
                 var cached = JsonConvert.DeserializeObject<TCache>(File.ReadAllText(file));
                 if (cached != null)
                 {
+                    _logger.LogInformation($"Deserialized successfully");
                     return transformToData(cached);
                 }
             }
 
+            _logger.LogInformation($"Getting data from source");
             var data = await getData();
             if (shouldCache(data))
             {
+                _logger.LogInformation($"Caching data");
                 File.WriteAllText(file, JsonConvert.SerializeObject(transformToCache(data)));
             }
 

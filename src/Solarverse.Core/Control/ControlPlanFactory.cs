@@ -40,12 +40,13 @@ namespace Solarverse.Core.Control
 
             var periodsWithoutControl = _currentDataService.TimeSeries
                 .Where(x => x.Time >= firstTime)
-                .Where(x => !x.ControlAction.HasValue)
+                .Where(x => !x.ControlAction.HasValue && x.IncomingRate.HasValue)
                 .Count();
 
             if (periodsWithoutControl == 0)
             {
-                _logger.LogInformation($"Creating control plan minTime = {minTime}, firstTime = {firstTime}");
+                _logger.LogInformation($"Creating control plan minTime = {minTime}, firstTime = {firstTime} - no points to update");
+                return;
             }
 
             using var updateLock = _currentDataService.LockForUpdate();
@@ -137,6 +138,7 @@ namespace Solarverse.Core.Control
             var adjustedCapacity = capacity * efficiency;
             var carryForward = adjustedCapacity;
             var lastPoint = allPointsWithoutActualFigures.First();
+            var lastCarryForward = 0d;
             foreach (var point in allPointsWithoutActualFigures.Skip(1))
             {
                 if (point.RequiredBatteryPowerKwh.HasValue && !lastPoint.RequiredBatteryPowerKwh.HasValue)
@@ -151,7 +153,12 @@ namespace Solarverse.Core.Control
 
                 point.MaxCarryForwardChargeKwh = carryForward;
                 lastPoint = point;
-                _logger.LogInformation($"Point at {point.Time} has maximum carry forward charge of {point.MaxCarryForwardChargeKwh:N2} kWh");
+
+                if (carryForward != lastCarryForward)
+                {
+                    _logger.LogInformation($"From {point.Time:HH:mm} maximum carry forward charge is {point.MaxCarryForwardChargeKwh:N2} kWh");
+                    lastCarryForward = carryForward;
+                }
             }
 
             lastPoint = allPointsWithoutActualFiguresReversed.First();
@@ -281,77 +288,83 @@ namespace Solarverse.Core.Control
                                 break;
                             }
                         }
+
+                        _currentDataService.RecalculateForecast();
                     }
                 }
-
 
                 lastPoint = point;
             }
             _currentDataService.RecalculateForecast();
 
-            // now we make a second pass on the discharge points - if the forecast at any point is lower than the required, we need a boost
-            // and that must come from the period in between now and the last targeted discharge
-            lastPoint = allPointsWithoutActualFiguresReversed.First();
-            foreach (var point in allPointsWithoutActualFiguresReversed.Skip(1))
+            void RunPass(string passName, List<TimeSeriesPoint> points, Func<TimeSeriesPoint, bool> selector)
             {
-                if (lastPoint.ControlAction == ControlAction.Discharge &&
-                    point.ControlAction != ControlAction.Discharge &&
-                    lastPoint.RequiredBatteryPowerKwh.HasValue)
+                lastPoint = points.First();
+                foreach (var point in points.Skip(1))
                 {
-                    _logger.LogInformation($"(Second pass) Point at {lastPoint.Time} is the start of a discharge period, requiring {lastPoint.RequiredBatteryPowerKwh.Value:N2} kWh");
-                    var lastPointPercent =
-                        (((lastPoint.RequiredBatteryPowerKwh.Value / efficiency) / capacity) * 100) +
-                        _currentDataService.CurrentState.BatteryReserve;
-                    if (lastPointPercent > 100)
+                    if (lastPoint.ControlAction == ControlAction.Discharge &&
+                        point.ControlAction != ControlAction.Discharge &&
+                        lastPoint.RequiredBatteryPowerKwh.HasValue)
                     {
-                        lastPointPercent = 100;
-                    }
-                    _logger.LogInformation($"(Second pass) Point at {lastPoint.Time} requires {lastPointPercent:N1}% battery");
-
-                    if (lastPoint.ForecastBatteryPercentage >= lastPointPercent)
-                    {
-                        _logger.LogInformation($"(Second pass) Point at {lastPoint.Time} has forecast of {lastPoint.ForecastBatteryPercentage:N1}% battery, no charge needed");
-                    }
-                    else
-                    {
-                        var shortfallPercent = lastPointPercent - (lastPoint.ForecastBatteryPercentage ?? 0);
-                        var shortfallKwh = capacity * shortfallPercent / 100;
-
-                        var numberOfChargePeriodsRequired = (int)Math.Ceiling(shortfallKwh / maxChargeKwhPerPeriod);
-                        _logger.LogInformation($"(Second pass) Point at {lastPoint.Time} has forecast of {lastPoint.ForecastBatteryPercentage:N1}% battery, charge required - shortfall of {shortfallPercent:N1}%, {shortfallKwh:N2} kWh, in {numberOfChargePeriodsRequired} periods");
-
-                        var allPointsAfterMax = allPointsWithoutActualFiguresReversed
-                            .Where(x => x.Time <= point.Time)
-                            .TakeWhile(x => x.MaxCarryForwardChargeKwh == point.MaxCarryForwardChargeKwh)
-                            .ToList();
-
-                        _logger.LogInformation($"(Second pass) Considering points from  {allPointsAfterMax.Select(x => x.Time).Min()} to {allPointsAfterMax.Select(x => x.Time).Max()}");
-
-                        var pointsAfterMax = allPointsAfterMax
-                            .Where(x => !x.ControlAction.HasValue)
-                            .ToList();
-
-                        // now find the points in there with the lowest incoming rate
-                        foreach (var targetPoint in pointsAfterMax.Where(x => x.IncomingRate.HasValue).OrderBy(x => x.IncomingRate))
+                        _logger.LogInformation($"({passName}) Point at {lastPoint.Time} is the start of a discharge period, requiring {lastPoint.RequiredBatteryPowerKwh.Value:N2} kWh");
+                        var lastPointPercent =
+                            (((lastPoint.RequiredBatteryPowerKwh.Value / efficiency) / capacity) * 100) +
+                            _currentDataService.CurrentState.BatteryReserve;
+                        if (lastPointPercent > 100)
                         {
-                            if (numberOfChargePeriodsRequired > 0)
-                            {
-                                _logger.LogInformation($"(Second pass) Setting period {targetPoint.Time} to charge");
+                            lastPointPercent = 100;
+                        }
+                        _logger.LogInformation($"({passName}) Point at {lastPoint.Time} requires {lastPointPercent:N1}% battery");
 
-                                targetPoint.ControlAction = ControlAction.Charge;
-                                numberOfChargePeriodsRequired--;
-                            }
-                            else
+                        if (lastPoint.ForecastBatteryPercentage >= lastPointPercent)
+                        {
+                            _logger.LogInformation($"({passName}) Point at {lastPoint.Time} has forecast of {lastPoint.ForecastBatteryPercentage:N1}% battery, no charge needed");
+                        }
+                        else
+                        {
+                            while (true)
                             {
-                                break;
+                                var shortfallPercent = lastPointPercent - (lastPoint.ForecastBatteryPercentage ?? 0);
+                                var shortfallKwh = capacity * shortfallPercent / 100;
+
+                                if (shortfallKwh <= 0)
+                                {
+                                    break;
+                                }
+
+                                _logger.LogInformation($"({passName}) Point at {lastPoint.Time} has forecast of {lastPoint.ForecastBatteryPercentage:N1}% battery, charge required - shortfall of {shortfallPercent:N1}%, {shortfallKwh:N2} kWh");
+
+                                var allPointsAfterMax = points
+                                    .Where(x => x.Time <= point.Time)
+                                    .TakeWhile(x => x.ForecastBatteryPercentage < 100)
+                                    .Where(selector)
+                                    .OrderBy(x => x.IncomingRate)
+                                    .Take(1)
+                                    .ToList();
+
+                                if (!allPointsAfterMax.Any())
+                                {
+                                    break;
+                                }
+
+                                allPointsAfterMax.Each(x => x.ControlAction = ControlAction.Charge);
+
+                                _currentDataService.RecalculateForecast();
                             }
                         }
                     }
-                }
 
-                lastPoint = point;
+                    lastPoint = point;
+                }
             }
 
+            // TODO - this section is similar to 'adapt' above
+
+            // now we make a second pass on the discharge points - find any shortfalls and try to fill them in from points that don't have a current control action
+            RunPass("Second pass", allPointsWithoutActualFiguresReversed, x => !x.ControlAction.HasValue);
+
+            // now we make a third pass - the point of this pass is to turn any discharge slots to charge if we have a shortfall somewhere
+            RunPass("Third pass", allPointsWithoutActualFiguresReversed, x => x.ControlAction != ControlAction.Charge);
 
             // TODO - we could, for each remaining point, order them by cost. If there is a chance for us to
             // discharge at higher cost and recharge at lower cost, we should do that. This should take into
@@ -374,8 +387,16 @@ namespace Solarverse.Core.Control
 
                 if (!point.ControlAction.HasValue)
                 {
-                    point.ControlAction = point.ExcessPowerKwh.HasValue && point.ExcessPowerKwh.Value > 0 ?
-                        ControlAction.Discharge : ControlAction.Hold;
+                    if (allPointsWithoutActualFigures.Any(x => x.Time > point.Time && x.ControlAction.HasValue))
+                    {
+                        point.ControlAction = point.ExcessPowerKwh.HasValue && point.ExcessPowerKwh.Value > 0 ?
+                            ControlAction.Discharge : ControlAction.Hold;
+                    }
+                    else
+                    {
+                        // at the end of the plan, we just set discharge
+                        point.ControlAction = ControlAction.Discharge;
+                    }
                 }
             }
 

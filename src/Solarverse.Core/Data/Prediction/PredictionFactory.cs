@@ -1,4 +1,5 @@
-﻿using Solarverse.Core.Helper;
+﻿using Microsoft.Extensions.Logging;
+using Solarverse.Core.Helper;
 using Solarverse.Core.Models;
 
 namespace Solarverse.Core.Data.Prediction
@@ -6,25 +7,31 @@ namespace Solarverse.Core.Data.Prediction
     public class PredictionFactory : IPredictionFactory
     {
         private readonly IDataStore _dataStore;
+        private readonly ILogger<PredictionFactory> _logger;
 
-        public PredictionFactory(IDataStore dataStore)
+        public PredictionFactory(IDataStore dataStore, ILogger<PredictionFactory> logger)
         {
             _dataStore = dataStore;
+            _logger = logger;
         }
 
         public async Task<PredictedConsumption> CreatePredictionFrom(DateTime from, DateTime to)
         {
             Func<DateTime, IEnumerable<DateTime>> dateSelector;
 
+            _logger.LogInformation($"Creating consumption prediction from {from} to {to}");
+
             var predictionSettings = ConfigurationProvider.Configuration.Prediction;
             switch (predictionSettings.MethodName ?? string.Empty)
             {
                 default:
                 case "LastNSameDayOfWeek":
+                    _logger.LogInformation($"Using LastNSameDayOfWeek with {predictionSettings.NumberOfDays} days");
                     dateSelector = date => LastNSameDayOfWeek(date, predictionSettings.NumberOfDays);
                     break;
 
                 case "LastNDays":
+                    _logger.LogInformation($"Using LastNDays with {predictionSettings.NumberOfDays} days");
                     dateSelector = date => LastNDays(date, predictionSettings.NumberOfDays);
                     break;
             }

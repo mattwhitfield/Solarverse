@@ -1,4 +1,5 @@
-﻿using Solarverse.Core.Helper;
+﻿using Microsoft.Extensions.Logging;
+using Solarverse.Core.Helper;
 using Solarverse.Core.Integration.Octopus.Models;
 using Solarverse.Core.Models;
 using Solarverse.Core.Models.Settings;
@@ -13,8 +14,9 @@ namespace Solarverse.Core.Integration.Octopus
 
         private readonly Dictionary<string, Product> _products = new Dictionary<string, Product>();
         private readonly Dictionary<string, string> _gridSupplyPointsByMpan = new Dictionary<string, string>();
+        private readonly ILogger<OctopusClient> _logger;
 
-        public OctopusClient(Configuration configuration)
+        public OctopusClient(Configuration configuration, ILogger<OctopusClient> logger)
         {
             _httpClient = new HttpClient();
 
@@ -26,6 +28,7 @@ namespace Solarverse.Core.Integration.Octopus
             var authenticationString = configuration.ApiKeys.Octopus + ":";
             var base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.ASCII.GetBytes(authenticationString));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+            _logger = logger;
         }
 
         public async Task<IList<TariffRate>> GetTariffRates(string productCode, string mpan)
@@ -45,7 +48,7 @@ namespace Solarverse.Core.Integration.Octopus
             }
 
             var ratesUri = await GetRatesUriForTariffAndGridSupplyPoint(productCode, gsp);
-            var rates = await _httpClient.Get<AgileRates>(ratesUri);
+            var rates = await _httpClient.Get<AgileRates>(_logger, ratesUri);
 
             if (rates.Rates == null)
             {
@@ -59,7 +62,7 @@ namespace Solarverse.Core.Integration.Octopus
         {
             if (!_products.TryGetValue(productCode, out var product))
             {
-                product = await _httpClient.Get<Product>($"https://api.octopus.energy/v1/products/{productCode}/");
+                product = await _httpClient.Get<Product>(_logger, $"https://api.octopus.energy/v1/products/{productCode}/");
 
                 if (product?.TariffTypes == null)
                 {
@@ -88,7 +91,7 @@ namespace Solarverse.Core.Integration.Octopus
         {
             if (!_gridSupplyPointsByMpan.TryGetValue(mpan, out var gridSupplyPoint))
             {
-                gridSupplyPoint = (await _httpClient.Get<MeterPoint>($"https://api.octopus.energy/v1/electricity-meter-points/{mpan}/"))?.GridSupplyPoint;
+                gridSupplyPoint = (await _httpClient.Get<MeterPoint>(_logger, $"https://api.octopus.energy/v1/electricity-meter-points/{mpan}/"))?.GridSupplyPoint;
                 if (!string.IsNullOrWhiteSpace(gridSupplyPoint))
                 {
                     _gridSupplyPointsByMpan[mpan] = gridSupplyPoint;

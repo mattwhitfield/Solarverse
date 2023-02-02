@@ -209,7 +209,7 @@
                         <TextBlock
                             Margin="2,0"
                             FontFamily="Segoe UI"
-                            Text="Projected Battery:" />
+                            Text="Battery:" />
                         <TextBlock
                             x:Name="ProjectedBatteryPercentLabel"
                             Margin="2,0"
@@ -227,7 +227,7 @@
                         <TextBlock
                             Margin="2,0"
                             FontFamily="Segoe UI"
-                            Text="Scheduled action:" />
+                            Text="Action:" />
                         <TextBlock
                             x:Name="ScheduledActionLabel"
                             Margin="2,0"

@@ -1,4 +1,5 @@
-﻿using Solarverse.Core.Helper;
+﻿using Microsoft.Extensions.Logging;
+using Solarverse.Core.Helper;
 using Solarverse.Core.Integration.GivEnergy.Models;
 using Solarverse.Core.Models;
 using Solarverse.Core.Models.Settings;
@@ -10,11 +11,11 @@ namespace Solarverse.Core.Integration.GivEnergy
     public class GivEnergyClient : IInverterClient
     {
         private readonly HttpClient _httpClient;
-
+        private readonly ILogger<GivEnergyClient> _logger;
         private string? _inverterSerial;
         private CurrentSettingValues? _currentSettings;
 
-        public GivEnergyClient(Configuration configuration)
+        public GivEnergyClient(Configuration configuration, ILogger<GivEnergyClient> logger)
         {
             _httpClient = new HttpClient();
 
@@ -26,13 +27,14 @@ namespace Solarverse.Core.Integration.GivEnergy
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configuration.ApiKeys.GivEnergy);
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _logger = logger;
         }
 
         public async Task<string> FindInverterSerial()
         {
             if (string.IsNullOrWhiteSpace(_inverterSerial))
             {
-                var inverterData = await _httpClient.Get<CommunicationsDeviceList>("https://api.givenergy.cloud/v1/communication-device");
+                var inverterData = await _httpClient.Get<CommunicationsDeviceList>(_logger, "https://api.givenergy.cloud/v1/communication-device");
                 if (inverterData == null || inverterData.CommunicationsDevices == null || !inverterData.CommunicationsDevices.Any(x => x.Inverter != null))
                 {
                     throw new InvalidOperationException("Could not get communication device list from GivEnergy API");
@@ -41,6 +43,7 @@ namespace Solarverse.Core.Integration.GivEnergy
                 var commsDevice = inverterData.CommunicationsDevices.First(x => x.Inverter != null);
 
                 _inverterSerial = commsDevice.Inverter?.SerialNumber ?? string.Empty;
+                _logger.LogInformation($"Inverter serial # is {_inverterSerial}");
             }
 
             return _inverterSerial;
@@ -50,6 +53,8 @@ namespace Solarverse.Core.Integration.GivEnergy
         {
             while (true)
             {
+                _logger.LogInformation($"Reading setting {id} ({SettingIds.GetName(id)}) as boolean");
+
                 var settingValue = await ReadSetting(id);
                 if (settingValue is bool b)
                 {
@@ -68,6 +73,8 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         private async Task<IntSetting> GetIntSetting(int id)
         {
+            _logger.LogInformation($"Reading setting {id} ({SettingIds.GetName(id)}) as integer");
+
             var settingValue = await ReadSetting(id);
             if (settingValue is int i)
             {
@@ -83,6 +90,8 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         private async Task<TimeSetting> GetTimeSetting(int id)
         {
+            _logger.LogInformation($"Reading setting {id} ({SettingIds.GetName(id)}) as time");
+
             while (true)
             {
                 var settingValue = await ReadSetting(id);
@@ -118,7 +127,7 @@ namespace Solarverse.Core.Integration.GivEnergy
         {
             var inverterSerial = await FindInverterSerial();
 
-            var currentState = await _httpClient.Get<CurrentState>($"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/system-data/latest");
+            var currentState = await _httpClient.Get<CurrentState>(_logger, $"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/system-data/latest");
 
             if (currentState.Data?.Solar == null || currentState.Data?.Battery == null)
             {
@@ -146,13 +155,26 @@ namespace Solarverse.Core.Integration.GivEnergy
             var maxDischargeRateKw = dischargeSettings.PowerLimit.Value / 1000.0;
             var maxChargeRateKw = chargeSettings.PowerLimit.Value / 1000.0;
 
-            return new InverterCurrentState(
+            var state = new InverterCurrentState(
                 currentState.Data.Time,
                 currentState.Data.Solar.Power,
                 currentState.Data.Battery.Percent,
                 maxDischargeRateKw,
                 maxChargeRateKw,
                 batteryReserve.Value);
+
+            _logger.LogInformation($"Inverter state updated @ {state.UpdateTime}:");
+            _logger.LogInformation($"  Battery {state.BatteryPercent}%");
+            _logger.LogInformation($"  Battery reserve {state.BatteryReserve}%");
+            _logger.LogInformation($"  Current solar power {state.CurrentSolarPower}");
+            _logger.LogInformation($"  Max charge rate Kw {state.MaxChargeRateKw}");
+            _logger.LogInformation($"  Max discharge rate Kw {state.MaxDischargeRateKw}");
+            _logger.LogInformation($"Internal inverter state:");
+            _logger.LogInformation($"  Eco - Enabled: {ecoModeEnabled.Value}");
+            _logger.LogInformation($"  Charge - Enabled: {chargeSettings.Enabled.Value}, From: {chargeSettings.StartTime.Value}, To {chargeSettings.EndTime.Value}");
+            _logger.LogInformation($"  Discharge - Enabled: {dischargeSettings.Enabled.Value}, From: {dischargeSettings.StartTime.Value}, To {dischargeSettings.EndTime.Value}");
+
+            return state;
         }
 
         private async Task<BatteryModeSettingValues> GetBatterySettings(int startTimeSettingId, int endTimeSettingId, int enabledSettingId, int powerLimitSettingId)
@@ -174,7 +196,7 @@ namespace Solarverse.Core.Integration.GivEnergy
         {
             var inverterSerial = await FindInverterSerial();
 
-            var setting = await _httpClient.Post<SettingValueData>($"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/settings/{id}/read");
+            var setting = await _httpClient.Post<SettingValueData>(_logger, $"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/settings/{id}/read");
 
             return setting.Data?.Value;
         }
@@ -189,7 +211,7 @@ namespace Solarverse.Core.Integration.GivEnergy
             SettingMutation? setting = null;
             while (attempts < 10)
             {
-                setting = await _httpClient.Post<SettingMutation>($"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/settings/{id}/write", new SettingValue { Value = value });
+                setting = await _httpClient.Post<SettingMutation>(_logger, $"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/settings/{id}/write", new SettingValue { Value = value });
 
                 if (setting.Data != null && setting.Data.Success)
                 {
@@ -208,7 +230,7 @@ namespace Solarverse.Core.Integration.GivEnergy
         {
             var inverterSerial = await FindInverterSerial();
 
-            var history = await _httpClient.Get<ConsumptionHistory>($"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/data-points/{date.Year}-{date.Month}-{date.Day}?pageSize=288");
+            var history = await _httpClient.Get<ConsumptionHistory>(_logger, $"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/data-points/{date.Year}-{date.Month}-{date.Day}?pageSize=288");
 
             var normalized = new NormalizedConsumption(history);
 
@@ -220,15 +242,23 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         public async Task SetSettingIfRequired(int settingId, Func<CurrentSettingValues, bool> shouldSet, object value)
         {
+            _logger.LogInformation($"Setting {settingId} ({SettingIds.GetName(settingId)}) to value {value}");
             if (_currentSettings == null || shouldSet(_currentSettings))
             {
+                _logger.LogInformation($"Setting {settingId} ({SettingIds.GetName(settingId)}) needs to be set");
                 // TODO - enable when we're happy
                 //await SetSetting(settingId, value);
+            }
+            else
+            {
+                _logger.LogInformation($"Setting {settingId} ({SettingIds.GetName(settingId)}) is already set to the required value");
             }
         }
 
         public async Task Charge(DateTime until)
         {
+            _logger.LogInformation($"Enabling Charge mode until {until}");
+
             // set start time if it's currently later than now or not set
             await SetSettingIfRequired(
                 SettingIds.Charge.StartTime,
@@ -256,6 +286,8 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         public async Task Hold(DateTime until)
         {
+            _logger.LogInformation($"Enabling Hold mode until {until}");
+
             // disable charge if it's enabled
             await SetSettingIfRequired(
                 SettingIds.Charge.Enabled,
@@ -277,6 +309,8 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         public async Task Discharge(DateTime until)
         {
+            _logger.LogInformation($"Enabling Discharge mode until {until}");
+
             // disable charge if it's enabled
             await SetSettingIfRequired(
                 SettingIds.Charge.Enabled,
@@ -298,6 +332,8 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         public async Task Export(DateTime until)
         {
+            _logger.LogInformation($"Enabling Export mode until {until}");
+
             // set start time if it's currently later than now or not set
             await SetSettingIfRequired(
                 SettingIds.Discharge.StartTime,

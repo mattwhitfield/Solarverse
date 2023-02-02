@@ -1,4 +1,5 @@
-﻿using Solarverse.Core.Data;
+﻿using Microsoft.Extensions.Logging;
+using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Integration;
 
@@ -8,23 +9,30 @@ namespace Solarverse.Core.Control
     {
         private readonly IInverterClient _inverterClient;
         private readonly ICurrentDataService _currentDataService;
+        private readonly ILogger<ControlPlanExecutor> _logger;
 
-        public ControlPlanExecutor(IInverterClient inverterClient, ICurrentDataService currentDataService)
+        public ControlPlanExecutor(IInverterClient inverterClient, ICurrentDataService currentDataService, ILogger<ControlPlanExecutor> logger)
         {
             _inverterClient = inverterClient;
             _currentDataService = currentDataService;
+            _logger = logger;
         }
 
         public async Task<bool> ExecutePlan()
         {
+            _logger.LogInformation("Executing control plan...");
+
             var currentPeriod = DateTime.UtcNow.ToHalfHourPeriod();
             if (!_currentDataService.TimeSeries.TryGetDataPointFor(currentPeriod, out var currentDataPoint) ||
                 currentDataPoint?.ControlAction == null)
             {
                 // no data point or control action for the current time
+                _logger.LogWarning("No data point or control action for the current time.");
                 return true;
             }
-           
+
+            _logger.LogInformation("Finding end time for current control state...");
+
             var endTime = currentPeriod;
             var action = currentDataPoint.ControlAction.Value;
             while (currentDataPoint?.ControlAction == action)
@@ -44,6 +52,8 @@ namespace Solarverse.Core.Control
                     break;
                 }
             }
+
+            _logger.LogInformation($"Control action {action} ends at {endTime}");
 
             switch (action)
             {
