@@ -3,6 +3,8 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy
     using System;
     using System.Threading.Tasks;
     using FluentAssertions;
+    using Microsoft.Extensions.Logging;
+    using NSubstitute;
     using Solarverse.Core.Helper;
     using Solarverse.Core.Integration.GivEnergy;
     using Solarverse.Core.Models.Settings;
@@ -16,14 +18,14 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy
         public GivEnergyClientTests()
         {
             _configuration = ConfigurationProvider.Configuration;
-            _testClass = new GivEnergyClient(_configuration);
+            _testClass = new GivEnergyClient(_configuration, Substitute.For<ILogger<GivEnergyClient>>());
         }
 
         [Fact]
         public void CanConstruct()
         {
             // Act
-            var instance = new GivEnergyClient(_configuration);
+            var instance = new GivEnergyClient(_configuration, Substitute.For<ILogger<GivEnergyClient>>());
 
             // Assert
             instance.Should().NotBeNull();
@@ -32,7 +34,7 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy
         [Fact]
         public void CannotConstructWithNullConfiguration()
         {
-            FluentActions.Invoking(() => new GivEnergyClient(default(Configuration))).Should().Throw<ArgumentNullException>();
+            FluentActions.Invoking(() => new GivEnergyClient(default(Configuration), Substitute.For<ILogger<GivEnergyClient>>())).Should().Throw<ArgumentNullException>();
         }
 
         [Fact]
@@ -70,12 +72,8 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy
         [Fact]
         public async Task CanCallSetSetting()
         {
-            // Arrange
-            var id = 1117878163;
-            var value = new object();
-
             // Act
-            var result = await _testClass.SetSetting(id, value);
+            var result = await _testClass.SetSetting(SettingIds.Charge.EndTime, "23:00");
 
             // Assert
             throw new NotImplementedException("Create or modify test");

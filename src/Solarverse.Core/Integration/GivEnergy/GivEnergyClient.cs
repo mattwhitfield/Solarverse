@@ -179,17 +179,16 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         private async Task<BatteryModeSettingValues> GetBatterySettings(int startTimeSettingId, int endTimeSettingId, int enabledSettingId, int powerLimitSettingId)
         {
-            var startTimeTask = GetTimeSetting(startTimeSettingId);
-            var endTimeTask = GetTimeSetting(endTimeSettingId);
-            var enabledTask = GetBoolSetting(enabledSettingId);
-            var powerLimitTask = GetIntSetting(powerLimitSettingId);
-            await Task.WhenAll(startTimeTask, endTimeTask, enabledTask, powerLimitTask);
+            var startTime = await GetTimeSetting(startTimeSettingId);
+            var endTime = await GetTimeSetting(endTimeSettingId);
+            var enabled = await GetBoolSetting(enabledSettingId);
+            var powerLimit = await GetIntSetting(powerLimitSettingId);
 
             return new BatteryModeSettingValues(
-                startTimeTask.Result,
-                endTimeTask.Result,
-                enabledTask.Result,
-                powerLimitTask.Result);
+                startTime,
+                endTime,
+                enabled,
+                powerLimit);
         }
 
         public async Task<object?> ReadSetting(int id)
@@ -218,8 +217,15 @@ namespace Solarverse.Core.Integration.GivEnergy
                     return setting.Data;
                 }
 
-                attempts++;
+                _logger.LogWarning($"Could not set setting {id} to value {value} - error was {setting?.Data?.Message}");
+
+                if (!string.Equals(setting?.Data?.Message, "Inverter Timeout", StringComparison.OrdinalIgnoreCase))
+                {
+                    attempts++;
+                }
+
                 await Task.Delay(delayTime);
+                _logger.LogWarning($"Will delay {delayTime} until next retry");
                 delayTime *= 1.5;
             }
 
@@ -246,8 +252,7 @@ namespace Solarverse.Core.Integration.GivEnergy
             if (_currentSettings == null || shouldSet(_currentSettings))
             {
                 _logger.LogInformation($"Setting {settingId} ({SettingIds.GetName(settingId)}) needs to be set");
-                // TODO - enable when we're happy
-                //await SetSetting(settingId, value);
+                await SetSetting(settingId, value);
             }
             else
             {
@@ -323,7 +328,7 @@ namespace Solarverse.Core.Integration.GivEnergy
                 x => x.DischargeSettings.Enabled.Value,
                 false);
 
-            // enable eco if it's enabled
+            // enable eco if it's disabled
             await SetSettingIfRequired(
                 SettingIds.EcoMode,
                 x => !x.EcoModeEnabled.Value,

@@ -75,9 +75,6 @@ namespace Solarverse.Core.Data
             var min = TimeSeries.GetMinimumDate();
             _logger.LogInformation($"Minimum household consumption time is {min}");
 
-            // TODO - testing
-            //var cutoff = new DateTime(2023, 1, 31, 18, 30, 0);
-            //var source = consumption.DataPoints.Where(x => x.Time < cutoff);
             var source = consumption.DataPoints;
 
             TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min), x => x.Time, x => x.Consumption, (val, pt) => pt.ActualConsumptionKwh = val);

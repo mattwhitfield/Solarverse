@@ -395,7 +395,7 @@ namespace Solarverse
             }
             _closing = true;
 
-            // TODO - show a 'closing' UI
+            ShuttingDownGrid.Visibility = Visibility.Visible;
 
             e.Cancel = true;
 
