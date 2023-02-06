@@ -79,7 +79,7 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
                     dataPoint.Max(x => x.Today?.Grid?.Export ?? 0),
                     dataPoint.Max(x => x.Today?.Battery?.Charge ?? 0),
                     dataPoint.Max(x => x.Today?.Battery?.Discharge ?? 0),
-                    dataPoint.Max(x => x.Power?.Battery?.Percent ?? 0));
+                    dataPoint.Where(x => x.Power?.Battery?.Percent > 0).OrderByDescending(x => x.Time).Select(x => x.Power?.Battery?.Percent ?? 0).FirstOrDefault());
             }
 
             for (int i = 0; i < 48; i++)

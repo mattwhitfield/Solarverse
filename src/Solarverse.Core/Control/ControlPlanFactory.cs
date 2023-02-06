@@ -338,6 +338,7 @@ namespace Solarverse.Core.Control
                                     .Where(x => x.Time <= point.Time)
                                     .TakeWhile(x => x.ForecastBatteryPercentage < 100)
                                     .Where(selector)
+                                    .Where(x => !x.IsDischargeTarget)
                                     .OrderBy(x => x.IncomingRate)
                                     .Take(1)
                                     .ToList();
