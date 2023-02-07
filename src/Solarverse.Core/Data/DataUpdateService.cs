@@ -117,7 +117,7 @@ namespace Solarverse.Core.Data
 
             var logBuilder = new StringBuilder();
 
-            foreach (var point in TimeSeries.Where(x => !x.ActualBatteryPercentage.HasValue && x.IncomingRate.HasValue).OrderBy(x => x.Time))
+            foreach (var point in TimeSeries.Where(x => x == lastActual || (!x.ActualBatteryPercentage.HasValue && x.IncomingRate.HasValue)).OrderBy(x => x.Time))
             {
                 var currentPointCharge = point.ExcessPowerKwh ?? 0;
                 if (currentPointCharge < 0)
