@@ -52,8 +52,11 @@ namespace Solarverse.Core.Control
             var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
             _actions.Add(new TimedAction(_logger, currentStatusPeriod, UpdateCurrentStatus, "Update current inverter status"));
 
-            var executePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromSeconds(15));
-            _actions.Add(new TimedAction(_logger, executePeriod, ExecuteControlPlan, "Execute control plan"));
+            if (!ConfigurationProvider.Configuration.TestMode)
+            {
+                var executePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromSeconds(15));
+                _actions.Add(new TimedAction(_logger, executePeriod, ExecuteControlPlan, "Execute control plan"));
+            }
 
             var dataCleanupPeriod = new Period(TimeSpan.FromHours(0.5));
             _actions.Add(new TimedAction(_logger, dataCleanupPeriod, CleanUpData, "Cleaning up old data"));

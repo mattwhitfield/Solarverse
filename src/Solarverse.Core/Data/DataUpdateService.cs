@@ -56,13 +56,6 @@ namespace Solarverse.Core.Data
                 return;
             }
 
-            // a little hack to make the first 'predicted' consumption point line up with the 'actual' graph
-            var min = consumption.DataPoints.Min(x => x.Time);
-            if (TimeSeries.TryGetDataPointFor(min, out var point) && point != null)
-            {
-                consumption.DataPoints.Where(x => x.Time == min).Each(x => x.Consumption = point.ActualConsumptionKwh.GetValueOrDefault(x.Consumption));
-            }
-
             TimeSeries.Set(x => x.ForecastConsumptionKwh = null);
             TimeSeries.AddPointsFrom(consumption.DataPoints, x => x.Time, x => x.Consumption, (val, pt) => pt.ForecastConsumptionKwh = val);
             TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
@@ -73,12 +66,13 @@ namespace Solarverse.Core.Data
             _logger.LogInformation($"Updating household consumption");
 
             var min = TimeSeries.GetMinimumDate();
+            var max = new Period(TimeSpan.FromMinutes(30)).GetLast(DateTime.UtcNow);
             _logger.LogInformation($"Minimum household consumption time is {min}");
 
             var source = consumption.DataPoints;
 
-            TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min), x => x.Time, x => x.Consumption, (val, pt) => pt.ActualConsumptionKwh = val);
-            TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min), x => x.Time, x => x.Solar, (val, pt) => pt.ActualSolarKwh = val);
+            TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min && x.Time < max), x => x.Time, x => x.Consumption, (val, pt) => pt.ActualConsumptionKwh = val);
+            TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min && x.Time < max), x => x.Time, x => x.Solar, (val, pt) => pt.ActualSolarKwh = val);
             TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min), x => x.Time, x => x.BatteryPercentage, (val, pt) => pt.ActualBatteryPercentage = val);
             TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
         }
@@ -89,6 +83,7 @@ namespace Solarverse.Core.Data
             if (forecast.IsValid)
             {
                 _logger.LogInformation($"Solar forecast is valid");
+
                 TimeSeries.AddPointsFrom(forecast.DataPoints, x => x.Time, x => x.PVEstimate, (val, pt) => pt.ForecastSolarKwh = val);
                 TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
             }

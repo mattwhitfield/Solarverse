@@ -131,8 +131,7 @@ namespace Solarverse
 
                 ExcessPowerLabel.Text = point.ExcessPowerKwh.HasValue ? point.ExcessPowerKwh.Value.ToString("N1") + " kWh (forecast)" : "-";
                 IncomingRateLabel.Text = point.IncomingRate.HasValue ? point.IncomingRate.Value.ToString("N2") + "p" : "-";
-                OutgoingRateLabel.Text = point.OutgoingRate.HasValue ? point.OutgoingRate.Value.ToString("N2") + "p" : "-";
-                ProjectedCostLabel.Text = point.CostWithoutStorage.HasValue ? point.CostWithoutStorage.Value.ToString("N1") + "p" : "-";
+                OutgoingRateLabel.Text = point.OutgoingRate.HasValue ? point.OutgoingRate.Value.ToString("N2") + "p" : "-";                
                 DateTimeLabel.Text = date.ToString("dd/MM HH:mm");
                 ScheduledActionLabel.Text = point.ControlAction.HasValue ? point.ControlAction.Value.ToString() : "-";
                 if (point.ControlAction.HasValue)
@@ -171,7 +170,6 @@ namespace Solarverse
                 ExcessPowerLabel.Text = "-";
                 IncomingRateLabel.Text = "-";
                 OutgoingRateLabel.Text = "-";
-                ProjectedCostLabel.Text = "-";
                 ProjectedBatteryPercentLabel.Text = "-";
                 ScheduledActionLabel.Text = "-";
                 ScheduledActionPath.Data = Shapes.Circle;
@@ -335,17 +333,16 @@ namespace Solarverse
 
             var maxTimeWithPvActual = series.GetNullableSeries(x => x.ActualSolarKwh).Where(x => x.Value.HasValue).Select(x => x.Time).DefaultIfEmpty(DateTime.MinValue).Max();
             AddPlot(WpfPlot1.Plot, series, x => x.ActualConsumptionKwh, Color.DarkBlue, true);
-            AddPlot(WpfPlot1.Plot, series, x => x.ForecastConsumptionKwh, Color.DarkBlue, false);
+            AddPlot(WpfPlot1.Plot, series, x => x.ForecastConsumptionKwh, Color.DarkBlue, false, x => x > maxTimeWithPvActual);
             AddPlot(WpfPlot1.Plot, series, x => x.ActualSolarKwh, Color.DarkGoldenrod, true);
-            AddPlot(WpfPlot1.Plot, series, x => x.ForecastSolarKwh, Color.DarkGoldenrod, false, x => x >= maxTimeWithPvActual);
-            AddPlot(WpfPlot1.Plot, series, x => x.ExcessPowerKwh, Color.Green, false);
+            AddPlot(WpfPlot1.Plot, series, x => x.ForecastSolarKwh, Color.DarkGoldenrod, false, x => x > maxTimeWithPvActual);
+            AddPlot(WpfPlot1.Plot, series, x => x.ExcessPowerKwh, Color.Green, false, x => x > maxTimeWithPvActual);
 
             AddPlot(WpfPlot2.Plot, series, x => x.IncomingRate, Color.Purple, true);
             AddPlot(WpfPlot2.Plot, series, x => x.OutgoingRate, Color.OrangeRed, true);
-            AddPlot(WpfPlot2.Plot, series, x => x.CostWithoutStorage, Color.Red, false);
 
             AddPlot(WpfPlot3.Plot, series, x => x.ActualBatteryPercentage, Color.Black, true);
-            AddPlot(WpfPlot3.Plot, series, x => x.ForecastBatteryPercentage, Color.Black, false, x => x >= maxTimeWithPvActual);
+            AddPlot(WpfPlot3.Plot, series, x => x.ForecastBatteryPercentage, Color.Black, false, x => x > maxTimeWithPvActual);
             //AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / ConfigurationProvider.Configuration.Battery.CapacityKwh) * 100, Color.DarkBlue, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
             //AddPlot(WpfPlot3.Plot, series, x => (x.MaxCarryForwardChargeKwh / ConfigurationProvider.Configuration.Battery.CapacityKwh) * 100, Color.MediumPurple, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
 

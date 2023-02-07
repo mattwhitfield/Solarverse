@@ -71,15 +71,17 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
 
             foreach (var dataPoint in datapoints.GroupBy(x => (int)((x.Time - date).TotalMinutes / 30)))
             {
+                var time = date.AddMinutes(dataPoint.Key * 30);
+
                 cumulativePoints[dataPoint.Key] = new NormalizedConsumptionDataPoint(
-                    date.AddMinutes(dataPoint.Key * 30),
+                    time,
                     dataPoint.Max(x => x.Today?.Consumption ?? 0),
                     dataPoint.Max(x => x.Today?.Solar ?? 0),
                     dataPoint.Max(x => x.Today?.Grid?.Import ?? 0),
                     dataPoint.Max(x => x.Today?.Grid?.Export ?? 0),
                     dataPoint.Max(x => x.Today?.Battery?.Charge ?? 0),
                     dataPoint.Max(x => x.Today?.Battery?.Discharge ?? 0),
-                    dataPoint.Where(x => x.Power?.Battery?.Percent > 0).OrderByDescending(x => x.Time).Select(x => x.Power?.Battery?.Percent ?? 0).FirstOrDefault());
+                    dataPoint.Where(x => x.Power?.Battery?.Percent > 0).OrderBy(x => x.Time).Select(x => x.Power?.Battery?.Percent ?? 0).FirstOrDefault());
             }
 
             for (int i = 0; i < 48; i++)

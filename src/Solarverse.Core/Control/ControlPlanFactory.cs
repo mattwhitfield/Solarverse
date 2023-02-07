@@ -191,6 +191,13 @@ namespace Solarverse.Core.Control
                         var numberOfChargePeriodsRequired = (int)Math.Ceiling(shortfallKwh / maxChargeKwhPerPeriod);
                         _logger.LogInformation($"Point at {lastPoint.Time} has forecast of {lastPoint.ForecastBatteryPercentage:N1}% battery, charge required - shortfall of {shortfallPercent:N1}%, {shortfallKwh:N2} kWh, in {numberOfChargePeriodsRequired} periods");
 
+                        var dischargePoints = allPointsWithoutActualFiguresReversed
+                            .Where(x => x.Time > point.Time)
+                            .OrderBy(x => x.Time)
+                            .TakeWhile(x => x.ControlAction == ControlAction.Discharge && x.ExcessPowerKwh < 0);
+
+                        var buckets = Bucketizer.Bucketize(dischargePoints, maxChargeKwhPerPeriod);
+
                         // if we need more charge then we can carry forward, then we
                         // need to add some charge afterwards. So the eligible points in 
                         // this instance are the ones where the max carry forward hasn't changed
@@ -218,11 +225,19 @@ namespace Solarverse.Core.Control
                             {
                                 if (numberOfPeriodsAfterMax > 0)
                                 {
-                                    _logger.LogInformation($"Setting period {targetPoint.Time} to charge");
+                                    if (buckets.TakeSlot(targetPoint.IncomingRate, efficiency))
+                                    {
+                                        _logger.LogInformation($"Setting period {targetPoint.Time} to charge");
 
-                                    targetPoint.ControlAction = ControlAction.Charge;
-                                    numberOfChargePeriodsRequired--;
-                                    numberOfPeriodsAfterMax--;
+                                        targetPoint.ControlAction = ControlAction.Charge;
+                                        numberOfChargePeriodsRequired--;
+                                        numberOfPeriodsAfterMax--;
+                                    }
+                                    else
+                                    {
+                                        _logger.LogInformation($"Period {targetPoint.Time} is too expensive to charge from");
+                                        break;
+                                    }
                                 }
                                 else
                                 {
@@ -230,39 +245,51 @@ namespace Solarverse.Core.Control
                                 }
                             }
 
-                            // now account for any points after we have charged within the current set
-                            // where it is set to discharge, and add extra charge
-                            var minTimeWithChargeAction = allPointsAfterMax
+                            var chargePoints = allPointsAfterMax
                                 .Where(x => x.ControlAction == ControlAction.Charge)
-                                .Select(x => x.Time)
-                                .Min();
+                                .Select(x => x.Time).ToList();
 
-                            // find any points that are discharging after our charge has started
-                            var kWhToAccountForDischarge = allPointsAfterMax
-                                .Where(x => x.Time > minTimeWithChargeAction)
-                                .Where(x => x.ControlAction == ControlAction.Discharge)
-                                .Select(x => x.RequiredPowerKwh ?? 0)
-                                .Sum();
-
-                            var extraChargePeriodsRequired = (int)Math.Ceiling(kWhToAccountForDischarge / maxChargeKwhPerPeriod);
-                            _logger.LogInformation($"Accounting for {kWhToAccountForDischarge:N2} kWh of discharge within the period, {extraChargePeriodsRequired} extra charge periods required");
-
-                            foreach (var targetPoint in pointsAfterMax.Where(x => x.IncomingRate.HasValue).OrderBy(x => x.IncomingRate))
+                            if (chargePoints.Any())
                             {
-                                if (targetPoint.ControlAction.HasValue)
-                                {
-                                    continue;
-                                }
+                                // now account for any points after we have charged within the current set
+                                // where it is set to discharge, and add extra charge
+                                var minTimeWithChargeAction = chargePoints.Min();
 
-                                if (extraChargePeriodsRequired > 0)
+                                // find any points that are discharging after our charge has started
+                                var kWhToAccountForDischarge = allPointsAfterMax
+                                    .Where(x => x.Time > minTimeWithChargeAction)
+                                    .Where(x => x.ControlAction == ControlAction.Discharge)
+                                    .Select(x => x.RequiredPowerKwh ?? 0)
+                                    .Sum();
+
+                                var extraChargePeriodsRequired = (int)Math.Ceiling(kWhToAccountForDischarge / maxChargeKwhPerPeriod);
+                                _logger.LogInformation($"Accounting for {kWhToAccountForDischarge:N2} kWh of discharge within the period, {extraChargePeriodsRequired} extra charge periods required");
+
+                                foreach (var targetPoint in pointsAfterMax.Where(x => x.IncomingRate.HasValue).OrderBy(x => x.IncomingRate))
                                 {
-                                    _logger.LogInformation($"Setting period {targetPoint.Time} to charge");
-                                    targetPoint.ControlAction = ControlAction.Charge;
-                                    extraChargePeriodsRequired--;
-                                }
-                                else
-                                {
-                                    break;
+                                    if (targetPoint.ControlAction.HasValue)
+                                    {
+                                        continue;
+                                    }
+
+                                    if (extraChargePeriodsRequired > 0)
+                                    {
+                                        if (buckets.TakeSlot(targetPoint.IncomingRate, efficiency))
+                                        {
+                                            _logger.LogInformation($"Setting period {targetPoint.Time} to charge");
+                                            targetPoint.ControlAction = ControlAction.Charge;
+                                            extraChargePeriodsRequired--;
+                                        }
+                                        else
+                                        {
+                                            _logger.LogInformation($"Period {targetPoint.Time} is too expensive to charge");
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -278,10 +305,18 @@ namespace Solarverse.Core.Control
                         {
                             if (numberOfChargePeriodsRequired > 0)
                             {
-                                _logger.LogInformation($"Setting period {targetPoint.Time} to charge");
+                                if (buckets.TakeSlot(targetPoint.IncomingRate, efficiency))
+                                {
+                                    _logger.LogInformation($"Setting period {targetPoint.Time} to charge");
 
-                                targetPoint.ControlAction = ControlAction.Charge;
-                                numberOfChargePeriodsRequired--;
+                                    targetPoint.ControlAction = ControlAction.Charge;
+                                    numberOfChargePeriodsRequired--;
+                                }
+                                else
+                                {
+                                    _logger.LogInformation($"Period {targetPoint.Time} is too expensive to charge");
+                                    break;
+                                }
                             }
                             else
                             {
@@ -322,6 +357,15 @@ namespace Solarverse.Core.Control
                         }
                         else
                         {
+                            // we now work out how much each period costs, with each period being defined as the usage
+                            // of power that we could charge in one single half hour period
+                            var dischargePoints = points
+                                .Where(x => x.Time > point.Time)
+                                .OrderBy(x => x.Time)
+                                .TakeWhile(x => x.ControlAction == ControlAction.Discharge && x.ExcessPowerKwh < 0);
+
+                            var buckets = Bucketizer.Bucketize(dischargePoints, maxChargeKwhPerPeriod);
+
                             while (true)
                             {
                                 var shortfallPercent = lastPointPercent - (lastPoint.ForecastBatteryPercentage ?? 0);
@@ -348,7 +392,27 @@ namespace Solarverse.Core.Control
                                     break;
                                 }
 
-                                allPointsAfterMax.Each(x => x.ControlAction = ControlAction.Charge);
+                                if (!buckets.Any())
+                                {
+                                    break;
+                                }
+
+                                // check if the point we're transforming has a rate low enough to make 
+                                // it worth charging
+                                var selectedPoint = allPointsAfterMax[0];
+                                if (buckets.TakeSlot(selectedPoint.IncomingRate, efficiency))
+                                {
+                                    _logger.LogInformation($"({passName}) Setting period {selectedPoint.Time} to charge");
+                                    selectedPoint.ControlAction = ControlAction.Charge;
+                                }
+                                else
+                                {
+                                    _logger.LogInformation($"({passName}) Period at {selectedPoint.Time} is too expensive to charge");
+
+                                    // if we have already passed the point of it being worthwhile charging
+                                    // then there's no point continuing;
+                                    break;
+                                }
 
                                 _currentDataService.RecalculateForecast();
                             }

@@ -188,23 +188,6 @@
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center"
                                 Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-                                Fill="Red"
-                                Stretch="Uniform" />
-                            <TextBlock
-                                Margin="2,0"
-                                FontFamily="Segoe UI"
-                                Text="Projected Cost:" />
-                            <TextBlock
-                                x:Name="ProjectedCostLabel"
-                                Margin="2,0"
-                                FontFamily="Segoe UI"
-                                Text="-" />
-                            <Path
-                                Width="12"
-                                Height="12"
-                                Margin="6,0,0,0"
-                                VerticalAlignment="Center"
-                                Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
                                 Fill="Black"
                                 Stretch="Uniform" />
                             <TextBlock

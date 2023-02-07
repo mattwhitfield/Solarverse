@@ -13,5 +13,7 @@
         public PredictionSettings Prediction { get; } = new PredictionSettings();
 
         public string? SolcastSiteId { get; set; }
+
+        public bool TestMode { get; set; }
     }
 }

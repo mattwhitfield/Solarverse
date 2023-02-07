@@ -33,8 +33,6 @@
 
         public double? RequiredBatteryPowerKwh { get; set; }
 
-        public double? CostWithoutStorage => IncomingRate.HasValue && RequiredPowerKwh.HasValue ? IncomingRate.Value * Math.Max(RequiredPowerKwh.Value, 0) : null;
-
         public double? RequiredPowerKwh => ForecastSolarKwh.HasValue && ForecastConsumptionKwh.HasValue ? ForecastConsumptionKwh.Value - ForecastSolarKwh.Value : null;
 
         public double? ExcessPowerKwh => ForecastSolarKwh.HasValue && ForecastConsumptionKwh.HasValue ? ForecastSolarKwh.Value - ForecastConsumptionKwh.Value : null;
