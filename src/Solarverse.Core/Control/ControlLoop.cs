@@ -12,6 +12,7 @@ namespace Solarverse.Core.Control
     public class ControlLoop : IControlLoop
     {
         private readonly ILogger<ControlLoop> _logger;
+        private readonly IConfigurationProvider _configurationProvider;
         private readonly IDataStore _dataStore;
         private readonly IInverterClient _inverterClient;
         private readonly ICurrentDataService _currentDataService;
@@ -22,6 +23,7 @@ namespace Solarverse.Core.Control
         private readonly List<TimedAction> _actions = new List<TimedAction>();
 
         public ControlLoop(ILogger<ControlLoop> logger,
+            IConfigurationProvider configurationProvider,
             IDataStore dataStore,
             IInverterClient inverterClient,
             ICurrentDataService currentDataService,
@@ -30,6 +32,7 @@ namespace Solarverse.Core.Control
             IPredictionFactory predictionFactory)
         {
             _logger = logger;
+            _configurationProvider = configurationProvider;
             _dataStore = dataStore;
             _inverterClient = inverterClient;
             _currentDataService = currentDataService;
@@ -52,7 +55,7 @@ namespace Solarverse.Core.Control
             var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
             _actions.Add(new TimedAction(_logger, currentStatusPeriod, UpdateCurrentStatus, "Update current inverter status"));
 
-            if (!ConfigurationProvider.Configuration.TestMode)
+            if (!_configurationProvider.Configuration.TestMode)
             {
                 var executePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromSeconds(15));
                 _actions.Add(new TimedAction(_logger, executePeriod, ExecuteControlPlan, "Execute control plan"));
@@ -130,7 +133,7 @@ namespace Solarverse.Core.Control
                 _logger.LogInformation($"Getting household consumption for {date}");
 
                 var data = await _dataStore.GetHouseholdConsumptionFor(date);
-                if (data != null)
+                if (data != null && data.IsValid)
                 {
                     _logger.LogInformation($"Got household consumption for {date}");
                     _currentDataService.Update(data);
@@ -158,8 +161,8 @@ namespace Solarverse.Core.Control
         public async Task<bool> UpdateTariffRates()
         {
             _logger.LogInformation($"Updating tariff rates");
-            var incoming = ConfigurationProvider.Configuration.IncomingMeter;
-            var outgoing = ConfigurationProvider.Configuration.OutgoingMeter;
+            var incoming = _configurationProvider.Configuration.IncomingMeter;
+            var outgoing = _configurationProvider.Configuration.OutgoingMeter;
 
             var succeeded =
                 await UpdateTariffRates(incoming, _currentDataService.UpdateIncomingRates) &&

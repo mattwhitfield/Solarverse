@@ -10,11 +10,13 @@ namespace Solarverse.Core.Control
     {
         private readonly ICurrentDataService _currentDataService;
         private readonly ILogger<ControlPlanFactory> _logger;
+        private readonly IConfigurationProvider _configurationProvider;
 
-        public ControlPlanFactory(ICurrentDataService currentDataService, ILogger<ControlPlanFactory> logger)
+        public ControlPlanFactory(ICurrentDataService currentDataService, ILogger<ControlPlanFactory> logger, IConfigurationProvider configurationProvider)
         {
             _currentDataService = currentDataService;
             _logger = logger;
+            _configurationProvider = configurationProvider;
         }
 
         public void CheckForAdaptations(InverterCurrentState currentState)
@@ -123,10 +125,10 @@ namespace Solarverse.Core.Control
                 }
             }
 
-            var efficiency = ConfigurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.85;
+            var efficiency = _configurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.85;
             var maxChargeKwhPerPeriod = _currentDataService.CurrentState.MaxChargeRateKw * 0.5 * efficiency;
             var allPointsWithoutActualFigures = allPointsWithoutActualFiguresReversed.AsEnumerable().Reverse().ToList();
-            var capacity = ConfigurationProvider.Configuration.Battery.CapacityKwh ?? 5;
+            var capacity = _configurationProvider.Configuration.Battery.CapacityKwh ?? 5;
             var singleDirectionEfficieny = 1 - ((1 - efficiency) / 2);
 
             _currentDataService.RecalculateForecast();

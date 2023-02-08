@@ -32,7 +32,7 @@ namespace Solarverse.Core.Helper
                 attempts++;
                 if (attempts < 10)
                 {
-                    logger.LogWarning($"HTTP Get to {url} failed (attempt {attempts}) - waiting {delayTime}");
+                    logger.LogWarning($"HTTP Get to {url} failed - status code {response.StatusCode} - (attempt {attempts}) - waiting {delayTime}");
                     await Task.Delay(delayTime);
                     delayTime *= 1.5;
                 }
@@ -77,7 +77,7 @@ namespace Solarverse.Core.Helper
                 attempts++;
                 if (attempts < 10)
                 {
-                    logger.LogWarning($"HTTP Post to {url} failed (attempt {attempts}) - waiting {delayTime}");
+                    logger.LogWarning($"HTTP Post to {url} failed - status code {response.StatusCode} - (attempt {attempts}) - waiting {delayTime}");
                     await Task.Delay(delayTime);
                     delayTime *= 1.5;
                 }

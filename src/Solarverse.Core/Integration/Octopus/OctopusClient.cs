@@ -15,20 +15,22 @@ namespace Solarverse.Core.Integration.Octopus
         private readonly Dictionary<string, Product> _products = new Dictionary<string, Product>();
         private readonly Dictionary<string, string> _gridSupplyPointsByMpan = new Dictionary<string, string>();
         private readonly ILogger<OctopusClient> _logger;
+        private readonly IConfigurationProvider _configurationProvider;
 
-        public OctopusClient(Configuration configuration, ILogger<OctopusClient> logger)
+        public OctopusClient(ILogger<OctopusClient> logger, IConfigurationProvider configurationProvider)
         {
             _httpClient = new HttpClient();
 
-            if (string.IsNullOrEmpty(configuration.ApiKeys?.Octopus))
+            if (string.IsNullOrEmpty(configurationProvider.Configuration.ApiKeys?.Octopus))
             {
                 throw new InvalidOperationException("Octopus API key was not configured");
             }
 
-            var authenticationString = configuration.ApiKeys.Octopus + ":";
+            var authenticationString = configurationProvider.Configuration.ApiKeys.Octopus + ":";
             var base64EncodedAuthenticationString = Convert.ToBase64String(Encoding.ASCII.GetBytes(authenticationString));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             _logger = logger;
+            _configurationProvider = configurationProvider;
         }
 
         public async Task<IList<TariffRate>> GetTariffRates(string productCode, string mpan)
@@ -36,9 +38,9 @@ namespace Solarverse.Core.Integration.Octopus
             // workaround - bug in octopus API means you can't look up a GSP for
             // an outgoing MPAN
             string gspMpan = mpan;
-            if (gspMpan == ConfigurationProvider.Configuration.OutgoingMeter?.MPAN)
+            if (gspMpan == _configurationProvider.Configuration.OutgoingMeter?.MPAN)
             {
-                gspMpan = ConfigurationProvider.Configuration.IncomingMeter?.MPAN ?? string.Empty;
+                gspMpan = _configurationProvider.Configuration.IncomingMeter?.MPAN ?? string.Empty;
             }
 
             var gsp = await GetGridSupplyPoint(gspMpan);

@@ -3,7 +3,7 @@ using Solarverse.Core.Models.Settings;
 
 namespace Solarverse.Core.Helper
 {
-    public static class ConfigurationProvider
+    public static class StaticConfigurationProvider
     {
         private static Lazy<Configuration> ConfigStore = new Lazy<Configuration>(() =>
         {

@@ -8,11 +8,13 @@ namespace Solarverse.Core.Data.Prediction
     {
         private readonly IDataStore _dataStore;
         private readonly ILogger<PredictionFactory> _logger;
+        private readonly IConfigurationProvider _configurationProvider;
 
-        public PredictionFactory(IDataStore dataStore, ILogger<PredictionFactory> logger)
+        public PredictionFactory(IDataStore dataStore, ILogger<PredictionFactory> logger, IConfigurationProvider configurationProvider)
         {
             _dataStore = dataStore;
             _logger = logger;
+            _configurationProvider = configurationProvider;
         }
 
         public async Task<PredictedConsumption> CreatePredictionFrom(DateTime from, DateTime to)
@@ -21,7 +23,7 @@ namespace Solarverse.Core.Data.Prediction
 
             _logger.LogInformation($"Creating consumption prediction from {from} to {to}");
 
-            var predictionSettings = ConfigurationProvider.Configuration.Prediction;
+            var predictionSettings = _configurationProvider.Configuration.Prediction;
             switch (predictionSettings.MethodName ?? string.Empty)
             {
                 default:

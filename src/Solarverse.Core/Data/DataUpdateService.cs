@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Models;
-using System.Drawing;
 using System.Text;
 
 namespace Solarverse.Core.Data
@@ -9,10 +8,12 @@ namespace Solarverse.Core.Data
     public class CurrentDataService : ICurrentDataService
     {
         private readonly ILogger<CurrentDataService> _logger;
+        private readonly IConfigurationProvider _configurationProvider;
 
-        public CurrentDataService(ILogger<CurrentDataService> logger)
+        public CurrentDataService(ILogger<CurrentDataService> logger, IConfigurationProvider configurationProvider)
         {
             _logger = logger;
+            _configurationProvider = configurationProvider;
         }
 
         public TimeSeries TimeSeries { get; } = new TimeSeries();
@@ -63,7 +64,13 @@ namespace Solarverse.Core.Data
 
         public void Update(HouseholdConsumption consumption)
         {
-            _logger.LogInformation($"Updating household consumption");
+            if (!consumption.DataPoints.Any())
+            {
+                _logger.LogInformation($"Household consumption contains no data points");
+                return;
+            }
+
+            _logger.LogInformation($"Updating household consumption - data from {consumption.DataPoints.Min(x => x.Time)} to {consumption.DataPoints.Max(x => x.Time)}");
 
             var min = TimeSeries.GetMinimumDate();
             var max = new Period(TimeSpan.FromMinutes(30)).GetLast(DateTime.UtcNow);
@@ -74,6 +81,15 @@ namespace Solarverse.Core.Data
             TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min && x.Time < max), x => x.Time, x => x.Consumption, (val, pt) => pt.ActualConsumptionKwh = val);
             TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min && x.Time < max), x => x.Time, x => x.Solar, (val, pt) => pt.ActualSolarKwh = val);
             TimeSeries.AddPointsFrom(source.Where(x => x.Time >= min), x => x.Time, x => x.BatteryPercentage, (val, pt) => pt.ActualBatteryPercentage = val);
+
+            if (!source.Any(x => x.Time == max))
+            {
+                if (CurrentState.UpdateTime > DateTime.UtcNow.AddMinutes(-5))
+                {
+                    TimeSeries.Set(max, x => x.ActualBatteryPercentage = CurrentState.BatteryPercent);
+                }
+            }
+
             TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
         }
 
@@ -106,9 +122,9 @@ namespace Solarverse.Core.Data
         public void RecalculateForecast()
         {
             _logger.LogInformation($"Recalculating forecast");
-            var efficiency = ConfigurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.85;
+            var efficiency = _configurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.85;
             var maxChargeKwhPerPeriod = CurrentState.MaxChargeRateKw * 0.5 * efficiency;
-            var capacity = ConfigurationProvider.Configuration.Battery.CapacityKwh ?? 5;
+            var capacity = _configurationProvider.Configuration.Battery.CapacityKwh ?? 5;
 
             var lastActual = TimeSeries.OrderBy(x => x.Time).LastOrDefault(x => x.ActualBatteryPercentage.HasValue);
             var lastPercentage = lastActual?.ActualBatteryPercentage ?? 4;

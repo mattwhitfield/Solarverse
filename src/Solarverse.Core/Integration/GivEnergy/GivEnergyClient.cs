@@ -2,7 +2,6 @@
 using Solarverse.Core.Helper;
 using Solarverse.Core.Integration.GivEnergy.Models;
 using Solarverse.Core.Models;
-using Solarverse.Core.Models.Settings;
 using System.Globalization;
 using System.Net.Http.Headers;
 
@@ -15,16 +14,16 @@ namespace Solarverse.Core.Integration.GivEnergy
         private string? _inverterSerial;
         private CurrentSettingValues? _currentSettings;
 
-        public GivEnergyClient(Configuration configuration, ILogger<GivEnergyClient> logger)
+        public GivEnergyClient(ILogger<GivEnergyClient> logger, IConfigurationProvider configurationProvider)
         {
             _httpClient = new HttpClient();
 
-            if (string.IsNullOrEmpty(configuration.ApiKeys?.GivEnergy))
+            if (string.IsNullOrEmpty(configurationProvider.Configuration.ApiKeys?.GivEnergy))
             {
                 throw new InvalidOperationException("GivEnergy API key was not configured");
             }
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configuration.ApiKeys.GivEnergy);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configurationProvider.Configuration.ApiKeys.GivEnergy);
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _logger = logger;
@@ -67,7 +66,7 @@ namespace Solarverse.Core.Integration.GivEnergy
                     continue;
                 }
 
-                throw new InvalidOperationException($"Could not read setting {id} as a boolean");
+                throw new InvalidOperationException($"Could not read setting {id} as a boolean - got {settingValue ?? "<null>"}");
             }
         }
 
@@ -85,7 +84,7 @@ namespace Solarverse.Core.Integration.GivEnergy
                 return new IntSetting(id, (int)l);
             }
 
-            throw new InvalidOperationException($"Could not read setting {id} as an integer");
+            throw new InvalidOperationException($"Could not read setting {id} as an integer - got {settingValue ?? "<null>"}");
         }
 
         private async Task<TimeSetting> GetTimeSetting(int id)

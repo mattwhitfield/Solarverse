@@ -30,7 +30,7 @@ namespace Solarverse.Core.Helper
                 builder.AddSerilog(dispose: true);
             });
 
-            collection.AddTransient(_ => ConfigurationProvider.Configuration);
+            collection.AddTransient<IConfigurationProvider, DefaultConfigurationProvider>();
             collection.AddTransient<IControlLoop, ControlLoop>();
             collection.AddSingleton<IInverterClient, GivEnergyClient>();
             collection.AddSingleton<ISolarForecastClient, SolcastClient>();
