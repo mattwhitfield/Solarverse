@@ -133,10 +133,12 @@ namespace Solarverse.Core.Control
                 _logger.LogInformation($"Getting household consumption for {date}");
 
                 var data = await _dataStore.GetHouseholdConsumptionFor(date);
-                if (data != null && data.IsValid)
+                if (data != null)
                 {
                     _logger.LogInformation($"Got household consumption for {date}");
                     _currentDataService.Update(data);
+
+                    _controlPlanFactory.CheckForAdaptations(_currentDataService.CurrentState);
                 }
                 else
                 {

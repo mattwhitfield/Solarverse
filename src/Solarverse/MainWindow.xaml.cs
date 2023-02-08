@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
 using ScottPlot;
 using ScottPlot.Plottable;
 using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows;
@@ -332,11 +332,17 @@ namespace Solarverse
             WpfPlot3.Plot.YAxis.LockLimits(false);
 
             var maxTimeWithPvActual = series.GetNullableSeries(x => x.ActualSolarKwh).Where(x => x.Value.HasValue).Select(x => x.Time).DefaultIfEmpty(DateTime.MinValue).Max();
+
+            AddFillBetween(WpfPlot1.Plot, series, x => x.ActualConsumptionKwh, x => x.ActualSolarKwh, x => x > 0, Color.FromArgb(32, Color.Green));
+            AddFillBetween(WpfPlot1.Plot, series, x => x.ForecastConsumptionKwh, x => x.ForecastSolarKwh, x => x > 0, Color.FromArgb(32, Color.Green));
+            AddFillBetween(WpfPlot1.Plot, series, x => x.ActualSolarKwh, x => x.ActualConsumptionKwh, x => x > 0, Color.FromArgb(32, Color.Red));
+            AddFillBetween(WpfPlot1.Plot, series, x => x.ForecastSolarKwh, x => x.ForecastConsumptionKwh, x => x > 0, Color.FromArgb(32, Color.Red));
+
             AddPlot(WpfPlot1.Plot, series, x => x.ActualConsumptionKwh, Color.DarkBlue, true);
             AddPlot(WpfPlot1.Plot, series, x => x.ForecastConsumptionKwh, Color.DarkBlue, false, x => x > maxTimeWithPvActual);
             AddPlot(WpfPlot1.Plot, series, x => x.ActualSolarKwh, Color.DarkGoldenrod, true);
             AddPlot(WpfPlot1.Plot, series, x => x.ForecastSolarKwh, Color.DarkGoldenrod, false, x => x > maxTimeWithPvActual);
-            AddPlot(WpfPlot1.Plot, series, x => x.ExcessPowerKwh, Color.Green, false, x => x > maxTimeWithPvActual);
+            //AddPlot(WpfPlot1.Plot, series, x => x.ExcessPowerKwh, Color.Green, false, x => x > maxTimeWithPvActual);
 
             AddPlot(WpfPlot2.Plot, series, x => x.IncomingRate, Color.Purple, true);
             AddPlot(WpfPlot2.Plot, series, x => x.OutgoingRate, Color.OrangeRed, true);
@@ -385,6 +391,43 @@ namespace Solarverse
             WpfPlot1.Plot.YAxis.LockLimits(true);
             WpfPlot2.Plot.YAxis.LockLimits(true);
             WpfPlot3.Plot.YAxis.LockLimits(true);
+        }
+
+        private void AddFillBetween(Plot plot, TimeSeries series, Func<TimeSeriesPoint, double?> value1, Func<TimeSeriesPoint, double?> value2, Func<double, bool> include, Color color)
+        {
+            var times = new List<double>();
+            var y1 = new List<double>();
+            var y2 = new List<double>();
+            foreach (var point in series)
+            {
+                var val1 = value1(point);
+                var val2 = value2(point);
+                if (val1.HasValue && val2.HasValue)
+                {
+                    var diff = val2.Value - val1.Value;
+                    if (include(diff))
+                    {
+                        times.Add(point.Time.ToOADate());
+                        y1.Add(val1.Value);
+                        y2.Add(val2.Value);
+                    }
+                    else
+                    {
+                        if (times.Any())
+                        {
+                            plot.AddFill(times.ToArray(), y1.ToArray(), y2.ToArray(), color);
+                        }
+                        times.Clear();
+                        y1.Clear();
+                        y2.Clear();
+                    }
+                }
+            }
+
+            if (times.Any())
+            {
+                plot.AddFill(times.ToArray(), y1.ToArray(), y2.ToArray(), color);
+            }
         }
 
         private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)

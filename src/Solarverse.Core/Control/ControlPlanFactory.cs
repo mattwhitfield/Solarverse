@@ -20,14 +20,23 @@ namespace Solarverse.Core.Control
 
         public void CheckForAdaptations(InverterCurrentState currentState)
         {
+            if (!_currentDataService.TimeSeries.Any(x => x.IsDischargeTarget))
+            {
+                _logger.LogInformation("Will not check for adaptations before discharge targets are set.");
+                return;
+            }
+
             // happens after every current state update - here we check if the battery charge is on track and if we need another 1/2 hour charge period
             if (_currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue).Any())
             {
-                //using var updateLock = _currentDataService.LockForUpdate();
+                if (_configurationProvider.Configuration.TestMode)
+                {
+                    using var updateLock = _currentDataService.LockForUpdate();
 
-                //_currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue && !x.IsDischargeTarget).Each(x => x.ControlAction = null);
+                    _currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue && !x.IsDischargeTarget).Each(x => x.ControlAction = null);
 
-                //CreatePlanForDischargeTargets();
+                    CreatePlanForDischargeTargets();
+                }
             }
         }
 
@@ -169,10 +178,10 @@ namespace Solarverse.Core.Control
         {
             SetRequiredPower(allPointsWithoutActualFiguresReversed);
 
-            efficiency = ConfigurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.85;
+            efficiency = _configurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.85;
             maxChargeKwhPerPeriod = _currentDataService.CurrentState.MaxChargeRateKw * 0.5 * efficiency;
             allPointsWithoutActualFigures = allPointsWithoutActualFiguresReversed.AsEnumerable().Reverse().ToList();
-            capacity = ConfigurationProvider.Configuration.Battery.CapacityKwh ?? 5;
+            capacity = _configurationProvider.Configuration.Battery.CapacityKwh ?? 5;
             var singleDirectionEfficieny = 1 - ((1 - efficiency) / 2);
 
             _currentDataService.RecalculateForecast();
