@@ -63,16 +63,20 @@
             </TextBlock>
             <Grid Grid.Row="0" Grid.Column="1">
                 <Border
+                    Width="900"
                     HorizontalAlignment="Center"
                     BorderBrush="Gray"
                     BorderThickness="1"
                     CornerRadius="3">
-                    <Grid>
+                    <Grid HorizontalAlignment="Center">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="220" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
@@ -80,11 +84,13 @@
                         <TextBlock
                             x:Name="DateTimeLabel"
                             Grid.Row="0"
-                            Grid.RowSpan="2"
+                            Grid.RowSpan="3"
                             Grid.Column="0"
                             Margin="2,0"
+                            HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             FontFamily="Segoe UI"
+                            FontSize="16"
                             Text="-" />
                         <StackPanel
                             Grid.Row="0"
@@ -108,6 +114,12 @@
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="0"
+                            Grid.Column="2"
+                            Margin="4"
+                            Orientation="Horizontal">
                             <Path
                                 Width="12"
                                 Height="12"
@@ -125,15 +137,23 @@
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="0"
+                            Grid.Column="3"
+                            Margin="4"
+                            Orientation="Horizontal">
                             <Path
+                                x:Name="ExcessPowerCircle"
                                 Width="12"
                                 Height="12"
                                 Margin="6,0,0,0"
                                 VerticalAlignment="Center"
                                 Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-                                Fill="Green"
+                                Fill="Black"
                                 Stretch="Uniform" />
                             <TextBlock
+                                x:Name="ExcessPowerTitleLabel"
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="Excess Power:" />
@@ -165,6 +185,12 @@
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="1"
+                            Grid.Column="2"
+                            Margin="4"
+                            Orientation="Horizontal">
                             <Path
                                 Width="12"
                                 Height="12"
@@ -182,6 +208,13 @@
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="2"
+                            Grid.Column="2"
+                            Grid.ColumnSpan="2"
+                            Margin="4"
+                            Orientation="Horizontal">
                             <Path
                                 Width="12"
                                 Height="12"
@@ -199,6 +232,12 @@
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            Margin="4"
+                            Orientation="Horizontal">
                             <Path
                                 x:Name="ScheduledActionPath"
                                 Width="12"
@@ -251,10 +290,10 @@
             Opacity="0.8"
             Visibility="Collapsed">
             <TextBlock
-                FontFamily="Segoe UI"
-                FontSize="20"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
+                FontFamily="Segoe UI"
+                FontSize="20"
                 Foreground="Black"
                 Text="Shutting down..." />
         </Grid>
