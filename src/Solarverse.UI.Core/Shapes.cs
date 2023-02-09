@@ -1,6 +1,6 @@
 ﻿using System.Windows.Media;
 
-namespace Solarverse
+namespace Solarverse.UI.Core
 {
     internal static class Shapes
     {

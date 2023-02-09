@@ -1,5 +1,6 @@
 ﻿using Solarverse.Core.Control;
 using Solarverse.Core.Data;
+using Solarverse.UI.Core;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,8 +12,9 @@ namespace Solarverse
         private readonly IControlLoop _controlLoop;
         private readonly ICurrentDataService _currentDataService;
         private readonly ITimeSeriesHandler _timeSeriesHandler;
+        private readonly CancellationTokenSource _controlLoopCancellation;
+
         private Task? _controlLoopTask;
-        private CancellationTokenSource _controlLoopCancellation;
 
         public MainWindowViewModel(IControlLoop controlLoop, ICurrentDataService currentDataService, ITimeSeriesHandler timeSeriesHandler)
         {
@@ -20,10 +22,10 @@ namespace Solarverse
             _currentDataService = currentDataService;
             _timeSeriesHandler = timeSeriesHandler;
             _controlLoopCancellation = new CancellationTokenSource();
-            _currentDataService.TimeSeriesUpdated += _currentDataService_TimeSeriesUpdated;
+            _currentDataService.TimeSeriesUpdated += CurrentDataService_TimeSeriesUpdated;
         }
 
-        private void _currentDataService_TimeSeriesUpdated(object? sender, EventArgs e)
+        private void CurrentDataService_TimeSeriesUpdated(object? sender, EventArgs e)
         {
             _timeSeriesHandler.UpdateTimeSeries(_currentDataService.TimeSeries);
         }
