@@ -6,6 +6,14 @@ namespace Solarverse.Core.Data
 {
     public class TimeSeries : IEnumerable<TimeSeriesPoint>
     {
+        public TimeSeries()
+        { }
+
+        public TimeSeries(IEnumerable<TimeSeriesPoint> data)
+        {
+            data.Each(x => _dataPoints[x.Time] = x);
+        }
+
         private Dictionary<DateTime, TimeSeriesPoint> _dataPoints = new Dictionary<DateTime, TimeSeriesPoint>();
 
         public void AddPointsFrom<TSource, TValue>(IEnumerable<TSource> points, Func<TSource, DateTime> dateTime, Func<TSource, TValue?> value, Action<TValue?, TimeSeriesPoint> set)

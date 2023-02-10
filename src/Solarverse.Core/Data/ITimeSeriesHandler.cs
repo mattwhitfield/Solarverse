@@ -1,6 +1,4 @@
-﻿using Solarverse.Core.Data;
-
-namespace Solarverse.UI.Core
+﻿namespace Solarverse.Core.Data
 {
     public interface ITimeSeriesHandler
     {

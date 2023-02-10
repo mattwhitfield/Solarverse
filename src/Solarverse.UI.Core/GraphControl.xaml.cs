@@ -365,6 +365,19 @@ namespace Solarverse.UI.Core
 
         public void UpdateTimeSeries(TimeSeries series)
         {
+            Dispatcher.BeginInvoke(new Action(() => UpdateTimeSeriesSafe(series)));
+        }
+
+        private bool _updating;
+        public void UpdateTimeSeriesSafe(TimeSeries series)
+        {
+            if (_updating)
+            {
+                return;
+            }
+
+            _updating = true;
+
             _currentSeries = series;
 
             WpfPlot1.Plot.Clear();
@@ -440,6 +453,8 @@ namespace Solarverse.UI.Core
             WpfPlot1.Plot.YAxis.LockLimits(true);
             WpfPlot2.Plot.YAxis.LockLimits(true);
             WpfPlot3.Plot.YAxis.LockLimits(true);
+
+            _updating = false;
         }
     }
 }

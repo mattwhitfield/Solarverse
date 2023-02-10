@@ -1,4 +1,6 @@
-﻿namespace Solarverse.Core.Data
+﻿using Newtonsoft.Json;
+
+namespace Solarverse.Core.Data
 {
     public class TimeSeriesPoint
     {
@@ -33,8 +35,10 @@
 
         public double? RequiredBatteryPowerKwh { get; set; }
 
+        [JsonIgnore]
         public double? RequiredPowerKwh => ForecastSolarKwh.HasValue && ForecastConsumptionKwh.HasValue ? ForecastConsumptionKwh.Value - ForecastSolarKwh.Value : null;
 
+        [JsonIgnore]
         public double? ExcessPowerKwh => ForecastSolarKwh.HasValue && ForecastConsumptionKwh.HasValue ? ForecastSolarKwh.Value - ForecastConsumptionKwh.Value : null;
     }
 }

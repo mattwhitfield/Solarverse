@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
-using Solarverse.UI.Core;
 using System.Windows;
 
 namespace Solarverse

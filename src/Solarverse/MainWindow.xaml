@@ -10,7 +10,7 @@
     Closing="Window_Closing"
     mc:Ignorable="d">
     <Grid>
-    <core:GraphControl x:Name="Graph" />
+        <core:GraphControl x:Name="Graph" />
         <Grid
             x:Name="ShuttingDownGrid"
             HorizontalAlignment="Stretch"

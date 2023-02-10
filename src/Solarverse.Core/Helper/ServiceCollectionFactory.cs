@@ -31,17 +31,24 @@ namespace Solarverse.Core.Helper
             });
 
             collection.AddTransient<IConfigurationProvider, DefaultConfigurationProvider>();
+
+            collection.AddSolarverse();
+
+            return collection;
+        }
+
+        public static void AddSolarverse(this IServiceCollection collection)
+        {
+            collection.AddSingleton<IDataStore, FileDataStore>();
             collection.AddTransient<IControlLoop, ControlLoop>();
             collection.AddSingleton<IInverterClient, GivEnergyClient>();
             collection.AddSingleton<ISolarForecastClient, SolcastClient>();
             collection.AddSingleton<IEnergySupplierClient, OctopusClient>();
             collection.AddSingleton<ICurrentDataService, CurrentDataService>();
-            collection.AddSingleton<IDataStore, FileDataStore>();
             collection.AddTransient<IControlPlanExecutor, ControlPlanExecutor>();
             collection.AddTransient<IPredictionFactory, PredictionFactory>();
             collection.AddTransient<IControlPlanFactory, ControlPlanFactory>();
             collection.AddTransient<IIntegrationProvider, IntegrationProvider>();
-            return collection;
         }
     }
 }

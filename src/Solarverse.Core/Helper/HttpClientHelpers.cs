@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Solarverse.Core.Helper
 {
-    internal static class HttpClientHelpers
+    public static class HttpClientHelpers
     {
         public static async Task<T> Get<T>(this HttpClient client, ILogger logger, string url) where T : class
         {
@@ -14,25 +14,35 @@ namespace Solarverse.Core.Helper
 
             while (attempts < 10)
             {
-                using HttpResponseMessage response = await client.GetAsync(url);
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrWhiteSpace(content))
+                    using HttpResponseMessage response = await client.GetAsync(url);
+                    if (response.IsSuccessStatusCode)
                     {
-                        var obj = JsonConvert.DeserializeObject<T>(content);
-                        if (obj != null)
+                        var content = await response.Content.ReadAsStringAsync();
+                        if (!string.IsNullOrWhiteSpace(content))
                         {
-                            logger.LogInformation($"HTTP Get to {url} succeeded, returning {typeof(T).GetFormattedName()}");
-                            return obj;
+                            var obj = JsonConvert.DeserializeObject<T>(content);
+                            if (obj != null)
+                            {
+                                logger.LogInformation($"HTTP Get to {url} succeeded, returning {typeof(T).GetFormattedName()}");
+                                return obj;
+                            }
                         }
                     }
+                    else
+                    {
+                        logger.LogWarning($"HTTP Get to {url} failed - status code {response.StatusCode} - (attempt {attempts}) - waiting {delayTime}");
+                    }
+                }
+                catch (HttpRequestException exc)
+                {
+                    logger.LogWarning(exc, $"HTTP Get to {url} failed with exception");
                 }
 
                 attempts++;
                 if (attempts < 10)
                 {
-                    logger.LogWarning($"HTTP Get to {url} failed - status code {response.StatusCode} - (attempt {attempts}) - waiting {delayTime}");
                     await Task.Delay(delayTime);
                     delayTime *= 1.5;
                 }
@@ -58,26 +68,36 @@ namespace Solarverse.Core.Helper
                     postContent = new StringContent(postContentString, null, "application/json");
                 }
 
-                using HttpResponseMessage response = await client.PostAsync(url, postContent);
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrWhiteSpace(content))
+                    using HttpResponseMessage response = await client.PostAsync(url, postContent);
+                    if (response.IsSuccessStatusCode)
                     {
-                        var obj = JsonConvert.DeserializeObject<T>(content);
-                        if (obj != null)
+                        var content = await response.Content.ReadAsStringAsync();
+                        if (!string.IsNullOrWhiteSpace(content))
                         {
-                            logger.LogInformation($"HTTP Post to {url} succeeded, returning {typeof(T).GetFormattedName()}");
+                            var obj = JsonConvert.DeserializeObject<T>(content);
+                            if (obj != null)
+                            {
+                                logger.LogInformation($"HTTP Post to {url} succeeded, returning {typeof(T).GetFormattedName()}");
 
-                            return obj;
+                                return obj;
+                            }
                         }
                     }
+                    else
+                    {
+                        logger.LogWarning($"HTTP Post to {url} failed - status code {response.StatusCode} - (attempt {attempts}) - waiting {delayTime}");
+                    }
+                }
+                catch (HttpRequestException exc)
+                {
+                    logger.LogWarning(exc, $"HTTP Get to {url} failed with exception");
                 }
 
                 attempts++;
                 if (attempts < 10)
                 {
-                    logger.LogWarning($"HTTP Post to {url} failed - status code {response.StatusCode} - (attempt {attempts}) - waiting {delayTime}");
                     await Task.Delay(delayTime);
                     delayTime *= 1.5;
                 }
