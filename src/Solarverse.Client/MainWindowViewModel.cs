@@ -30,6 +30,10 @@ namespace Solarverse.Client
                     await _dataHubClient.OpenConnection();
                     return;
                 }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
                 catch (HttpRequestException)
                 {
                     attempts++;
