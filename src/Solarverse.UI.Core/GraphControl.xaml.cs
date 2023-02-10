@@ -411,8 +411,7 @@ namespace Solarverse.UI.Core
             AddPlot(WpfPlot3.Plot, series, x => x.ForecastBatteryPercentage, Color.Black, false, x => x > maxTimeWithPvActual);
             if (ShowDevelopmentDetail)
             {
-                AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / BatteryCapacityKwh) * 100, Color.DarkBlue, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
-                AddPlot(WpfPlot3.Plot, series, x => (x.MaxCarryForwardChargeKwh / BatteryCapacityKwh) * 100, Color.MediumPurple, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
+                //AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / BatteryCapacityKwh) * 100, Color.DarkBlue, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
             }
 
             foreach (var point in series)

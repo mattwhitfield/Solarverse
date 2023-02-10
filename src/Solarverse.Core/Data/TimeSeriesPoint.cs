@@ -31,8 +31,6 @@ namespace Solarverse.Core.Data
 
         public bool IsDischargeTarget { get; set; }
 
-        public double? MaxCarryForwardChargeKwh { get; set; }
-
         public double? RequiredBatteryPowerKwh { get; set; }
 
         [JsonIgnore]
