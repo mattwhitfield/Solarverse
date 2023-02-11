@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Models.Settings;
 using IConfigurationProvider = Solarverse.Core.Helper.IConfigurationProvider;
@@ -16,7 +17,11 @@ namespace Solarverse.Server
             builder.Services.Configure<Configuration>(
                 builder.Configuration.GetSection("Solarverse"));
 
-            builder.Services.AddLogging(); // TODO - route to in-memory store
+            builder.Services.AddLogging(builder =>
+            {
+                builder.Services.TryAddEnumerable(
+                    ServiceDescriptor.Singleton<ILoggerProvider, MemoryLoggerProvider>());
+            });
             builder.Services.AddTransient<IConfigurationProvider, OptionsConfigurationProvider>();
             builder.Services.AddSolarverse();
             builder.Services.AddHostedService<ControlLoopService>();

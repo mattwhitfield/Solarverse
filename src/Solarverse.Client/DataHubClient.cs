@@ -32,6 +32,7 @@ namespace Solarverse.Client
         private readonly IOptions<ClientConfiguration> _configuration;
         private readonly ITimeSeriesRetriever _timeSeriesRetriever;
         private IDisposable? _timeSeriesUpdated;
+        private IDisposable? _memoryLogUpdated;
 
         public bool IsConnected => (_hubConnection?.State ?? HubConnectionState.Disconnected) == HubConnectionState.Connected;
 
@@ -39,6 +40,8 @@ namespace Solarverse.Client
         {
             _timeSeriesUpdated?.Dispose();
             _timeSeriesUpdated = null;
+            _memoryLogUpdated?.Dispose();
+            _memoryLogUpdated = null;
             return _hubConnection.StopAsync();
         }
 
@@ -46,11 +49,18 @@ namespace Solarverse.Client
         {
             await _hubConnection.StartAsync();
             _timeSeriesUpdated = _hubConnection.On(DataHubMethods.TimeSeriesUpdated, () => UpdateTimeSeries());
+            _memoryLogUpdated = _hubConnection.On(DataHubMethods.MemoryLogUpdated, () => UpdateMemoryLog());
         }
 
         private Task UpdateTimeSeries()
         {
             return _timeSeriesRetriever.UpdateTimeSeries();
+        }
+
+        private Task UpdateMemoryLog()
+        {
+            // TODO - implement
+            return Task.CompletedTask;
         }
     }
 }

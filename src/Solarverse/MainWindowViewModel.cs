@@ -1,6 +1,8 @@
 ﻿using Solarverse.Core.Control;
 using Solarverse.Core.Data;
+using Solarverse.Core.Helper;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,23 +12,39 @@ namespace Solarverse
     {
         private readonly IControlLoop _controlLoop;
         private readonly ICurrentDataService _currentDataService;
-        private readonly ITimeSeriesHandler _timeSeriesHandler;
+        private readonly IUpdateHandler _updateHandler;
+        private readonly IMemoryLog _memoryLog;
         private readonly CancellationTokenSource _controlLoopCancellation;
 
         private Task? _controlLoopTask;
 
-        public MainWindowViewModel(IControlLoop controlLoop, ICurrentDataService currentDataService, ITimeSeriesHandler timeSeriesHandler)
+        public MainWindowViewModel(IControlLoop controlLoop, ICurrentDataService currentDataService, IUpdateHandler updateHandler, IMemoryLog memoryLog)
         {
             _controlLoop = controlLoop;
             _currentDataService = currentDataService;
-            _timeSeriesHandler = timeSeriesHandler;
+            _updateHandler = updateHandler;
+            _memoryLog = memoryLog;
             _controlLoopCancellation = new CancellationTokenSource();
             _currentDataService.TimeSeriesUpdated += CurrentDataService_TimeSeriesUpdated;
+            _memoryLog.LogUpdated += MemoryLog_LogUpdated;
+        }
+
+        long _lastLog = -1;
+
+        private void MemoryLog_LogUpdated(object? sender, EventArgs e)
+        {
+            var lines = _memoryLog.GetSince(_lastLog).ToList();
+            if (lines.Any())
+            {
+                _lastLog = lines.Max(x => x.Index);
+            }
+
+            _updateHandler.AddLogLines(lines);
         }
 
         private void CurrentDataService_TimeSeriesUpdated(object? sender, EventArgs e)
         {
-            _timeSeriesHandler.UpdateTimeSeries(_currentDataService.TimeSeries);
+            _updateHandler.UpdateTimeSeries(_currentDataService.TimeSeries);
         }
 
         public void Start()

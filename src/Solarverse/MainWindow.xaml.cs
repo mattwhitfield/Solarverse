@@ -22,7 +22,7 @@ namespace Solarverse
             Graph.BatteryCapacityKwh = configuration.Battery.CapacityKwh ?? 5.2;
 
             var collection = ServiceCollectionFactory.Create();
-            collection.AddSingleton<ITimeSeriesHandler>(Graph);
+            collection.AddSingleton<IUpdateHandler>(Graph);
             collection.AddSingleton<MainWindowViewModel>();
             _serviceProvider = collection.BuildServiceProvider();
 

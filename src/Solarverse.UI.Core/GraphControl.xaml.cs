@@ -1,6 +1,8 @@
 ﻿using ScottPlot;
 using ScottPlot.Plottable;
 using Solarverse.Core.Data;
+using Solarverse.Core.Helper;
+using Solarverse.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -10,7 +12,7 @@ using System.Windows.Input;
 
 namespace Solarverse.UI.Core
 {
-    public partial class GraphControl : UserControl, ITimeSeriesHandler
+    public partial class GraphControl : UserControl, IUpdateHandler
     {
         HSpan? _span1, _span2, _span3;
 
@@ -112,7 +114,7 @@ namespace Solarverse.UI.Core
                     SolarLabel.Text = "-";
                 }
 
-                string GetBatteryDescription(TimeSeriesPoint sourcePoint)
+                static string GetBatteryDescription(TimeSeriesPoint sourcePoint)
                 {
                     if (sourcePoint.ActualBatteryPercentage.HasValue)
                     {
@@ -368,6 +370,41 @@ namespace Solarverse.UI.Core
             Dispatcher.BeginInvoke(new Action(() => UpdateTimeSeriesSafe(series)));
         }
 
+        private void ShowGraph(object sender, System.Windows.RoutedEventArgs e)
+        {
+            SetVisible(GraphGrid);
+        }
+
+        private void ShowLogs(object sender, System.Windows.RoutedEventArgs e)
+        {
+            SetVisible(LogsGrid);
+        }
+
+        private void ShowInverter(object sender, System.Windows.RoutedEventArgs e)
+        {
+            SetVisible(InverterGrid);
+        }
+
+        private void SetVisible(Grid visibleGrid)
+        {
+            void Set(Grid control, Button button)
+            {
+                if (ReferenceEquals(control, visibleGrid))
+                {
+                    control.Visibility = System.Windows.Visibility.Visible;
+                    button.Background = System.Windows.Media.Brushes.LightBlue;
+                }
+                else
+                {
+                    control.Visibility = System.Windows.Visibility.Collapsed;
+                    button.Background = System.Windows.Media.Brushes.Transparent;
+                }
+            }
+            Set(GraphGrid, GraphButton);
+            Set(LogsGrid, LogsButton);
+            Set(InverterGrid, InverterButton);
+        }
+
         private bool _updating;
         public void UpdateTimeSeriesSafe(TimeSeries series)
         {
@@ -411,8 +448,7 @@ namespace Solarverse.UI.Core
             AddPlot(WpfPlot3.Plot, series, x => x.ForecastBatteryPercentage, Color.Black, false, x => x > maxTimeWithPvActual);
             if (ShowDevelopmentDetail)
             {
-                AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / BatteryCapacityKwh) * 100, Color.DarkBlue, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
-                AddPlot(WpfPlot3.Plot, series, x => (x.MaxCarryForwardChargeKwh / BatteryCapacityKwh) * 100, Color.MediumPurple, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
+                //AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / BatteryCapacityKwh) * 100, Color.DarkBlue, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
             }
 
             foreach (var point in series)
@@ -455,6 +491,18 @@ namespace Solarverse.UI.Core
             WpfPlot3.Plot.YAxis.LockLimits(true);
 
             _updating = false;
+        }
+
+        public void AddLogLines(IEnumerable<MemoryLogEntry> entries)
+        {
+            foreach (var entry in entries)
+            {
+                LogItems.Items.Insert(0, entry);
+                if (LogItems.Items.Count > MemoryLog.LogLength)
+                {
+                    LogItems.Items.RemoveAt(MemoryLog.LogLength);
+                }
+            }
         }
     }
 }

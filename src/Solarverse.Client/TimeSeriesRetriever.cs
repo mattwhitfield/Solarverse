@@ -13,9 +13,9 @@ namespace Solarverse.Client
         private readonly HttpClient _httpClient;
         private readonly ILogger<TimeSeriesRetriever> _logger;
         private readonly IOptions<ClientConfiguration> _configuration;
-        private readonly ITimeSeriesHandler _timeSeriesHandler;
+        private readonly IUpdateHandler _timeSeriesHandler;
 
-        public TimeSeriesRetriever(ILogger<TimeSeriesRetriever> logger, IOptions<ClientConfiguration> configuration, ITimeSeriesHandler timeSeriesHandler)
+        public TimeSeriesRetriever(ILogger<TimeSeriesRetriever> logger, IOptions<ClientConfiguration> configuration, IUpdateHandler timeSeriesHandler)
         {
             _httpClient = new HttpClient();
             _logger = logger;

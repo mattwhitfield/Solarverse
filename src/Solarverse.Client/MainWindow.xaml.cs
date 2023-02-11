@@ -30,7 +30,7 @@ namespace Solarverse.Client
 
             collection.AddLogging();
 
-            collection.AddSingleton<ITimeSeriesHandler>(Graph);
+            collection.AddSingleton<IUpdateHandler>(Graph);
             collection.AddTransient<ITimeSeriesRetriever, TimeSeriesRetriever>();
             collection.AddTransient<IDataHubClient, DataHubClient>();
             collection.AddSingleton<MainWindowViewModel>();

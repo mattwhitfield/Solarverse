@@ -121,7 +121,6 @@ namespace Solarverse.Core.Data
 
         public void RecalculateForecast()
         {
-            _logger.LogInformation($"Recalculating forecast");
             var efficiency = _configurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.85;
             var maxChargeKwhPerPeriod = CurrentState.MaxChargeRateKw * 0.5 * efficiency;
             var capacity = _configurationProvider.Configuration.Battery.CapacityKwh ?? 5;
