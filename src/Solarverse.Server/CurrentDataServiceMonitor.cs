@@ -2,6 +2,7 @@
 using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Models;
+using System.Transactions;
 
 namespace Solarverse.Server
 {
@@ -10,11 +11,13 @@ namespace Solarverse.Server
         private IHubContext<DataHub> _hubContext;
         bool _timeSeriesUpdated;
         bool _memoryLogUpdated;
+        bool _currentStateUpdated;
 
         public CurrentDataServiceMonitor(ICurrentDataService currentDataService, IMemoryLog memoryLog, IHubContext<DataHub> hubContext)
         {
             _hubContext = hubContext;
             currentDataService.TimeSeriesUpdated += CurrentDataService_TimeSeriesUpdated;
+            currentDataService.CurrentStateUpdated += CurrentDataService_CurrentStateUpdated;
             memoryLog.LogUpdated += MemoryLog_LogUpdated;
         }
 
@@ -34,6 +37,12 @@ namespace Solarverse.Server
                     _memoryLogUpdated = false;
                 }
 
+                if (_currentStateUpdated)
+                {
+                    await _hubContext.Clients.All.SendAsync(DataHubMethods.CurrentStateUpdated);
+                    _currentStateUpdated = false;
+                }
+
                 try
                 {
                     await Task.Delay(1000, stoppingToken);
@@ -41,6 +50,11 @@ namespace Solarverse.Server
                 catch (OperationCanceledException) 
                 { }
             }
+        }
+
+        private void CurrentDataService_CurrentStateUpdated(object? sender, EventArgs e)
+        {
+            _currentStateUpdated = true;
         }
 
         private void MemoryLog_LogUpdated(object? sender, EventArgs e)

@@ -287,12 +287,12 @@ namespace Solarverse.UI.Core
             return scatter;
         }
 
-        private static ScatterPlot AddSteppedPlot(Plot plot, TimeSeries timeSeries, Func<TimeSeriesPoint, double?> value, Color color, bool isActual)
+        private static void AddSteppedPlot(Plot plot, TimeSeries timeSeries, Func<TimeSeriesPoint, double?> value, Color color, bool isActual)
         {
-            return AddSteppedPlot(plot, timeSeries, value, color, isActual, _ => true);
+            AddSteppedPlot(plot, timeSeries, value, color, isActual, _ => true);
         }
 
-        private static ScatterPlot AddSteppedPlot(Plot plot, TimeSeries timeSeries, Func<TimeSeriesPoint, double?> value, Color color, bool isActual, Func<DateTime, bool> timeFilter)
+        private static void AddSteppedPlot(Plot plot, TimeSeries timeSeries, Func<TimeSeriesPoint, double?> value, Color color, bool isActual, Func<DateTime, bool> timeFilter)
         {
             var renderedSeries = timeSeries.GetNullableSeries(value);
             var dataX = new List<double>();
@@ -310,17 +310,21 @@ namespace Solarverse.UI.Core
                 dataY.Add(y);
             }
 
+            if (dataX.Count <= 0)
+            {
+                return;
+            }
+
             var scatter = plot.AddScatter(dataX.ToArray(), dataY.ToArray());
             scatter.Color = color;
             scatter.LineStyle = isActual ? LineStyle.Solid : LineStyle.Dash;
             scatter.OnNaN = ScottPlot.Plottable.ScatterPlot.NanBehavior.Gap;
             scatter.MarkerShape = MarkerShape.none;
-            return scatter;
         }
 
-        private static HSpan AddAndConfigureHspan(Plot plot)
+        private static HSpan AddAndConfigureHspan(Plot plot, Color color)
         {
-            var span = plot.AddHorizontalSpan(DateTime.UtcNow.ToOADate(), DateTime.UtcNow.ToOADate(), Color.FromArgb(32, Color.Black));
+            var span = plot.AddHorizontalSpan(DateTime.UtcNow.ToOADate(), DateTime.UtcNow.ToOADate(), Color.FromArgb(32, color));
             span.IsVisible = false;
             return span;
         }
@@ -421,9 +425,18 @@ namespace Solarverse.UI.Core
             WpfPlot2.Plot.Clear();
             WpfPlot3.Plot.Clear();
 
-            _span1 = AddAndConfigureHspan(WpfPlot1.Plot);
-            _span2 = AddAndConfigureHspan(WpfPlot2.Plot);
-            _span3 = AddAndConfigureHspan(WpfPlot3.Plot);
+            _span1 = AddAndConfigureHspan(WpfPlot1.Plot, Color.Black);
+            _span2 = AddAndConfigureHspan(WpfPlot2.Plot, Color.Black);
+            _span3 = AddAndConfigureHspan(WpfPlot3.Plot, Color.Black);
+
+            var currentTimeSpan1 = AddAndConfigureHspan(WpfPlot1.Plot, Color.Blue);
+            var currentTimeSpan2 = AddAndConfigureHspan(WpfPlot2.Plot, Color.Blue);
+            var currentTimeSpan3 = AddAndConfigureHspan(WpfPlot3.Plot, Color.Blue);
+
+            var period = new Period(TimeSpan.FromMinutes(30));
+            currentTimeSpan1.X1 = currentTimeSpan2.X1 = currentTimeSpan3.X1 = period.GetLast(DateTime.UtcNow).ToOADate();
+            currentTimeSpan1.X2 = currentTimeSpan2.X2 = currentTimeSpan3.X2 = period.GetNext(DateTime.UtcNow).ToOADate();
+            currentTimeSpan1.IsVisible = currentTimeSpan2.IsVisible = currentTimeSpan3.IsVisible = true;
 
             WpfPlot1.Plot.YAxis.LockLimits(false);
             WpfPlot2.Plot.YAxis.LockLimits(false);
@@ -495,6 +508,11 @@ namespace Solarverse.UI.Core
 
         public void AddLogLines(IEnumerable<MemoryLogEntry> entries)
         {
+            Dispatcher.BeginInvoke(new Action(() => AddLogLinesSafe(entries)));
+        }
+
+        public void AddLogLinesSafe(IEnumerable<MemoryLogEntry> entries)
+        {
             foreach (var entry in entries)
             {
                 LogItems.Items.Insert(0, entry);
@@ -506,6 +524,11 @@ namespace Solarverse.UI.Core
         }
 
         public void UpdateCurrentState(InverterCurrentState currentState)
+        {
+            Dispatcher.BeginInvoke(new Action(() => UpdateCurrentStateSafe(currentState)));
+        }
+
+        public void UpdateCurrentStateSafe(InverterCurrentState currentState)
         {
             CurrentStateTimeUpdatedLabel.Text = currentState.UpdateTime.ToString();
             CurrentStateSolarPowerLabel.Text = currentState.CurrentSolarPower.ToString();

@@ -4,5 +4,6 @@
     {
         public const string TimeSeriesUpdated = "TimeSeriesUpdated";
         public const string MemoryLogUpdated = "MemoryLogUpdated";
+        public const string CurrentStateUpdated = "CurrentStateUpdated";
     }
 }

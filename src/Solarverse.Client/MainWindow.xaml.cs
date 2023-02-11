@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Solarverse.Core.Data;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,7 +13,7 @@ namespace Solarverse.Client
         private ServiceProvider _serviceProvider;
         private MainWindowViewModel _viewModel;
         private bool _closing;
-        private ITimeSeriesRetriever _timeSeriesRetriever;
+        private ISolarverseApiClient _solarverseApiClient;
 
         public MainWindow()
         {
@@ -31,13 +32,13 @@ namespace Solarverse.Client
             collection.AddLogging();
 
             collection.AddSingleton<IUpdateHandler>(Graph);
-            collection.AddTransient<ITimeSeriesRetriever, TimeSeriesRetriever>();
+            collection.AddTransient<ISolarverseApiClient, SolarverseApiClient>();
             collection.AddTransient<IDataHubClient, DataHubClient>();
             collection.AddSingleton<MainWindowViewModel>();
             _serviceProvider = collection.BuildServiceProvider();
 
             DataContext = _viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
-            _timeSeriesRetriever = _serviceProvider.GetRequiredService<ITimeSeriesRetriever>();
+            _solarverseApiClient = _serviceProvider.GetRequiredService<ISolarverseApiClient>();
 
             Loaded += OnLoaded;
         }
@@ -49,8 +50,18 @@ namespace Solarverse.Client
             // TODO - observe exceptions
             Task.Run(async () => 
             {
-                await _viewModel.Start();
-                await _timeSeriesRetriever.UpdateTimeSeries();
+                try
+                {
+                    await _viewModel.Start();
+                    await _solarverseApiClient.UpdateTimeSeries();
+                }
+                catch (Exception e)
+                {
+                    await Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        MessageBox.Show("Failed while connecting to server - " + e.GetType().Name + ": " + e.Message, "Failed during startup", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }));
+                }
             });
         }
 

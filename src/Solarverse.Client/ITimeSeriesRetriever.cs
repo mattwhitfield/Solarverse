@@ -2,8 +2,10 @@
 
 namespace Solarverse.Client
 {
-    public interface ITimeSeriesRetriever
+    public interface ISolarverseApiClient
     {
         Task UpdateTimeSeries();
+        Task UpdateCurrentState();
+        Task UpdateMemoryLog();
     }
 }

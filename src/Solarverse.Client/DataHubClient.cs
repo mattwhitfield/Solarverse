@@ -10,7 +10,7 @@ namespace Solarverse.Client
 {
     public class DataHubClient : IDataHubClient
     {
-        public DataHubClient(IOptions<ClientConfiguration> configuration, ITimeSeriesRetriever timeSeriesRetriever)
+        public DataHubClient(IOptions<ClientConfiguration> configuration, ISolarverseApiClient solarverseApiClient)
         {
             _configuration = configuration;
 
@@ -20,7 +20,7 @@ namespace Solarverse.Client
                 throw new InvalidOperationException();
             }
 
-            _timeSeriesRetriever = timeSeriesRetriever;
+            _solarverseApiClient = solarverseApiClient;
             var reconnectionDelays = Enumerable.Range(1, 20).Select(x => TimeSpan.FromSeconds(x)).ToArray();
             _hubConnection = new HubConnectionBuilder()
                 .WithUrl(url.TrimEnd('/') + "/DataHub")
@@ -30,7 +30,7 @@ namespace Solarverse.Client
 
         private HubConnection _hubConnection;
         private readonly IOptions<ClientConfiguration> _configuration;
-        private readonly ITimeSeriesRetriever _timeSeriesRetriever;
+        private readonly ISolarverseApiClient _solarverseApiClient;
         private IDisposable? _timeSeriesUpdated;
         private IDisposable? _memoryLogUpdated;
 
@@ -50,17 +50,22 @@ namespace Solarverse.Client
             await _hubConnection.StartAsync();
             _timeSeriesUpdated = _hubConnection.On(DataHubMethods.TimeSeriesUpdated, () => UpdateTimeSeries());
             _memoryLogUpdated = _hubConnection.On(DataHubMethods.MemoryLogUpdated, () => UpdateMemoryLog());
+            _memoryLogUpdated = _hubConnection.On(DataHubMethods.CurrentStateUpdated, () => UpdateCurrentState());
         }
 
         private Task UpdateTimeSeries()
         {
-            return _timeSeriesRetriever.UpdateTimeSeries();
+            return _solarverseApiClient.UpdateTimeSeries();
         }
 
         private Task UpdateMemoryLog()
         {
-            // TODO - implement
-            return Task.CompletedTask;
+            return _solarverseApiClient.UpdateMemoryLog();
+        }
+
+        private Task UpdateCurrentState()
+        {
+            return _solarverseApiClient.UpdateCurrentState();
         }
     }
 }

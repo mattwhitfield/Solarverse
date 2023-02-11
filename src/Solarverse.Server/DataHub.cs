@@ -2,7 +2,6 @@
 
 namespace Solarverse.Server
 {
-
     public class DataHub : Hub
     {
     }
