@@ -7,5 +7,7 @@ namespace Solarverse.Core.Data
         public void UpdateTimeSeries(TimeSeries series);
 
         public void AddLogLines(IEnumerable<MemoryLogEntry> entries);
+
+        public void UpdateCurrentState(InverterCurrentState currentState);
     }
 }

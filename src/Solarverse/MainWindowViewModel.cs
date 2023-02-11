@@ -26,7 +26,13 @@ namespace Solarverse
             _memoryLog = memoryLog;
             _controlLoopCancellation = new CancellationTokenSource();
             _currentDataService.TimeSeriesUpdated += CurrentDataService_TimeSeriesUpdated;
+            _currentDataService.CurrentStateUpdated += CurrentDataService_CurrentStateUpdated;
             _memoryLog.LogUpdated += MemoryLog_LogUpdated;
+        }
+
+        private void CurrentDataService_CurrentStateUpdated(object? sender, EventArgs e)
+        {
+            _updateHandler.UpdateCurrentState(_currentDataService.CurrentState);
         }
 
         long _lastLog = -1;

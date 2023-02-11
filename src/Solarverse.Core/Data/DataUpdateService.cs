@@ -185,6 +185,15 @@ namespace Solarverse.Core.Data
             _logger.LogInformation($"Forecast = {logBuilder}");
         }
 
+        public void UpdateCurrentState(Action<InverterCurrentState> updateAction)
+        {
+            if (CurrentState != null)
+            {
+                updateAction(CurrentState);
+                CurrentStateUpdated?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
         private class CurrentDataLock : IDisposable
         {
             private readonly CurrentDataService _currentDataService;

@@ -29,5 +29,7 @@ namespace Solarverse.Core.Models
         public double MaxChargeRateKw { get; }
 
         public int BatteryReserve { get; }
+
+        public Dictionary<string, string> ExtendedProperties { get; } = new Dictionary<string, string>();
     }
 }

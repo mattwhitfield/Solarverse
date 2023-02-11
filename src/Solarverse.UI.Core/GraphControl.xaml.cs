@@ -504,5 +504,21 @@ namespace Solarverse.UI.Core
                 }
             }
         }
+
+        public void UpdateCurrentState(InverterCurrentState currentState)
+        {
+            CurrentStateTimeUpdatedLabel.Text = currentState.UpdateTime.ToString();
+            CurrentStateSolarPowerLabel.Text = currentState.CurrentSolarPower.ToString();
+            CurrentStateBatteryPercentLabel.Text = currentState.BatteryPercent.ToString();
+            CurrentStateBatteryReserveLabel.Text = currentState.BatteryReserve.ToString();
+            CurrentStateMaxChargeRateKwLabel.Text = currentState.MaxChargeRateKw.ToString();
+            CurrentStateMaxDischargeRateKwLabel.Text = currentState.MaxDischargeRateKw.ToString();
+
+            CurrentStateExtendedItems.Items.Clear();
+            foreach (var item in currentState.ExtendedProperties.OrderBy(x => x.Key))
+            {
+                CurrentStateExtendedItems.Items.Add(new ExtendedPropertyModel(item.Key, item.Value));
+            }
+        }
     }
 }
