@@ -368,6 +368,41 @@ namespace Solarverse.UI.Core
             Dispatcher.BeginInvoke(new Action(() => UpdateTimeSeriesSafe(series)));
         }
 
+        private void ShowGraph(object sender, System.Windows.RoutedEventArgs e)
+        {
+            SetVisible(GraphGrid);
+        }
+
+        private void ShowLogs(object sender, System.Windows.RoutedEventArgs e)
+        {
+            SetVisible(LogsGrid);
+        }
+
+        private void ShowInverter(object sender, System.Windows.RoutedEventArgs e)
+        {
+            SetVisible(InverterGrid);
+        }
+
+        private void SetVisible(Grid visibleGrid)
+        {
+            void Set(Grid control, Button button)
+            {
+                if (ReferenceEquals(control, visibleGrid))
+                {
+                    control.Visibility = System.Windows.Visibility.Visible;
+                    button.Background = System.Windows.Media.Brushes.LightBlue;
+                }
+                else
+                {
+                    control.Visibility = System.Windows.Visibility.Collapsed;
+                    button.Background = System.Windows.Media.Brushes.Transparent;
+                }
+            }
+            Set(GraphGrid, GraphButton);
+            Set(LogsGrid, LogsButton);
+            Set(InverterGrid, InverterButton);
+        }
+
         private bool _updating;
         public void UpdateTimeSeriesSafe(TimeSeries series)
         {

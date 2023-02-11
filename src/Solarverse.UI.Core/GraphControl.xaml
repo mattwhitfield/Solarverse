@@ -9,54 +9,12 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBlock
-                Grid.Row="1"
-                Grid.Column="0"
-                Margin="4"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                FontFamily="Segoe UI"
-                FontSize="20"
-                Text="Power">
-            <TextBlock.LayoutTransform>
-                <RotateTransform Angle="-90" />
-            </TextBlock.LayoutTransform>
-        </TextBlock>
-        <TextBlock
-                Grid.Row="2"
-                Grid.Column="0"
-                Margin="4"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                FontFamily="Segoe UI"
-                FontSize="20"
-                Text="Cost">
-            <TextBlock.LayoutTransform>
-                <RotateTransform Angle="-90" />
-            </TextBlock.LayoutTransform>
-        </TextBlock>
-        <TextBlock
-                Grid.Row="3"
-                Grid.Column="0"
-                Margin="4, 4, 4, 30"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                FontFamily="Segoe UI"
-                FontSize="20"
-                Text="Plan">
-            <TextBlock.LayoutTransform>
-                <RotateTransform Angle="-90" />
-            </TextBlock.LayoutTransform>
-        </TextBlock>
-        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" Margin="24, 0" VerticalAlignment="Center">
+        <Grid Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" Margin="24, 0" VerticalAlignment="Center">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -85,47 +43,101 @@
                         </BeginStoryboard>
                     </EventTrigger>
                 </Path.Triggers>
-            </Path> 
+            </Path>
 
             <TextBlock Grid.Column="1" Text="Solarverse" FontFamily="Segoe UI" FontSize="28" VerticalAlignment="Center" />
         </Grid>
-        <Grid Grid.Row="0" Grid.Column="1">
-            <Border
-                    Width="900"
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Right" Margin="0,0,3,0" VerticalAlignment="Center">
+            <Button x:Name="GraphButton" Click="ShowGraph" Background="LightBlue" Margin="3, 2">
+                <StackPanel Orientation="Horizontal" Margin="6">
+                    <Path Grid.Column="0"
+                  Width="20"
+                  Height="20"
+                  Fill="Black"
+                  VerticalAlignment="Center"
+                  Margin="0, 0, 4, 0"
+                  Data="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"
+                  Stretch="Uniform" />
+                    <TextBlock Text="Graph" FontFamily="Segoe UI" FontSize="13" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+            <Button x:Name="InverterButton" Click="ShowInverter" Background="Transparent" Margin="3, 2">
+                <StackPanel Orientation="Horizontal" Margin="6">
+                    <Path Grid.Column="0"
+                  Width="20"
+                  Height="20"
+                  Fill="Black"
+                  VerticalAlignment="Center"
+                  Margin="0, 0, 4, 0"
+                  Data="M12 3L2 12H5V20H19V12H22L12 3M11.5 18V14H9L12.5 7V11H15L11.5 18Z"
+                  Stretch="Uniform" />
+                    <TextBlock Text="Inverter" FontFamily="Segoe UI" FontSize="13" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+            <Button x:Name="LogsButton" Click="ShowLogs" Background="Transparent" Margin="3, 2">
+                <StackPanel Orientation="Horizontal" Margin="6">
+                    <Path Grid.Column="0"
+                  Width="20"
+                  Height="20"
+                  Fill="Black"
+                  VerticalAlignment="Center"
+                  Margin="0, 0, 4, 0"
+                  Data="M5,3C3.89,3 3,3.89 3,5V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V5C21,3.89 20.11,3 19,3H5M5,5H19V19H5V5M7,7V9H17V7H7M7,11V13H17V11H7M7,15V17H14V15H7Z"
+                  Stretch="Uniform" />
+                    <TextBlock Text="Logs" FontFamily="Segoe UI" FontSize="13" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" x:Name="GraphGrid">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
+                <Border
+                    Width="1000"
                     HorizontalAlignment="Center"
                     BorderBrush="Gray"
                     BorderThickness="1"
                     CornerRadius="3">
-                <Grid HorizontalAlignment="Center">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="220" />
-                        <ColumnDefinition Width="220" />
-                        <ColumnDefinition Width="220" />
-                        <ColumnDefinition Width="220" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                    <Grid HorizontalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="210" />
+                            <ColumnDefinition Width="210" />
+                            <ColumnDefinition Width="180" />
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="260" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                    <TextBlock
+                        <TextBlock
                             x:Name="DateTimeLabel"
                             Grid.Row="0"
-                            Grid.RowSpan="3"
+                            Grid.RowSpan="2"
                             Grid.Column="0"
                             Margin="2,0"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             FontFamily="Segoe UI"
-                            FontSize="16"
+                            FontSize="14"
                             Text="-" />
-                    <StackPanel
+                        <StackPanel
                             Grid.Row="0"
                             Grid.Column="1"
                             Margin="4"
                             Orientation="Horizontal">
-                        <Path
+                            <Path
                                 Width="12"
                                 Height="12"
                                 Margin="6,0,0,0"
@@ -133,22 +145,22 @@
                                 Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
                                 Fill="DarkBlue"
                                 Stretch="Uniform" />
-                        <TextBlock
+                            <TextBlock
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="Consumption:" />
-                        <TextBlock
+                            <TextBlock
                                 x:Name="ConsumptionLabel"
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
-                    </StackPanel>
-                    <StackPanel
+                        </StackPanel>
+                        <StackPanel
                             Grid.Row="0"
                             Grid.Column="2"
                             Margin="4"
                             Orientation="Horizontal">
-                        <Path
+                            <Path
                                 Width="12"
                                 Height="12"
                                 Margin="6,0,0,0"
@@ -156,22 +168,23 @@
                                 Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
                                 Fill="DarkGoldenrod"
                                 Stretch="Uniform" />
-                        <TextBlock
+                            <TextBlock
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="Solar:" />
-                        <TextBlock
+                            <TextBlock
                                 x:Name="SolarLabel"
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
-                    </StackPanel>
-                    <StackPanel
+                        </StackPanel>
+                        <StackPanel
                             Grid.Row="0"
                             Grid.Column="3"
+                            Grid.ColumnSpan="2"
                             Margin="4"
                             Orientation="Horizontal">
-                        <Path
+                            <Path
                                 x:Name="ExcessPowerCircle"
                                 Width="12"
                                 Height="12"
@@ -180,23 +193,23 @@
                                 Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
                                 Fill="Black"
                                 Stretch="Uniform" />
-                        <TextBlock
+                            <TextBlock
                                 x:Name="ExcessPowerTitleLabel"
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="Excess Power:" />
-                        <TextBlock
+                            <TextBlock
                                 x:Name="ExcessPowerLabel"
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
-                    </StackPanel>
-                    <StackPanel
+                        </StackPanel>
+                        <StackPanel
                             Grid.Row="1"
                             Grid.Column="1"
                             Margin="4"
                             Orientation="Horizontal">
-                        <Path
+                            <Path
                                 Width="12"
                                 Height="12"
                                 Margin="6,0,0,0"
@@ -204,22 +217,22 @@
                                 Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
                                 Fill="Purple"
                                 Stretch="Uniform" />
-                        <TextBlock
+                            <TextBlock
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="Incoming Rate:" />
-                        <TextBlock
+                            <TextBlock
                                 x:Name="IncomingRateLabel"
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
-                    </StackPanel>
-                    <StackPanel
+                        </StackPanel>
+                        <StackPanel
                             Grid.Row="1"
                             Grid.Column="2"
                             Margin="4"
                             Orientation="Horizontal">
-                        <Path
+                            <Path
                                 Width="12"
                                 Height="12"
                                 Margin="6,0,0,0"
@@ -227,23 +240,23 @@
                                 Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
                                 Fill="OrangeRed"
                                 Stretch="Uniform" />
-                        <TextBlock
+                            <TextBlock
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="Outgoing Rate:" />
-                        <TextBlock
+                            <TextBlock
                                 x:Name="OutgoingRateLabel"
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
-                    </StackPanel>
-                    <StackPanel
-                            Grid.Row="2"
-                            Grid.Column="2"
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="1"
+                            Grid.Column="4"
                             Grid.ColumnSpan="2"
                             Margin="4"
                             Orientation="Horizontal">
-                        <Path
+                            <Path
                                 Width="12"
                                 Height="12"
                                 Margin="6,0,0,0"
@@ -251,22 +264,22 @@
                                 Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
                                 Fill="Black"
                                 Stretch="Uniform" />
-                        <TextBlock
+                            <TextBlock
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="Battery:" />
-                        <TextBlock
+                            <TextBlock
                                 x:Name="ProjectedBatteryPercentLabel"
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
-                    </StackPanel>
-                    <StackPanel
-                            Grid.Row="2"
-                            Grid.Column="1"
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Row="1"
+                            Grid.Column="3"
                             Margin="4"
                             Orientation="Horizontal">
-                        <Path
+                            <Path
                                 x:Name="ScheduledActionPath"
                                 Width="12"
                                 Height="12"
@@ -275,20 +288,59 @@
                                 Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
                                 Fill="Black"
                                 Stretch="Uniform" />
-                        <TextBlock
+                            <TextBlock
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="Action:" />
-                        <TextBlock
+                            <TextBlock
                                 x:Name="ScheduledActionLabel"
                                 Margin="2,0"
                                 FontFamily="Segoe UI"
                                 Text="-" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </Grid>
-        <WpfPlot
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+            <TextBlock
+                Grid.Row="1"
+                Grid.Column="0"
+                Margin="4"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontFamily="Segoe UI"
+                FontSize="20"
+                Text="Power">
+                <TextBlock.LayoutTransform>
+                    <RotateTransform Angle="-90" />
+                </TextBlock.LayoutTransform>
+            </TextBlock>
+            <TextBlock
+                Grid.Row="2"
+                Grid.Column="0"
+                Margin="4"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontFamily="Segoe UI"
+                FontSize="20"
+                Text="Cost">
+                <TextBlock.LayoutTransform>
+                    <RotateTransform Angle="-90" />
+                </TextBlock.LayoutTransform>
+            </TextBlock>
+            <TextBlock
+                Grid.Row="3"
+                Grid.Column="0"
+                Margin="4, 4, 4, 30"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontFamily="Segoe UI"
+                FontSize="20"
+                Text="Plan">
+                <TextBlock.LayoutTransform>
+                    <RotateTransform Angle="-90" />
+                </TextBlock.LayoutTransform>
+            </TextBlock>
+            <WpfPlot
                 Name="WpfPlot1"
                 Grid.Row="1"
                 Grid.Column="1"
@@ -297,7 +349,7 @@
                 MouseEnter="WpfPlot_MouseEnter"
                 MouseLeave="WpfPlot_MouseLeave"
                 MouseMove="WpfPlot_OnMouseMove" />
-        <WpfPlot
+            <WpfPlot
                 Name="WpfPlot2"
                 Grid.Row="2"
                 Grid.Column="1"
@@ -306,7 +358,7 @@
                 MouseEnter="WpfPlot_MouseEnter"
                 MouseLeave="WpfPlot_MouseLeave"
                 MouseMove="WpfPlot_OnMouseMove" />
-        <WpfPlot
+            <WpfPlot
                 Name="WpfPlot3"
                 Grid.Row="3"
                 Grid.Column="1"
@@ -315,5 +367,12 @@
                 MouseEnter="WpfPlot_MouseEnter"
                 MouseLeave="WpfPlot_MouseLeave"
                 MouseMove="WpfPlot_OnMouseMove" />
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" x:Name="InverterGrid" Visibility="Collapsed">
+            <TextBlock Text="Inverter" />
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" x:Name="LogsGrid" Visibility="Collapsed">
+            <TextBlock Text="Logs" />
+        </Grid>
     </Grid>
 </UserControl>
