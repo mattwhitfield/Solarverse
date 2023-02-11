@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Solarverse.Core.Control;
 using Solarverse.Core.Data;
@@ -28,6 +30,8 @@ namespace Solarverse.Core.Helper
             collection.AddLogging(builder =>
             {
                 builder.AddSerilog(dispose: true);
+                builder.Services.TryAddEnumerable(
+                    ServiceDescriptor.Singleton<ILoggerProvider, MemoryLoggerProvider>());
             });
 
             collection.AddTransient<IConfigurationProvider, DefaultConfigurationProvider>();
@@ -49,6 +53,7 @@ namespace Solarverse.Core.Helper
             collection.AddTransient<IPredictionFactory, PredictionFactory>();
             collection.AddTransient<IControlPlanFactory, ControlPlanFactory>();
             collection.AddTransient<IIntegrationProvider, IntegrationProvider>();
+            collection.AddSingleton<IMemoryLog, MemoryLog>();
         }
     }
 }

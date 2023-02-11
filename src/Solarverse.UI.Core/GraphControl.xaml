@@ -372,7 +372,15 @@
             <TextBlock Text="Inverter" />
         </Grid>
         <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" x:Name="LogsGrid" Visibility="Collapsed">
-            <TextBlock Text="Logs" />
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <ItemsControl Margin="6" BorderThickness="1" x:Name="LogItems">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="MemoryLogEntry">
+                            <TextBlock Text="{Binding Message}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
         </Grid>
     </Grid>
 </UserControl>

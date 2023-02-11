@@ -1,6 +1,8 @@
 ﻿using ScottPlot;
 using ScottPlot.Plottable;
 using Solarverse.Core.Data;
+using Solarverse.Core.Helper;
+using Solarverse.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -10,7 +12,7 @@ using System.Windows.Input;
 
 namespace Solarverse.UI.Core
 {
-    public partial class GraphControl : UserControl, ITimeSeriesHandler
+    public partial class GraphControl : UserControl, IUpdateHandler
     {
         HSpan? _span1, _span2, _span3;
 
@@ -112,7 +114,7 @@ namespace Solarverse.UI.Core
                     SolarLabel.Text = "-";
                 }
 
-                string GetBatteryDescription(TimeSeriesPoint sourcePoint)
+                static string GetBatteryDescription(TimeSeriesPoint sourcePoint)
                 {
                     if (sourcePoint.ActualBatteryPercentage.HasValue)
                     {
@@ -489,6 +491,18 @@ namespace Solarverse.UI.Core
             WpfPlot3.Plot.YAxis.LockLimits(true);
 
             _updating = false;
+        }
+
+        public void AddLogLines(IEnumerable<MemoryLogEntry> entries)
+        {
+            foreach (var entry in entries)
+            {
+                LogItems.Items.Insert(0, entry);
+                if (LogItems.Items.Count > MemoryLog.LogLength)
+                {
+                    LogItems.Items.RemoveAt(MemoryLog.LogLength);
+                }
+            }
         }
     }
 }

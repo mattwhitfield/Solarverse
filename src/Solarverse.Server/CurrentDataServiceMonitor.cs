@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Solarverse.Core.Data;
+using Solarverse.Core.Helper;
 using Solarverse.Core.Models;
 
 namespace Solarverse.Server
@@ -8,11 +9,13 @@ namespace Solarverse.Server
     {
         private IHubContext<DataHub> _hubContext;
         bool _timeSeriesUpdated;
+        bool _memoryLogUpdated;
 
-        public CurrentDataServiceMonitor(ICurrentDataService currentDataService, IHubContext<DataHub> hubContext)
+        public CurrentDataServiceMonitor(ICurrentDataService currentDataService, IMemoryLog memoryLog, IHubContext<DataHub> hubContext)
         {
             _hubContext = hubContext;
             currentDataService.TimeSeriesUpdated += CurrentDataService_TimeSeriesUpdated;
+            memoryLog.LogUpdated += MemoryLog_LogUpdated;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -25,6 +28,12 @@ namespace Solarverse.Server
                     _timeSeriesUpdated = false;
                 }
 
+                if (_memoryLogUpdated)
+                {
+                    await _hubContext.Clients.All.SendAsync(DataHubMethods.MemoryLogUpdated);
+                    _memoryLogUpdated = false;
+                }
+
                 try
                 {
                     await Task.Delay(1000, stoppingToken);
@@ -32,6 +41,11 @@ namespace Solarverse.Server
                 catch (OperationCanceledException) 
                 { }
             }
+        }
+
+        private void MemoryLog_LogUpdated(object? sender, EventArgs e)
+        {
+            _memoryLogUpdated = true;
         }
 
         private void CurrentDataService_TimeSeriesUpdated(object? sender, EventArgs e)
