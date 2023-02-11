@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Integration.GivEnergy.Models;
 using Solarverse.Core.Models;
@@ -11,10 +12,11 @@ namespace Solarverse.Core.Integration.GivEnergy
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<GivEnergyClient> _logger;
+        private readonly ICurrentDataService _currentDataService;
         private string? _inverterSerial;
         private CurrentSettingValues? _currentSettings;
 
-        public GivEnergyClient(ILogger<GivEnergyClient> logger, IConfigurationProvider configurationProvider)
+        public GivEnergyClient(ILogger<GivEnergyClient> logger, IConfigurationProvider configurationProvider, ICurrentDataService currentDataService)
         {
             _httpClient = new HttpClient();
 
@@ -27,6 +29,7 @@ namespace Solarverse.Core.Integration.GivEnergy
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _logger = logger;
+            _currentDataService = currentDataService;
         }
 
         public async Task<string> FindInverterSerial()
@@ -162,6 +165,14 @@ namespace Solarverse.Core.Integration.GivEnergy
                 maxChargeRateKw,
                 batteryReserve.Value);
 
+            state.ExtendedProperties[SettingIds.GetName(SettingIds.EcoMode)] = ecoModeEnabled.Value.ToString();
+            state.ExtendedProperties[SettingIds.GetName(SettingIds.Charge.Enabled)] = chargeSettings.Enabled.Value.ToString();
+            state.ExtendedProperties[SettingIds.GetName(SettingIds.Charge.StartTime)] = chargeSettings.StartTime.Value?.ToString() ?? "<not set>";
+            state.ExtendedProperties[SettingIds.GetName(SettingIds.Charge.EndTime)] = chargeSettings.EndTime.Value?.ToString() ?? "<not set>";
+            state.ExtendedProperties[SettingIds.GetName(SettingIds.Discharge.Enabled)] = dischargeSettings.Enabled.Value.ToString();
+            state.ExtendedProperties[SettingIds.GetName(SettingIds.Discharge.StartTime)] = dischargeSettings.StartTime.Value?.ToString() ?? "<not set>";
+            state.ExtendedProperties[SettingIds.GetName(SettingIds.Discharge.EndTime)] = dischargeSettings.EndTime.Value?.ToString() ?? "<not set>";
+
             _logger.LogInformation($"Inverter state updated @ {state.UpdateTime}:");
             _logger.LogInformation($"  Battery {state.BatteryPercent}%");
             _logger.LogInformation($"  Battery reserve {state.BatteryReserve}%");
@@ -213,6 +224,9 @@ namespace Solarverse.Core.Integration.GivEnergy
 
                 if (setting.Data != null && setting.Data.Success)
                 {
+                    _currentDataService.UpdateCurrentState(x =>
+                        x.ExtendedProperties[SettingIds.GetName(id)] = value?.ToString() ?? "<null>"
+                    );
                     return setting.Data;
                 }
 

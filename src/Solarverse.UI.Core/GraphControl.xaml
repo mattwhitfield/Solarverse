@@ -369,13 +369,54 @@
                 MouseMove="WpfPlot_OnMouseMove" />
         </Grid>
         <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" x:Name="InverterGrid" Visibility="Collapsed">
-            <TextBlock Text="Inverter" />
+            <StackPanel Orientation="Vertical" Grid.IsSharedSizeScope="True" Margin="12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="Prompt" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" FontFamily="Segoe UI" FontSize="14" Text="Time updated:" Margin="0, 0, 4, 0" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" FontFamily="Segoe UI" FontSize="14" x:Name="CurrentStateTimeUpdatedLabel" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" FontFamily="Segoe UI" FontSize="14" Text="Current solar power:" Margin="0, 0, 4, 0" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" FontFamily="Segoe UI" FontSize="14" x:Name="CurrentStateSolarPowerLabel" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" FontFamily="Segoe UI" FontSize="14" Text="Current battery percentage:" Margin="0, 0, 4, 0" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" FontFamily="Segoe UI" FontSize="14" x:Name="CurrentStateBatteryPercentLabel" />
+                    <TextBlock Grid.Row="3" Grid.Column="0" FontFamily="Segoe UI" FontSize="14" Text="Battery reserve (%):" Margin="0, 0, 4, 0" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" FontFamily="Segoe UI" FontSize="14" x:Name="CurrentStateBatteryReserveLabel" />
+                    <TextBlock Grid.Row="4" Grid.Column="0" FontFamily="Segoe UI" FontSize="14" Text="Maximum charge rate (kW):" Margin="0, 0, 4, 0" />
+                    <TextBlock Grid.Row="4" Grid.Column="1" FontFamily="Segoe UI" FontSize="14" x:Name="CurrentStateMaxChargeRateKwLabel" />
+                    <TextBlock Grid.Row="5" Grid.Column="0" FontFamily="Segoe UI" FontSize="14" Text="Maximum discharge rate (kW):" Margin="0, 0, 4, 0" />
+                    <TextBlock Grid.Row="5" Grid.Column="1" FontFamily="Segoe UI" FontSize="14" x:Name="CurrentStateMaxDischargeRateKwLabel" />
+                </Grid>
+                <ItemsControl x:Name="CurrentStateExtendedItems">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="ExtendedPropertyModel">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Prompt" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" FontFamily="Segoe UI" FontSize="14" Text="{Binding Caption}" Margin="0, 0, 4, 0" />
+                                <TextBlock Grid.Column="1" FontFamily="Segoe UI" FontSize="14" Text="{Binding Message}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
         </Grid>
         <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" x:Name="LogsGrid" Visibility="Collapsed">
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                 <ItemsControl Margin="6" BorderThickness="1" x:Name="LogItems">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="MemoryLogEntry">
+                        <DataTemplate DataType="MemoryLogEntryModel">
                             <TextBlock Text="{Binding Message}" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
