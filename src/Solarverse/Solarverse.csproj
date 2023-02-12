@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Solarverse.Client\Solarverse.Client.csproj" />
     <ProjectReference Include="..\Solarverse.Core\Solarverse.Core.csproj" />
     <ProjectReference Include="..\Solarverse.UI.Core\Solarverse.UI.Core.csproj" />
   </ItemGroup>

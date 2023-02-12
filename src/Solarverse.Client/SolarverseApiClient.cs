@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
@@ -6,6 +7,7 @@ using Solarverse.Core.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace Solarverse.Client
@@ -21,6 +23,9 @@ namespace Solarverse.Client
         public SolarverseApiClient(ILogger<SolarverseApiClient> logger, IOptions<ClientConfiguration> configuration, IUpdateHandler updateHandler)
         {
             _httpClient = new HttpClient();
+
+            _httpClient.DefaultRequestHeaders.Add(Headers.ApiKey, configuration.Value.ApiKey.ToString());
+
             _logger = logger;
             _configuration = configuration;
             _updateHandler = updateHandler;

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
+using Solarverse.Core.Helper;
 using Solarverse.Core.Models;
 using System;
 using System.Data;
@@ -23,7 +24,10 @@ namespace Solarverse.Client
             _solarverseApiClient = solarverseApiClient;
             var reconnectionDelays = Enumerable.Range(1, 20).Select(x => TimeSpan.FromSeconds(x)).ToArray();
             _hubConnection = new HubConnectionBuilder()
-                .WithUrl(url.TrimEnd('/') + "/DataHub")
+                .WithUrl(url.TrimEnd('/') + "/DataHub", options =>
+                {
+                    options.Headers[Headers.ApiKey] = _configuration.Value.ApiKey.ToString();
+                })
                 .WithAutomaticReconnect(reconnectionDelays)
                 .Build();
         }

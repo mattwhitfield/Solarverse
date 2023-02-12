@@ -29,11 +29,9 @@ namespace Solarverse.Server
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
@@ -41,8 +39,7 @@ namespace Solarverse.Server
 
             app.UseRouting();
 
-//            app.UseAuthentication();
-//            app.UseAuthorization();
+            app.UseMiddleware<ApiKeyMiddleware>();
 
             app.MapControllers();
             app.MapHub<DataHub>("DataHub");

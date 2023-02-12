@@ -15,5 +15,7 @@
         public string? SolcastSiteId { get; set; }
 
         public bool TestMode { get; set; }
+
+        public Guid ApiKey { get; set; }
     }
 }
