@@ -49,7 +49,7 @@ namespace Solarverse.Core.Control
             var consumptionUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(1));
             _actions.Add(new TimedAction(_logger, consumptionUpdatePeriod, GetConsumptionData, "Get consumption data"));
 
-            var planUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(15));
+            var planUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(5));
             _actions.Add(new TimedAction(_logger, planUpdatePeriod, UpdatePlan, "Update control plan"));
 
             var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
@@ -169,6 +169,11 @@ namespace Solarverse.Core.Control
             var succeeded =
                 await UpdateTariffRates(incoming, _currentDataService.UpdateIncomingRates) &&
                 await UpdateTariffRates(outgoing, _currentDataService.UpdateOutgoingRates);
+
+            if (succeeded)
+            {
+                _controlPlanFactory.SetDischargeTargets();
+            }
 
             return succeeded;
         }

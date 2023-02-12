@@ -7,5 +7,7 @@ namespace Solarverse.Core.Control
         void CreatePlan();
 
         void CheckForAdaptations(InverterCurrentState currentState);
+
+        void SetDischargeTargets();
     }
 }

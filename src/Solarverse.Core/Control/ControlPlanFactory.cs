@@ -42,6 +42,13 @@ namespace Solarverse.Core.Control
 
         public void CreatePlan()
         {
+            SetDischargeTargets();
+
+            CreatePlanForDischargeTargets();
+        }
+
+        public void SetDischargeTargets()
+        {
             // happns after tariffs become available, so we look at solar forecast, predicted consumption and tariff rates
             var firstTime = _currentDataService.TimeSeries.GetMinimumDate(x => !x.ActualConsumptionKwh.HasValue);
             if (firstTime == null)
@@ -61,8 +68,6 @@ namespace Solarverse.Core.Control
             using var updateLock = _currentDataService.LockForUpdate();
 
             SetDischargeTargets(firstTime.Value);
-
-            CreatePlanForDischargeTargets();
         }
 
         private void SetDischargeTargets(DateTime firstTime)
