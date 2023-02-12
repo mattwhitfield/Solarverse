@@ -31,8 +31,10 @@ namespace Solarverse.Core.Control
             {
                 using var updateLock = _currentDataService.LockForUpdate();
 
-                _currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue).Each(x => x.ControlAction = null);
-                _currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue && x.IsDischargeTarget && x.RequiredPowerKwh > 0).Each(x => x.ControlAction = ControlAction.Discharge);
+                var currentTime = new Period(TimeSpan.FromMinutes(30)).GetLast(DateTime.UtcNow);
+
+                _currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue && x.Time > currentTime).Each(x => x.ControlAction = null);
+                _currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue && x.Time > currentTime && x.IsDischargeTarget && x.RequiredPowerKwh > 0).Each(x => x.ControlAction = ControlAction.Discharge);
 
                 CreatePlanForDischargeTargets();
             }
