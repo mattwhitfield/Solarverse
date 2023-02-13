@@ -32,8 +32,10 @@ namespace Solarverse.Core.Control
             {
                 using var updateLock = _currentDataService.LockForUpdate();
 
-                _currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue).Each(x => x.ControlAction = null);
-                _currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue && x.IsDischargeTarget && x.RequiredPowerKwh > 0).Each(x => x.ControlAction = ControlAction.Discharge);
+                var currentTime = new Period(TimeSpan.FromMinutes(30)).GetLast(DateTime.UtcNow);
+
+                _currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue && x.Time > currentTime).Each(x => x.ControlAction = null);
+                _currentDataService.TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue && x.Time > currentTime && x.IsDischargeTarget && x.RequiredPowerKwh > 0).Each(x => x.ControlAction = ControlAction.Discharge);
 
                 CreatePlanForDischargeTargets();
             }
@@ -41,12 +43,16 @@ namespace Solarverse.Core.Control
 
         public void CreatePlan()
         {
+            SetDischargeTargets();
+
+            using var updateLock = _currentDataService.LockForUpdate();
+            CreatePlanForDischargeTargets();
+        }
+
+        public void SetDischargeTargets()
+        {
             // happns after tariffs become available, so we look at solar forecast, predicted consumption and tariff rates
-            var firstTime = _currentDataService.TimeSeries.GetMinimumDate(x => !x.ActualConsumptionKwh.HasValue);
-            if (firstTime == null)
-            {
-                firstTime = new Period(TimeSpan.FromMinutes(30)).GetNext(DateTime.UtcNow);
-            }
+            var firstTime = new Period(TimeSpan.FromMinutes(30)).GetNext(DateTime.UtcNow);
 
             if (!_currentDataService.TimeSeries
                                     .Where(x => x.Time >= firstTime)
@@ -58,10 +64,7 @@ namespace Solarverse.Core.Control
             }
 
             using var updateLock = _currentDataService.LockForUpdate();
-
-            SetDischargeTargets(firstTime.Value);
-
-            CreatePlanForDischargeTargets();
+            SetDischargeTargets(firstTime);
         }
 
         private void SetDischargeTargets(DateTime firstTime)

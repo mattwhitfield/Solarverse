@@ -459,39 +459,43 @@ namespace Solarverse.UI.Core
 
             AddPlot(WpfPlot3.Plot, series, x => x.ActualBatteryPercentage, Color.Black, true);
             AddPlot(WpfPlot3.Plot, series, x => x.ForecastBatteryPercentage, Color.Black, false, x => x > maxTimeWithPvActual);
-            if (ShowDevelopmentDetail)
-            {
-                //AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / BatteryCapacityKwh) * 100, Color.DarkBlue, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
-            }
 
-            foreach (var point in series)
+            if (series.Any(x => x.ActualBatteryPercentage.HasValue || x.ForecastBatteryPercentage.HasValue))
             {
-                var plottableTime = point.Time.AddMinutes(15).ToOADate();
-
-                var action = point.ControlAction;
-                if (action.HasValue)
+                if (ShowDevelopmentDetail)
                 {
-                    switch (action.Value)
-                    {
-                        case ControlAction.Charge:
-                            WpfPlot3.Plot.AddMarker(plottableTime, 50, MarkerShape.filledTriangleUp, 8, Color.Salmon);
-                            break;
-                        case ControlAction.Hold:
-                            WpfPlot3.Plot.AddMarker(plottableTime, 50, MarkerShape.filledCircle, 8, Color.Silver);
-                            break;
-                        case ControlAction.Discharge:
-                            WpfPlot3.Plot.AddMarker(plottableTime, 50, MarkerShape.filledTriangleDown, 8, Color.MediumSeaGreen);
-                            break;
-                        case ControlAction.Export:
-                            WpfPlot3.Plot.AddMarker(plottableTime, 49.25, MarkerShape.filledTriangleDown, 8, Color.DodgerBlue);
-                            WpfPlot3.Plot.AddMarker(plottableTime, 50.75, MarkerShape.filledTriangleDown, 8, Color.DodgerBlue);
-                            break;
-                    }
+                    //AddPlot(WpfPlot3.Plot, series, x => (x.RequiredBatteryPowerKwh / BatteryCapacityKwh) * 100, Color.DarkBlue, true, x => x >= maxTimeWithPvActual).MarkerShape = MarkerShape.filledCircle;
                 }
 
-                if (point.IsDischargeTarget)
+                foreach (var point in series)
                 {
-                    WpfPlot3.Plot.AddMarker(plottableTime, 55, MarkerShape.asterisk, 4, Color.FromArgb(64, Color.Red));
+                    var plottableTime = point.Time.AddMinutes(15).ToOADate();
+
+                    var action = point.ControlAction;
+                    if (action.HasValue)
+                    {
+                        switch (action.Value)
+                        {
+                            case ControlAction.Charge:
+                                WpfPlot3.Plot.AddMarker(plottableTime, 50, MarkerShape.filledTriangleUp, 8, Color.Salmon);
+                                break;
+                            case ControlAction.Hold:
+                                WpfPlot3.Plot.AddMarker(plottableTime, 50, MarkerShape.filledCircle, 8, Color.Silver);
+                                break;
+                            case ControlAction.Discharge:
+                                WpfPlot3.Plot.AddMarker(plottableTime, 50, MarkerShape.filledTriangleDown, 8, Color.MediumSeaGreen);
+                                break;
+                            case ControlAction.Export:
+                                WpfPlot3.Plot.AddMarker(plottableTime, 49.25, MarkerShape.filledTriangleDown, 8, Color.DodgerBlue);
+                                WpfPlot3.Plot.AddMarker(plottableTime, 50.75, MarkerShape.filledTriangleDown, 8, Color.DodgerBlue);
+                                break;
+                        }
+                    }
+
+                    if (point.IsDischargeTarget)
+                    {
+                        WpfPlot3.Plot.AddMarker(plottableTime, 55, MarkerShape.asterisk, 4, Color.FromArgb(64, Color.Red));
+                    }
                 }
             }
 

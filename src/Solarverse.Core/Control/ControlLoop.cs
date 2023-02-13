@@ -49,7 +49,7 @@ namespace Solarverse.Core.Control
             var consumptionUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(1));
             _actions.Add(new TimedAction(_logger, consumptionUpdatePeriod, GetConsumptionData, "Get consumption data"));
 
-            var planUpdatePeriod = new Period(TimeSpan.FromHours(0.5));
+            var planUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(5));
             _actions.Add(new TimedAction(_logger, planUpdatePeriod, UpdatePlan, "Update control plan"));
 
             var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
@@ -137,8 +137,6 @@ namespace Solarverse.Core.Control
                 {
                     _logger.LogInformation($"Got household consumption for {date}");
                     _currentDataService.Update(data);
-
-                    _controlPlanFactory.CheckForAdaptations(_currentDataService.CurrentState);
                 }
                 else
                 {
@@ -155,6 +153,8 @@ namespace Solarverse.Core.Control
                 _logger.LogInformation($"Time series range after actual figures - from {from} to {to}, creating prediction");
                 var aggregateConsumption = await _predictionFactory.CreatePredictionFrom(from.Value, to.Value);
                 _currentDataService.Update(aggregateConsumption);
+
+                _controlPlanFactory.CheckForAdaptations(_currentDataService.CurrentState);
             }
 
             return !anyFailed;
@@ -169,6 +169,11 @@ namespace Solarverse.Core.Control
             var succeeded =
                 await UpdateTariffRates(incoming, _currentDataService.UpdateIncomingRates) &&
                 await UpdateTariffRates(outgoing, _currentDataService.UpdateOutgoingRates);
+
+            if (succeeded)
+            {
+                _controlPlanFactory.SetDischargeTargets();
+            }
 
             return succeeded;
         }
