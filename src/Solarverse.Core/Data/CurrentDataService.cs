@@ -16,6 +16,11 @@ namespace Solarverse.Core.Data
             _configurationProvider = configurationProvider;
         }
 
+        public ForecastTimeSeries GetForecastTimeSeries(ILogger logger)
+        {
+            return new ForecastTimeSeries(TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue), logger, this, _configurationProvider);
+        }
+
         public TimeSeries TimeSeries { get; } = new TimeSeries();
 
         public InverterCurrentState CurrentState { get; private set; } = InverterCurrentState.Default;
