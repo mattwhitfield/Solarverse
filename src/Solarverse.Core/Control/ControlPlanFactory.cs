@@ -122,11 +122,8 @@ namespace Solarverse.Core.Control
             }
 
             _currentDataService.RecalculateForecast();
-            SetRequiredPower(forecastPoints);
 
-            var efficiency = _configurationProvider.Configuration.Battery.EfficiencyFactor ?? 0.85;
-            var maxChargeKwhPerPeriod = _currentDataService.CurrentState.MaxChargeRateKw * 0.5 * efficiency;
-            var capacity = _configurationProvider.Configuration.Battery.CapacityKwh ?? 5;
+            SetRequiredPower(forecastPoints);
 
             // now we make a first pass on the discharge points - find any shortfalls
             // and try to fill them in from points that don't have a current control action
