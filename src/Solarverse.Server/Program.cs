@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Models.Settings;
 using IConfigurationProvider = Solarverse.Core.Helper.IConfigurationProvider;
@@ -23,6 +24,7 @@ namespace Solarverse.Server
                     ServiceDescriptor.Singleton<ILoggerProvider, MemoryLoggerProvider>());
             });
             builder.Services.AddTransient<IConfigurationProvider, OptionsConfigurationProvider>();
+            builder.Services.AddTransient<ICachePathProvider, ContainerCachePathProvider>();
             builder.Services.AddSolarverse();
             builder.Services.AddHostedService<ControlLoopService>();
             builder.Services.AddHostedService<CurrentDataServiceMonitor>();

@@ -13,7 +13,7 @@ namespace Solarverse.Core.Tests.Helper
         public static void CanCallCreate()
         {
             // Act
-            var collection = ServiceCollectionFactory.Create();
+            var collection = ServiceCollectionFactory.CreateForWindows();
 
             using (var serviceProvider = collection.BuildServiceProvider())
             {
