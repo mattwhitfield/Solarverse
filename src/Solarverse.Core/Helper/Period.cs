@@ -17,17 +17,14 @@
 
         public DateTime GetLast(DateTime current)
         {
-            return GetNext(current).Subtract(_period);
+            return GetNext(current) - _period;
         }
 
         public DateTime GetNext(DateTime last)
         {
-            var next = last.Date + _offset;
-            while (next <= last)
-            {
-                next += _period;
-            }
-            return next;
+            var secondsIntoDay = last.TimeOfDay.TotalSeconds - _offset.TotalSeconds;
+            var periodsIntoDay = secondsIntoDay / _period.TotalSeconds;
+            return last.Date + ((Math.Floor(periodsIntoDay) + 1) * _period) + _offset;
         }
     }
 }
