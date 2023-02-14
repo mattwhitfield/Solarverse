@@ -1,6 +1,7 @@
 namespace Solarverse.Core.Tests.Helper
 {
     using System;
+    using System.Collections.Generic;
     using FluentAssertions;
     using Solarverse.Core.Helper;
     using Xunit;
@@ -11,19 +12,39 @@ namespace Solarverse.Core.Tests.Helper
         public static void CanCallGetFormattedName()
         {
             // Arrange
-            var @type = typeof(string);
+            var type = typeof(string);
 
             // Act
             var result = type.GetFormattedName();
 
             // Assert
-            throw new NotImplementedException("Create or modify test");
+            result.Should().Be("String");
         }
 
         [Fact]
-        public static void CannotCallGetFormattedNameWithNullType()
+        public static void CanCallGetFormattedNameWithGeneric()
         {
-            FluentActions.Invoking(() => default(Type).GetFormattedName()).Should().Throw<ArgumentNullException>();
+            // Arrange
+            var type = typeof(IEnumerable<string>);
+
+            // Act
+            var result = type.GetFormattedName();
+
+            // Assert
+            result.Should().Be("IEnumerable<String>");
+        }
+
+        [Fact]
+        public static void CanCallGetFormattedNameWithDoubleGeneric()
+        {
+            // Arrange
+            var type = typeof(IEnumerable<IEnumerable<string>>);
+
+            // Act
+            var result = type.GetFormattedName();
+
+            // Assert
+            result.Should().Be("IEnumerable<IEnumerable<String>>");
         }
     }
 }

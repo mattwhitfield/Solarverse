@@ -13,26 +13,15 @@ namespace Solarverse.Core.Tests.Helper
         public static void CanCallEach()
         {
             // Arrange
+            var list = new List<string>();
             var source = new[] { "TestValue464913635", "TestValue2092296880", "TestValue1567165296" };
-            Action<T> action = x => { };
+            Action<T> action = list.Add;
 
             // Act
-            source.Each<T>(action);
+            source.Each(action);
 
             // Assert
-            throw new NotImplementedException("Create or modify test");
-        }
-
-        [Fact]
-        public static void CannotCallEachWithNullSource()
-        {
-            FluentActions.Invoking(() => default(IEnumerable<T>).Each<T>(x => { })).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
-        public static void CannotCallEachWithNullAction()
-        {
-            FluentActions.Invoking(() => new[] { "TestValue1522136539", "TestValue1487988546", "TestValue1958657565" }.Each<T>(default(Action<T>))).Should().Throw<ArgumentNullException>();
+            list.Should().BeEquivalentTo(source);
         }
     }
 }

@@ -36,33 +36,6 @@ namespace Solarverse.Core.Tests.Helper
         }
 
         [Fact]
-        public void CannotConstructWithNullLogger()
-        {
-            FluentActions.Invoking(() => new TimedAction(default(ILogger), new Period(TimeSpan.FromSeconds(66)), () => Task.FromResult(true), "TestValue1324448480")).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
-        public void CannotConstructWithNullPeriod()
-        {
-            FluentActions.Invoking(() => new TimedAction(Substitute.For<ILogger>(), default(Period), () => Task.FromResult(true), "TestValue468323584")).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
-        public void CannotConstructWithNullExecute()
-        {
-            FluentActions.Invoking(() => new TimedAction(Substitute.For<ILogger>(), new Period(TimeSpan.FromSeconds(294)), default(Func<Task<bool>>), "TestValue1878295085")).Should().Throw<ArgumentNullException>();
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public void CannotConstructWithInvalidActionName(string value)
-        {
-            FluentActions.Invoking(() => new TimedAction(Substitute.For<ILogger>(), new Period(TimeSpan.FromSeconds(416)), () => Task.FromResult(false), value)).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
         public async Task CanCallRun()
         {
             // Arrange

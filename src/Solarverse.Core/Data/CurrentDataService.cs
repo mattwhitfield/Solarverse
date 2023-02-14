@@ -78,7 +78,7 @@ namespace Solarverse.Core.Data
             _logger.LogInformation($"Updating household consumption - data from {consumption.DataPoints.Min(x => x.Time)} to {consumption.DataPoints.Max(x => x.Time)}");
 
             var min = TimeSeries.GetMinimumDate();
-            var max = new Period(TimeSpan.FromMinutes(30)).GetLast(DateTime.UtcNow);
+            var max = Period.HalfHourly.GetLast(DateTime.UtcNow);
             _logger.LogInformation($"Minimum household consumption time is {min}");
 
             var source = consumption.DataPoints;

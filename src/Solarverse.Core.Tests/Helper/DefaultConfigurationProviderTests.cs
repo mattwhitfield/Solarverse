@@ -20,8 +20,6 @@ namespace Solarverse.Core.Tests.Helper
         {
             // Assert
             _testClass.Configuration.Should().BeAssignableTo<Configuration>();
-
-            throw new NotImplementedException("Create or modify test");
         }
     }
 }

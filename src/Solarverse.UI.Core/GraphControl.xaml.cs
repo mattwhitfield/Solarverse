@@ -433,7 +433,7 @@ namespace Solarverse.UI.Core
             var currentTimeSpan2 = AddAndConfigureHspan(WpfPlot2.Plot, Color.Blue);
             var currentTimeSpan3 = AddAndConfigureHspan(WpfPlot3.Plot, Color.Blue);
 
-            var period = new Period(TimeSpan.FromMinutes(30));
+            var period = Period.HalfHourly;
             currentTimeSpan1.X1 = currentTimeSpan2.X1 = currentTimeSpan3.X1 = period.GetLast(DateTime.UtcNow).ToOADate();
             currentTimeSpan1.X2 = currentTimeSpan2.X2 = currentTimeSpan3.X2 = period.GetNext(DateTime.UtcNow).ToOADate();
             currentTimeSpan1.IsVisible = currentTimeSpan2.IsVisible = currentTimeSpan3.IsVisible = true;

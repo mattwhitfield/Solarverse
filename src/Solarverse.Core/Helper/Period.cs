@@ -2,6 +2,8 @@
 {
     public class Period
     {
+        public static Period HalfHourly = new Period(TimeSpan.FromMinutes(30));
+
         private readonly TimeSpan _period;
         private readonly TimeSpan _offset;
 
