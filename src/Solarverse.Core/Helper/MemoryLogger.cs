@@ -2,7 +2,7 @@
 {
     using Microsoft.Extensions.Logging;
 
-    internal class MemoryLogger : ILogger
+    public class MemoryLogger : ILogger
     {
         private readonly string _name;
         private readonly IMemoryLog _memoryLog;
@@ -30,7 +30,7 @@
             Exception? exception,
             Func<TState, Exception?, string> formatter)
         {
-            _memoryLog.Add($"[{DateTime.UtcNow.ToString("yyyyMMdd HH:mm:ss")} {_name}] {formatter(state, exception)}");
+            _memoryLog.Add($"[{DateTime.UtcNow:yyyyMMdd HH:mm:ss} {_name}] {formatter(state, exception)}");
         }
     }
 }

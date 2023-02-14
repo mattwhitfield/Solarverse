@@ -22,7 +22,7 @@ namespace Solarverse.Core.Control
         {
             _logger.LogInformation("Executing control plan...");
 
-            var currentPeriod = DateTime.UtcNow.ToHalfHourPeriod();
+            var currentPeriod = Period.HalfHourly.GetLast(DateTime.UtcNow);
             if (!_currentDataService.TimeSeries.TryGetDataPointFor(currentPeriod, out var currentDataPoint) ||
                 currentDataPoint?.ControlAction == null)
             {

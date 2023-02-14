@@ -1,4 +1,5 @@
-﻿using Solarverse.Core.Models;
+﻿using Microsoft.Extensions.Logging;
+using Solarverse.Core.Models;
 
 namespace Solarverse.Core.Data
 {
@@ -8,6 +9,7 @@ namespace Solarverse.Core.Data
 
         event EventHandler<EventArgs> CurrentStateUpdated;
 
+        ForecastTimeSeries GetForecastTimeSeries(ILogger logger);
         InverterCurrentState CurrentState { get; }
         TimeSeries TimeSeries { get; }
         void Cull(TimeSpan deleteOlderThan);

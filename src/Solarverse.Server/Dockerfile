@@ -18,5 +18,6 @@ RUN dotnet publish "Solarverse.Server.csproj" -c Release -o /app/publish /p:UseA
 
 FROM base AS final
 WORKDIR /app
+VOLUME /cache
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Solarverse.Server.dll"]

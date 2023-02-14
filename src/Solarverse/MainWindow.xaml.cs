@@ -21,7 +21,7 @@ namespace Solarverse
             Graph.ShowDevelopmentDetail = configuration.TestMode;
             Graph.BatteryCapacityKwh = configuration.Battery.CapacityKwh ?? 5.2;
 
-            var collection = ServiceCollectionFactory.Create();
+            var collection = ServiceCollectionFactory.CreateForWindows();
             collection.AddSingleton<IUpdateHandler>(Graph);
             collection.AddSingleton<MainWindowViewModel>();
             _serviceProvider = collection.BuildServiceProvider();

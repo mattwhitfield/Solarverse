@@ -8,6 +8,11 @@ namespace Solarverse.Core.Helper
         private static Lazy<Configuration> ConfigStore = new Lazy<Configuration>(() =>
         {
             var fileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Solarverse", "Configuration.json");
+            if (!File.Exists(fileName))
+            {
+                return new Configuration();
+            }
+
             var fileContent = File.ReadAllText(fileName);
             return JsonConvert.DeserializeObject<Configuration>(fileContent) ?? new Configuration();
         });

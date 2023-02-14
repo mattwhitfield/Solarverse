@@ -14,7 +14,7 @@ namespace Solarverse.Core.Helper
 {
     public static class ServiceCollectionFactory
     {
-        public static IServiceCollection Create()
+        public static IServiceCollection CreateForWindows()
         {
             var collection = new ServiceCollection();
 
@@ -35,6 +35,7 @@ namespace Solarverse.Core.Helper
             });
 
             collection.AddTransient<IConfigurationProvider, DefaultConfigurationProvider>();
+            collection.AddTransient<ICachePathProvider, WindowsCachePathProvider>();
 
             collection.AddSolarverse();
 

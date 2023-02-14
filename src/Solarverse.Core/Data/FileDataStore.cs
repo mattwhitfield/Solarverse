@@ -14,10 +14,10 @@ namespace Solarverse.Core.Data
         private readonly ILogger<FileDataStore> _logger;
         private string _cacheRoot;
 
-        public FileDataStore(IIntegrationProvider integrationProvider, ILogger<FileDataStore> logger)
+        public FileDataStore(IIntegrationProvider integrationProvider, ICachePathProvider cachePathProvider, ILogger<FileDataStore> logger)
         {
             _cacheRoot = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                cachePathProvider.CachePath,
                 "Solarverse",
                 "Cache");
             _integrationProvider = integrationProvider;
