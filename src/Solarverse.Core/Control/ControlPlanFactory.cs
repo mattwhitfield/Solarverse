@@ -51,7 +51,7 @@ namespace Solarverse.Core.Control
         public void SetDischargeTargets()
         {
             // happns after tariffs become available, so we look at solar forecast, predicted consumption and tariff rates
-            var firstTime = new Period(TimeSpan.FromMinutes(30)).GetNext(DateTime.UtcNow);
+            var firstTime = new Period(TimeSpan.FromMinutes(30)).GetLast(DateTime.UtcNow);
 
             if (!_currentDataService.TimeSeries
                                     .Where(x => x.Time >= firstTime)
@@ -62,7 +62,6 @@ namespace Solarverse.Core.Control
                 return;
             }
 
-            using var updateLock = _currentDataService.LockForUpdate();
             SetDischargeTargets(firstTime);
         }
 
