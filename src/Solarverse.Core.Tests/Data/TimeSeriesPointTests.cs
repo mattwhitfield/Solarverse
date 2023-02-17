@@ -179,18 +179,28 @@ namespace Solarverse.Core.Tests.Data
         public void CanGetRequiredPowerKwh()
         {
             // Assert
-            _testClass.RequiredPowerKwh.As<object>().Should().BeAssignableTo<double?>();
+            _testClass.RequiredPowerKwh.Should().BeNull();
 
-            throw new NotImplementedException("Create or modify test");
+            // Act
+            _testClass.ForecastSolarKwh = 3;
+            _testClass.ForecastConsumptionKwh = 4.5;
+
+            // Assert
+            _testClass.RequiredPowerKwh.Should().Be(1.5);
         }
 
         [Fact]
         public void CanGetExcessPowerKwh()
         {
             // Assert
-            _testClass.ExcessPowerKwh.As<object>().Should().BeAssignableTo<double?>();
+            _testClass.ExcessPowerKwh.Should().BeNull();
 
-            throw new NotImplementedException("Create or modify test");
+            // Act
+            _testClass.ForecastSolarKwh = 6;
+            _testClass.ForecastConsumptionKwh = 4.5;
+
+            // Assert
+            _testClass.ExcessPowerKwh.Should().Be(1.5);
         }
     }
 }

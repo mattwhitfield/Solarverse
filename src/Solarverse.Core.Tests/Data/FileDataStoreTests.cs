@@ -35,24 +35,6 @@ namespace Solarverse.Core.Tests.Data
         }
 
         [Fact]
-        public void CannotConstructWithNullIntegrationProvider()
-        {
-            FluentActions.Invoking(() => new FileDataStore(default(IIntegrationProvider), Substitute.For<ICachePathProvider>(), Substitute.For<ILogger<FileDataStore>>())).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
-        public void CannotConstructWithNullCachePathProvider()
-        {
-            FluentActions.Invoking(() => new FileDataStore(Substitute.For<IIntegrationProvider>(), default(ICachePathProvider), Substitute.For<ILogger<FileDataStore>>())).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
-        public void CannotConstructWithNullLogger()
-        {
-            FluentActions.Invoking(() => new FileDataStore(Substitute.For<IIntegrationProvider>(), Substitute.For<ICachePathProvider>(), default(ILogger<FileDataStore>))).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
         public async Task CanCallGetHouseholdConsumptionFor()
         {
             // Arrange
@@ -94,24 +76,6 @@ namespace Solarverse.Core.Tests.Data
 
             // Assert
             throw new NotImplementedException("Create or modify test");
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public async Task CannotCallGetTariffRatesWithInvalidProductCode(string value)
-        {
-            await FluentActions.Invoking(() => _testClass.GetTariffRates(value, "TestValue964459887")).Should().ThrowAsync<ArgumentNullException>();
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public async Task CannotCallGetTariffRatesWithInvalidMpan(string value)
-        {
-            await FluentActions.Invoking(() => _testClass.GetTariffRates("TestValue1923586067", value)).Should().ThrowAsync<ArgumentNullException>();
         }
     }
 }

@@ -18,9 +18,7 @@ namespace Solarverse.Core.Tests.Data
         public void CanGetCachePath()
         {
             // Assert
-            _testClass.CachePath.Should().BeAssignableTo<string>();
-
-            throw new NotImplementedException("Create or modify test");
+            _testClass.CachePath.Should().Be(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
         }
     }
 }

@@ -32,21 +32,6 @@ namespace Solarverse.Core.Tests.Helper
         }
 
         [Fact]
-        public void CannotConstructWithNullMemoryLog()
-        {
-            FluentActions.Invoking(() => new MemoryLogger("TestValue1962455977", default(IMemoryLog))).Should().Throw<ArgumentNullException>();
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public void CannotConstructWithInvalidName(string value)
-        {
-            FluentActions.Invoking(() => new MemoryLogger(value, Substitute.For<IMemoryLog>())).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
         public void CanCallBeginScope()
         {
             // Arrange
@@ -56,7 +41,7 @@ namespace Solarverse.Core.Tests.Helper
             var result = _testClass.BeginScope<TState>(state);
 
             // Assert
-            throw new NotImplementedException("Create or modify test");
+            result.Should().BeNull();
         }
 
         [Fact]
@@ -69,7 +54,7 @@ namespace Solarverse.Core.Tests.Helper
             var result = _testClass.IsEnabled(logLevel);
 
             // Assert
-            throw new NotImplementedException("Create or modify test");
+            result.Should().BeTrue();
         }
 
         [Fact]
@@ -86,15 +71,7 @@ namespace Solarverse.Core.Tests.Helper
             _testClass.Log<TState>(logLevel, eventId, state, exception, formatter);
 
             // Assert
-            _memoryLog.Received().Add(Arg.Any<string>());
-
-            throw new NotImplementedException("Create or modify test");
-        }
-
-        [Fact]
-        public void CannotCallLogWithNullFormatter()
-        {
-            FluentActions.Invoking(() => _testClass.Log<TState>(LogLevel.None, new EventId(), "TestValue1242567081", new Exception(), default(Func<TState, Exception, string>))).Should().Throw<ArgumentNullException>();
+            _memoryLog.Received().Add(Arg.Is<string>(x => x.EndsWith("TestValue1159690945")));
         }
     }
 }

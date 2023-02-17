@@ -15,18 +15,19 @@ namespace Solarverse.Core.Helper
             ILogger logger,
             Period period,
             Func<Task<bool>> execute,
-            string actionName)
+            string actionName,
+            DateTime? current = null)
         {
             _logger = logger;
             _period = period;
-            _lastSuccessfulDue = _due = _period.GetLast(DateTime.UtcNow);
+            _lastSuccessfulDue = _due = _period.GetLast(current ?? DateTime.UtcNow);
             _execute = execute;
             _actionName = actionName;
         }
 
         public async Task<TimedActionResult> Run(DateTime current)
         {
-            if (current > _due)
+            if (current >= _due)
             {
                 _logger.LogInformation($"Action {_actionName} due, executing...");
                 using var scope = _logger.BeginScope("Action {action} running", _actionName);

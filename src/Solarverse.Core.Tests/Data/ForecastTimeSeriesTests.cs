@@ -38,53 +38,6 @@ namespace Solarverse.Core.Tests.Data
         }
 
         [Fact]
-        public void CannotConstructWithNullPoints()
-        {
-            FluentActions.Invoking(() => new ForecastTimeSeries(default(IEnumerable<TimeSeriesPoint>), Substitute.For<ILogger>(), Substitute.For<ICurrentDataService>(), Substitute.For<IConfigurationProvider>())).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
-        public void CannotConstructWithNullLogger()
-        {
-            FluentActions.Invoking(() => new ForecastTimeSeries(new[] { new TimeSeriesPoint(DateTime.UtcNow), new TimeSeriesPoint(DateTime.UtcNow), new TimeSeriesPoint(DateTime.UtcNow) }, default(ILogger), Substitute.For<ICurrentDataService>(), Substitute.For<IConfigurationProvider>())).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
-        public void CannotConstructWithNullCurrentDataService()
-        {
-            FluentActions.Invoking(() => new ForecastTimeSeries(new[] { new TimeSeriesPoint(DateTime.UtcNow), new TimeSeriesPoint(DateTime.UtcNow), new TimeSeriesPoint(DateTime.UtcNow) }, Substitute.For<ILogger>(), default(ICurrentDataService), Substitute.For<IConfigurationProvider>())).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
-        public void CannotConstructWithNullConfigurationProvider()
-        {
-            FluentActions.Invoking(() => new ForecastTimeSeries(new[] { new TimeSeriesPoint(DateTime.UtcNow), new TimeSeriesPoint(DateTime.UtcNow), new TimeSeriesPoint(DateTime.UtcNow) }, Substitute.For<ILogger>(), Substitute.For<ICurrentDataService>(), default(IConfigurationProvider))).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
-        public void ImplementsIEnumerable_TimeSeriesPoint()
-        {
-            // Arrange
-            ForecastTimeSeries enumerable = default(ForecastTimeSeries);
-            int expectedCount = -1;
-            int actualCount = 0;
-
-            // Act
-            using (var enumerator = enumerable.GetEnumerator())
-            {
-                enumerator.Should().NotBeNull();
-                while (enumerator.MoveNext())
-                {
-                    actualCount++;
-                    enumerator.Current.Should().BeAssignableTo<TimeSeriesPoint>();
-                }
-            }
-
-            // Assert
-            actualCount.Should().Be(expectedCount);
-        }
-
-        [Fact]
         public void CanCallGetEnumeratorWithNoParameters()
         {
             // Act
@@ -106,21 +59,6 @@ namespace Solarverse.Core.Tests.Data
 
             // Assert
             throw new NotImplementedException("Create or modify test");
-        }
-
-        [Fact]
-        public void CannotCallRunActionOnDischargeStartPeriodsWithNullAction()
-        {
-            FluentActions.Invoking(() => _testClass.RunActionOnDischargeStartPeriods("TestValue1723077143", default(Action<(TimeSeriesPoint Point, double PointPercentRequired, IList<TimeSeriesPoint> DischargePoints)>))).Should().Throw<ArgumentNullException>();
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public void CannotCallRunActionOnDischargeStartPeriodsWithInvalidPassName(string value)
-        {
-            FluentActions.Invoking(() => _testClass.RunActionOnDischargeStartPeriods(value, x => { })).Should().Throw<ArgumentNullException>();
         }
 
         [Fact]

@@ -15,8 +15,8 @@ namespace Solarverse.Core.Tests.Models
 
         public PredictedConsumptionTests()
         {
-            _sourcesIEnumerablePredictedConsumption = new[] { new PredictedConsumption(default(IEnumerable<PredictedConsumption>)), new PredictedConsumption(default(IEnumerable<PredictedConsumption>)), new PredictedConsumption(default(IEnumerable<PredictedConsumption>)) };
-            _sourcesIEnumerableHouseholdConsumption = new[] { new HouseholdConsumption(false, false, default(IEnumerable<HouseholdConsumptionDataPoint>)), new HouseholdConsumption(true, true, default(IEnumerable<HouseholdConsumptionDataPoint>)), new HouseholdConsumption(true, true, default(IEnumerable<HouseholdConsumptionDataPoint>)) };
+            _sourcesIEnumerablePredictedConsumption = new[] { new PredictedConsumption(new[] { TestData.Household1, TestData.Household2 }, _date), new PredictedConsumption(new[] { TestData.Household3, TestData.Household4 }, _date) };
+            _sourcesIEnumerableHouseholdConsumption = new[] { TestData.Household1, TestData.Household2, TestData.Household3, TestData.Household4 };
             _date = DateTime.UtcNow;
             _testClass = new PredictedConsumption(_sourcesIEnumerableHouseholdConsumption, _date);
         }

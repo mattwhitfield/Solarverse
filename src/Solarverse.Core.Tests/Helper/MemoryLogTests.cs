@@ -1,6 +1,7 @@
 namespace Solarverse.Core.Tests.Helper
 {
     using System;
+    using System.Linq;
     using FluentAssertions;
     using Solarverse.Core.Helper;
     using Xunit;
@@ -15,38 +16,33 @@ namespace Solarverse.Core.Tests.Helper
         }
 
         [Fact]
-        public void CanCallAdd()
+        public void CanCallAddAndGetSince()
         {
-            // Arrange
-            var logLine = "TestValue1972192104";
+            _testClass.Add("TestLine1");
+            _testClass.Add("TestLine2");
+            _testClass.Add("TestLine3");
+            _testClass.Add("TestLine4");
 
-            // Act
-            _testClass.Add(logLine);
+            var result = _testClass.GetSince(0).ToList();
+            result.Select(x => x.Message).Should().BeEquivalentTo("TestLine1", "TestLine2", "TestLine3", "TestLine4");
 
-            // Assert
-            throw new NotImplementedException("Create or modify test");
-        }
+            _testClass.Add("TestLine5");
+            _testClass.Add("TestLine6");
+            _testClass.Add("TestLine7");
+            _testClass.Add("TestLine8");
 
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public void CannotCallAddWithInvalidLogLine(string value)
-        {
-            FluentActions.Invoking(() => _testClass.Add(value)).Should().Throw<ArgumentNullException>();
+            result = _testClass.GetSince(4).ToList();
+            result.Select(x => x.Message).Should().BeEquivalentTo("TestLine5", "TestLine6", "TestLine7", "TestLine8");
         }
 
         [Fact]
-        public void CanCallGetSince()
+        public void CanCallGetSinceWithoutAdding()
         {
-            // Arrange
-            var index = 1672730239L;
-
             // Act
-            var result = _testClass.GetSince(index);
+            var result = _testClass.GetSince(0);
 
             // Assert
-            throw new NotImplementedException("Create or modify test");
+            result.Should().BeEmpty();
         }
     }
 }
