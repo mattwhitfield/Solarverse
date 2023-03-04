@@ -11,6 +11,7 @@ namespace Solarverse
     public class MainWindowViewModel
     {
         private readonly IControlLoop _controlLoop;
+        private readonly IDataStore _dataStore;
         private readonly ICurrentDataService _currentDataService;
         private readonly IUpdateHandler _updateHandler;
         private readonly IMemoryLog _memoryLog;
@@ -18,9 +19,10 @@ namespace Solarverse
 
         private Task? _controlLoopTask;
 
-        public MainWindowViewModel(IControlLoop controlLoop, ICurrentDataService currentDataService, IUpdateHandler updateHandler, IMemoryLog memoryLog)
+        public MainWindowViewModel(IControlLoop controlLoop, IDataStore dataStore, ICurrentDataService currentDataService, IUpdateHandler updateHandler, IMemoryLog memoryLog)
         {
             _controlLoop = controlLoop;
+            _dataStore = dataStore;
             _currentDataService = currentDataService;
             _updateHandler = updateHandler;
             _memoryLog = memoryLog;

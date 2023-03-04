@@ -60,6 +60,12 @@ namespace Solarverse.Core.Tests.Data
         }
 
         [Fact]
+        public void CannotCallGetForecastTimeSeriesWithNullLogger()
+        {
+            FluentActions.Invoking(() => _testClass.GetForecastTimeSeries(default(ILogger))).Should().Throw<ArgumentNullException>();
+        }
+
+        [Fact]
         public void CanCallCull()
         {
             // Arrange
@@ -96,6 +102,12 @@ namespace Solarverse.Core.Tests.Data
         }
 
         [Fact]
+        public void CannotCallUpdateWithCurrentStateWithNullCurrentState()
+        {
+            FluentActions.Invoking(() => _testClass.Update(default(InverterCurrentState))).Should().Throw<ArgumentNullException>();
+        }
+
+        [Fact]
         public void CanCallUpdateWithPredictedConsumption()
         {
             // Arrange
@@ -106,6 +118,12 @@ namespace Solarverse.Core.Tests.Data
 
             // Assert
             throw new NotImplementedException("Create or modify test");
+        }
+
+        [Fact]
+        public void CannotCallUpdateWithPredictedConsumptionWithNullConsumption()
+        {
+            FluentActions.Invoking(() => _testClass.Update(default(PredictedConsumption))).Should().Throw<ArgumentNullException>();
         }
 
         [Fact]
@@ -122,6 +140,12 @@ namespace Solarverse.Core.Tests.Data
         }
 
         [Fact]
+        public void CannotCallUpdateWithHouseholdConsumptionWithNullConsumption()
+        {
+            FluentActions.Invoking(() => _testClass.Update(default(HouseholdConsumption))).Should().Throw<ArgumentNullException>();
+        }
+
+        [Fact]
         public void CanCallUpdateWithForecast()
         {
             // Arrange
@@ -132,6 +156,12 @@ namespace Solarverse.Core.Tests.Data
 
             // Assert
             throw new NotImplementedException("Create or modify test");
+        }
+
+        [Fact]
+        public void CannotCallUpdateWithForecastWithNullForecast()
+        {
+            FluentActions.Invoking(() => _testClass.Update(default(SolarForecast))).Should().Throw<ArgumentNullException>();
         }
 
         [Fact]
@@ -148,6 +178,12 @@ namespace Solarverse.Core.Tests.Data
         }
 
         [Fact]
+        public void CannotCallUpdateIncomingRatesWithNullIncomingRates()
+        {
+            FluentActions.Invoking(() => _testClass.UpdateIncomingRates(default(IList<TariffRate>))).Should().Throw<ArgumentNullException>();
+        }
+
+        [Fact]
         public void CanCallUpdateOutgoingRates()
         {
             // Arrange
@@ -158,6 +194,12 @@ namespace Solarverse.Core.Tests.Data
 
             // Assert
             throw new NotImplementedException("Create or modify test");
+        }
+
+        [Fact]
+        public void CannotCallUpdateOutgoingRatesWithNullOutgoingRates()
+        {
+            FluentActions.Invoking(() => _testClass.UpdateOutgoingRates(default(IList<TariffRate>))).Should().Throw<ArgumentNullException>();
         }
 
         [Fact]
@@ -187,6 +229,12 @@ namespace Solarverse.Core.Tests.Data
         }
 
         [Fact]
+        public void CannotCallUpdateCurrentStateWithNullUpdateAction()
+        {
+            FluentActions.Invoking(() => _testClass.UpdateCurrentState(default(Action<InverterCurrentState>))).Should().Throw<ArgumentNullException>();
+        }
+
+        [Fact]
         public void CanGetTimeSeries()
         {
             // Assert
@@ -202,6 +250,25 @@ namespace Solarverse.Core.Tests.Data
             _testClass.CurrentState.Should().BeAssignableTo<InverterCurrentState>();
 
             throw new NotImplementedException("Create or modify test");
+        }
+
+        [Fact]
+        public void CanCallInitializeTimeSeries()
+        {
+            // Arrange
+            var points = new[] { new TimeSeriesPoint(DateTime.UtcNow), new TimeSeriesPoint(DateTime.UtcNow), new TimeSeriesPoint(DateTime.UtcNow) };
+
+            // Act
+            _testClass.InitializeTimeSeries(points);
+
+            // Assert
+            throw new NotImplementedException("Create or modify test");
+        }
+
+        [Fact]
+        public void CannotCallInitializeTimeSeriesWithNullPoints()
+        {
+            FluentActions.Invoking(() => _testClass.InitializeTimeSeries(default(IEnumerable<TimeSeriesPoint>))).Should().Throw<ArgumentNullException>().WithParameterName("points");
         }
     }
 }

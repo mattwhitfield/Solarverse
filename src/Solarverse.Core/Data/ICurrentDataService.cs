@@ -14,6 +14,7 @@ namespace Solarverse.Core.Data
         TimeSeries TimeSeries { get; }
         void Cull(TimeSpan deleteOlderThan);
         IDisposable LockForUpdate();
+        void InitializeTimeSeries(IEnumerable<TimeSeriesPoint> points);
         void Update(HouseholdConsumption consumption);
         void Update(PredictedConsumption consumption);
         void Update(InverterCurrentState currentState);

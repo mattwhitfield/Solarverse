@@ -113,5 +113,41 @@ namespace Solarverse.Core.Data
             }
             return folder;
         }
+
+        public void WriteTimeSeries(TimeSeries series)
+        {
+            var file = GetTimeSeriesFile();
+
+            _logger.LogInformation($"Caching data");
+            var cachable = new List<TimeSeriesPoint>(series);
+            File.WriteAllText(file, JsonConvert.SerializeObject(cachable));
+        }
+
+        public IList<TimeSeriesPoint>? ReadTimeSeries()
+        {
+            var file = GetTimeSeriesFile();
+
+            if (File.Exists(file))
+            {
+                _logger.LogInformation($"File exists");
+
+                var cached = JsonConvert.DeserializeObject<List<TimeSeriesPoint>>(File.ReadAllText(file));
+                if (cached != null)
+                {
+                    _logger.LogInformation($"Deserialized successfully");
+                    return cached;
+                }
+            }
+
+            return null;
+        }
+
+        private string GetTimeSeriesFile()
+        {
+            var folder = GetCacheFolder("TimeSeries");
+            var file = Path.Combine(folder, "current.json");
+            _logger.LogInformation($"File path for {typeof(TimeSeries).GetFormattedName()} is {file}");
+            return file;
+        }
     }
 }

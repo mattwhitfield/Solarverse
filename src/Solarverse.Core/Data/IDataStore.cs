@@ -9,5 +9,9 @@ namespace Solarverse.Core.Data
         public Task<IList<TariffRate>?> GetTariffRates(string productCode, string mpan);
 
         public Task<SolarForecast> GetSolarForecast();
+
+        public void WriteTimeSeries(TimeSeries series);
+
+        public IList<TimeSeriesPoint>? ReadTimeSeries();
     }
 }

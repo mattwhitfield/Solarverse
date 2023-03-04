@@ -21,7 +21,7 @@ namespace Solarverse.Core.Data
             return new ForecastTimeSeries(TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue), logger, this, _configurationProvider);
         }
 
-        public TimeSeries TimeSeries { get; } = new TimeSeries();
+        public TimeSeries TimeSeries { get; private set; } = new TimeSeries();
 
         public InverterCurrentState CurrentState { get; private set; } = InverterCurrentState.Default;
 
@@ -197,6 +197,12 @@ namespace Solarverse.Core.Data
                 updateAction(CurrentState);
                 CurrentStateUpdated?.Invoke(this, EventArgs.Empty);
             }
+        }
+
+        public void InitializeTimeSeries(IEnumerable<TimeSeriesPoint> points)
+        {
+            TimeSeries = new TimeSeries(points);
+            TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
         }
 
         private class CurrentDataLock : IDisposable

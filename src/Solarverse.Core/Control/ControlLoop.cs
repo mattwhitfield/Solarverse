@@ -67,6 +67,13 @@ namespace Solarverse.Core.Control
 
         public async Task Run(CancellationToken cancellation)
         {
+            var timeSeries = _dataStore.ReadTimeSeries();
+
+            if (timeSeries != null && timeSeries.Any())
+            {
+                _currentDataService.InitializeTimeSeries(timeSeries);
+            }
+
             while (!cancellation.IsCancellationRequested)
             {
                 foreach (var action in _actions)
@@ -101,6 +108,8 @@ namespace Solarverse.Core.Control
                 _logger.LogInformation($"Checking for plan adaptations");
                 _controlPlanFactory.CheckForAdaptations(currentState);
 
+                CacheTimeSeries();
+
                 return true;
             }
 
@@ -108,10 +117,19 @@ namespace Solarverse.Core.Control
             return false;
         }
 
+        private void CacheTimeSeries()
+        {
+            _logger.LogInformation("Caching current time series");
+            _dataStore.WriteTimeSeries(_currentDataService.TimeSeries);
+        }
+
         public Task<bool> CleanUpData()
         {
             _logger.LogInformation($"Cleaning up old data");
             _currentDataService.Cull(TimeSpan.FromDays(7));
+
+            CacheTimeSeries();
+
             return Task.FromResult(true);
         }
 
@@ -157,6 +175,11 @@ namespace Solarverse.Core.Control
                 _controlPlanFactory.CheckForAdaptations(_currentDataService.CurrentState);
             }
 
+            if (!anyFailed)
+            {
+                CacheTimeSeries();
+            }
+
             return !anyFailed;
         }
 
@@ -188,6 +211,8 @@ namespace Solarverse.Core.Control
                 {
                     _logger.LogInformation($"We have points with actual battery percentage");
                     _controlPlanFactory.CreatePlan();
+                    CacheTimeSeries();
+
                     return Task.FromResult(true);
                 }
                 else
