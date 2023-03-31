@@ -111,7 +111,8 @@ namespace Solarverse.Core.Integration.GivEnergy
 
                     if (TimeSpan.TryParseExact(s, "hh\\:mm", CultureInfo.InvariantCulture, out var time))
                     {
-                        return new TimeSetting(id, time);
+                        var offset = (DateTime.Now - DateTime.UtcNow);
+                        return new TimeSetting(id, time - offset);
                     }
                 }
 
@@ -154,8 +155,8 @@ namespace Solarverse.Core.Integration.GivEnergy
                 chargeSettings,
                 dischargeSettings);
 
-            var maxDischargeRateKw = dischargeSettings.PowerLimit.Value / 1000.0;
-            var maxChargeRateKw = chargeSettings.PowerLimit.Value / 1000.0;
+            var maxDischargeRateKw = Math.Max(dischargeSettings.PowerLimit.Value / 1000.0, 0);
+            var maxChargeRateKw = Math.Max(chargeSettings.PowerLimit.Value / 1000.0, 0);
 
             var state = new InverterCurrentState(
                 currentState.Data.Time,
@@ -281,13 +282,13 @@ namespace Solarverse.Core.Integration.GivEnergy
             await SetSettingIfRequired(
                 SettingIds.Charge.StartTime,
                 x => !x.ChargeSettings.StartTime.Value.HasValue || x.ChargeSettings.StartTime.Value.Value > DateTime.UtcNow.TimeOfDay,
-                DateTime.UtcNow.ToString("HH:mm"));
+                DateTime.Now.ToString("HH:mm"));
 
             // set until if it's not what we want or not set
             await SetSettingIfRequired(
                 SettingIds.Charge.EndTime,
                 x => !x.ChargeSettings.EndTime.Value.HasValue || x.ChargeSettings.EndTime.Value.Value != until.TimeOfDay,
-                until.ToString("HH:mm"));
+                until.ToLocalTime().ToString("HH:mm"));
 
             // enable charge if it's not enabled
             await SetSettingIfRequired(

@@ -157,12 +157,12 @@ namespace Solarverse.UI.Core
                 if (nextPoint != null)
                 {
                     ProjectedBatteryPercentLabel.Text = GetBatteryDescription(point) + " -> " + GetBatteryDescription(nextPoint);
-                    DateTimeLabel.Text = date.ToString("dd/MM HH:mm") + " -> " + nextPoint.Time.ToString("dd/MM HH:mm");
+                    DateTimeLabel.Text = date.ToLocalTime().ToString("dd/MM HH:mm") + " -> " + nextPoint.Time.ToLocalTime().ToString("dd/MM HH:mm");
                 }
                 else
                 {
                     ProjectedBatteryPercentLabel.Text = GetBatteryDescription(point);
-                    DateTimeLabel.Text = date.ToString("dd/MM HH:mm");
+                    DateTimeLabel.Text = date.ToLocalTime().ToString("dd/MM HH:mm");
                 }
                 ScheduledActionLabel.Text = point.ControlAction.HasValue ? point.ControlAction.Value.ToString() : "-";
                 if (point.ControlAction.HasValue)

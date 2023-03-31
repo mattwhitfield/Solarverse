@@ -67,7 +67,8 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
         private static NormalizedConsumptionDataPoint?[] GetCumulativePoints(List<ConsumptionDataPoint> datapoints)
         {
             var cumulativePoints = new NormalizedConsumptionDataPoint?[48];
-            var date = datapoints[0].Time.Date;
+            var basis = datapoints.Min(x => x.Time);
+            var date = new DateTime(basis.Year, basis.Month, basis.Day, basis.Hour, 0, 0);
 
             foreach (var dataPoint in datapoints.GroupBy(x => (int)((x.Time - date).TotalMinutes / 30)))
             {
