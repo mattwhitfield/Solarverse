@@ -212,12 +212,14 @@ namespace Solarverse.Core.Control
                 }
 
                 // todo - this should look at if we have solar excess later, and if it's profitable to export
-                if (point.IncomingRate.HasValue && point.IncomingRate.Value < 2.0)
+                if (point.IncomingRate.HasValue && point.IncomingRate.Value < 0.0)
                 {
                     _logger.LogInformation($"Point at {point.Time} has negative rate, setting to charge");
                     point.ControlAction = ControlAction.Charge;
                 }
             }
+
+            _currentDataService.RecalculateForecast();
         }
 
         private bool RunSinglePointPass(TimeSeriesPoint targetPoint, List<TimeSeriesPoint> points, double efficiency, double capacity)
