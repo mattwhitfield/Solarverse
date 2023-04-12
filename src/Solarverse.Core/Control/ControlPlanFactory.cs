@@ -124,16 +124,16 @@ namespace Solarverse.Core.Control
             // slots to charge if we have a shortfall somewhere
             RunPass("Second pass", forecastPoints, x => x.ControlAction != ControlAction.Charge);
 
-            // now run pairing - identify any periods left where we can pair with another
-            // period to charge / discharge cost-effectively
-            RunPairingPass(forecastPoints);
-
             // now make sure that the covered discharge periods are catered for - if more expensive
             // periods aren't fully covered, we sacrifice charge for less expensive periods
             PrioritizeDischargeTargetsByPrice(forecastPoints);
 
             // set the remaining points to hold/discharge
             SetTailPoints(forecastPoints);
+
+            // now run pairing - identify any periods left where we can pair with another
+            // period to charge / discharge cost-effectively
+            RunPairingPass(forecastPoints);
 
             _currentDataService.RecalculateForecast();
         }
@@ -145,15 +145,23 @@ namespace Solarverse.Core.Control
             // whether the pair of points being targeted are split by any sections where the battery is
             // already at 100%
             var remainingPoints = series
-                .Where(x => !x.ControlAction.HasValue)
-                .OrderByDescending(x => x.IncomingRate)
+                .Where(x => x.ControlAction == ControlAction.Hold && 
+                            x.IncomingRate.HasValue &&
+                            !x.ActualConsumptionKwh.HasValue)
+                .OrderBy(x => x.IncomingRate)
                 .ToList();
 
             foreach (var point in remainingPoints)
             {
-                if (!RunSinglePointPass(point, remainingPoints, series.Efficiency, series.Capacity))
+                if (point.ControlAction != ControlAction.Hold)
                 {
-                    break;
+                    continue;
+                }
+
+                var passPoints = remainingPoints.Where(x => x.ControlAction == ControlAction.Hold).ToList();
+                if (!RunSinglePointPass(point, passPoints, series.Efficiency, series.Capacity, series.MaxChargeKwhPerPeriod, series.Reserve))
+                {
+                    return;
                 }
             }
         }
@@ -222,39 +230,62 @@ namespace Solarverse.Core.Control
             _currentDataService.RecalculateForecast();
         }
 
-        private bool RunSinglePointPass(TimeSeriesPoint targetPoint, List<TimeSeriesPoint> points, double efficiency, double capacity)
+        private bool RunSinglePointPass(TimeSeriesPoint potentialChargePoint, List<TimeSeriesPoint> points, double efficiency, double capacity, double kwhPerPeriod, int reserve)
         {
-            if (!targetPoint.RequiredPowerKwh.HasValue || targetPoint.RequiredPowerKwh.Value <= 0)
-            {
-                return false;
-            }
+            var chargeSlotPercent = (kwhPerPeriod / capacity) * 100;
 
-            var targetPointPercent = targetPoint.RequiredPowerKwh.Value / capacity;
+            var eligibleDischargePointsPrior = points
+                .Where(x => x.Time < potentialChargePoint.Time)
+                .TakeWhile(x => x.ForecastBatteryPercentage < 100 - chargeSlotPercent);
 
-            var eligibleChargePoints = points
-                .Where(x => x.Time <= targetPoint.Time)
-                .TakeWhile(x => x.ForecastBatteryPercentage < 100 - targetPointPercent)
+            var eligibleDischargePointsAfter = points
+                .Where(x => x.Time > potentialChargePoint.Time)
+                .OrderBy(x => x.Time)
+                .TakeWhile(x => x.ForecastBatteryPercentage > chargeSlotPercent + reserve);
+
+            var eligibleDischargePoints = eligibleDischargePointsAfter
+                .Concat(eligibleDischargePointsPrior)
                 .Where(x => !x.IsDischargeTarget)
-                .OrderBy(x => x.IncomingRate)
-                .Take(1)
+                .Where(x => x.RequiredPowerKwh > 0)
+                .OrderByDescending(x => x.IncomingRate)
                 .ToList();
 
-            if (!eligibleChargePoints.Any())
+            var dischargePoints = new List<TimeSeriesPoint>();
+            var currentTotalKwh = 0.0;
+            var totalCost = 0.0;
+            var targetMet = false;
+            foreach (var point in eligibleDischargePoints)
+            {
+                var pointPower = point.RequiredPowerKwh ?? 0;
+
+                if (currentTotalKwh + pointPower > kwhPerPeriod)
+                {
+                    targetMet = true;
+                    break;
+                }
+
+                dischargePoints.Add(point);
+                currentTotalKwh += pointPower;
+                totalCost += pointPower * point.IncomingRate ?? 0;
+            }
+
+            if (!dischargePoints.Any() || !targetMet)
             {
                 return false;
             }
 
-            // check if the point we're transforming has a rate low enough to make 
-            // it worth charging
-            var selectedPoint = eligibleChargePoints[0];
-            if (selectedPoint.IncomingRate >= targetPoint.IncomingRate * efficiency)
+            _logger.LogInformation($"(Pairing) Targeting periods at [{string.Join(',', dischargePoints.Select(x => x.Time.ToString("MM/dd HH:mm")))}] with a total cost of {totalCost:N2}");
+
+            var selectedPointCost = potentialChargePoint.IncomingRate ?? 0 * kwhPerPeriod;
+            if (selectedPointCost < totalCost * efficiency)
             {
-                _logger.LogInformation($"(Pairing) Period at {selectedPoint.Time} is too expensive to charge");
+                _logger.LogInformation($"(Pairing) Period at {potentialChargePoint.Time} is too expensive ({(selectedPointCost / efficiency):N2})");
                 return false;
             }
 
-            _logger.LogInformation($"(Pairing) Setting period {selectedPoint.Time} to charge to cater for point at {targetPoint.Time}");
-            selectedPoint.ControlAction = ControlAction.Charge;
+            _logger.LogInformation($"(Pairing) Setting period {potentialChargePoint.Time} to charge to cater for targeted points");
+            dischargePoints.Each(x => x.ControlAction = ControlAction.Discharge);
+            potentialChargePoint.ControlAction = ControlAction.Charge;
             _currentDataService.RecalculateForecast();
 
             return true;
