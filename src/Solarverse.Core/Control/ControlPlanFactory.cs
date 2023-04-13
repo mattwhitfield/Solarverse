@@ -260,6 +260,7 @@ namespace Solarverse.Core.Control
 
                 if (currentTotalKwh + pointPower > kwhPerPeriod)
                 {
+                    currentTotalKwh += pointPower;
                     targetMet = true;
                     break;
                 }
@@ -269,15 +270,24 @@ namespace Solarverse.Core.Control
                 totalCost += pointPower * point.IncomingRate ?? 0;
             }
 
-            if (!dischargePoints.Any() || !targetMet)
+            if (!dischargePoints.Any())
             {
+                _logger.LogInformation($"(Pairing) No targetable periods found");
                 return false;
             }
 
-            _logger.LogInformation($"(Pairing) Targeting periods at [{string.Join(',', dischargePoints.Select(x => x.Time.ToString("MM/dd HH:mm")))}] with a total cost of {totalCost:N2}");
+            var targetString = string.Join(',', dischargePoints.Select(x => x.Time.ToString("MM/dd HH:mm")));
+
+            if (!targetMet || currentTotalKwh < kwhPerPeriod * 0.8)
+            {
+                _logger.LogInformation($"(Pairing) Periods at [{targetString}] did not meet point targeting ({currentTotalKwh:N1} < {kwhPerPeriod:N1} * 0.8)");
+                return false;
+            }
+
+            _logger.LogInformation($"(Pairing) Targeting periods at [{targetString}] with a total cost of {totalCost:N2} and required power of {currentTotalKwh:N1}");
 
             var selectedPointCost = potentialChargePoint.IncomingRate ?? 0 * kwhPerPeriod;
-            if (selectedPointCost < totalCost * efficiency)
+            if (selectedPointCost / efficiency > totalCost)
             {
                 _logger.LogInformation($"(Pairing) Period at {potentialChargePoint.Time} is too expensive ({(selectedPointCost / efficiency):N2})");
                 return false;
