@@ -258,10 +258,16 @@ namespace Solarverse.Core.Control
             {
                 var pointPower = point.RequiredPowerKwh ?? 0;
 
-                if (currentTotalKwh + pointPower > kwhPerPeriod)
+                if (currentTotalKwh + pointPower > kwhPerPeriod * 1.1)
                 {
-                    currentTotalKwh += pointPower;
                     targetMet = true;
+
+                    if (dischargePoints.Count == 0)
+                    {
+                        dischargePoints.Add(point);
+                        currentTotalKwh += pointPower;
+                        totalCost += pointPower * point.IncomingRate ?? 0;
+                    }
                     break;
                 }
 

@@ -98,7 +98,7 @@ namespace Solarverse.Core.Data
                 () => _integrationProvider.EnergySupplierClient.GetTariffRates(productCode, mpan),
                 x => x.ToCache(),
                 x => x.FromCache(),
-                _ => true,
+                x => x.Any() && x.Max(point => point.ValidFrom).Date > DateTime.UtcNow.Date,
                 UpdatePeriods.TariffUpdates,
                 DateTime.UtcNow,
                 "Tariff-" + mpan);

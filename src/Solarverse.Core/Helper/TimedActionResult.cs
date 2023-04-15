@@ -5,5 +5,6 @@
         NotDue,
         Succeeded,
         Failed,
+        Skipped,
     }
 }

@@ -3,6 +3,7 @@ using Solarverse.Core.Data;
 using Solarverse.Core.Data.Prediction;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Integration;
+using Solarverse.Core.Integration.Octopus.Models;
 using Solarverse.Core.Models;
 using Solarverse.Core.Models.Settings;
 using System.Diagnostics.Metrics;
@@ -44,10 +45,10 @@ namespace Solarverse.Core.Control
             _actions.Add(new TimedAction(_logger, getSolarForecastDataPeriod, UpdateSolcastData, "Update solar forecast data"));
 
             var getTariffRatesPeriod = UpdatePeriods.TariffUpdates;
-            _actions.Add(new TimedAction(_logger, getTariffRatesPeriod, UpdateTariffRates, "Update energy tariff rates"));
+            _actions.Add(new TimedAction(_logger, getTariffRatesPeriod, ShouldUpdateTariffRates, UpdateTariffRates, "Update energy tariff rates"));
 
-            var consumptionUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(1));
-            _actions.Add(new TimedAction(_logger, consumptionUpdatePeriod, GetConsumptionData, "Get consumption data"));
+            var consumptionUpdatePeriod = UpdatePeriods.ConsumptionUpdates;
+            _actions.Add(new TimedAction(_logger, consumptionUpdatePeriod, ShouldGetConsumptionData, GetConsumptionData, "Get consumption data"));
 
             var planUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(5));
             _actions.Add(new TimedAction(_logger, planUpdatePeriod, UpdatePlan, "Update control plan"));
@@ -139,12 +140,22 @@ namespace Solarverse.Core.Control
             return _controlPlanExecutor.ExecutePlan();
         }
 
+        public bool ShouldGetConsumptionData()
+        {
+            var current = new Period(TimeSpan.FromMinutes(30)).GetLast(DateTime.UtcNow).AddMinutes(-30);
+            var from = _currentDataService.TimeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
+
+            return current > from;
+        }
+
         public async Task<bool> GetConsumptionData()
         {
             _logger.LogInformation($"Getting consumption data");
 
             bool anyFailed = false;
             var timeSeries = _currentDataService.TimeSeries;
+
+            var from = timeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
 
             foreach (var date in timeSeries.GetDates().Where(x => x.Date <= DateTime.UtcNow.Date))
             {
@@ -163,7 +174,7 @@ namespace Solarverse.Core.Control
                 }
             }
 
-            var from = timeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
+
             var to = timeSeries.GetMaximumDate();
 
             if (from.HasValue && to.HasValue)
@@ -183,6 +194,25 @@ namespace Solarverse.Core.Control
             return !anyFailed;
         }
 
+        public bool ShouldUpdateTariffRates()
+        {
+            bool shouldUpdate = false;
+            var existingMax = _currentDataService.TimeSeries.GetMaximumDate(x => x.IncomingRate != null);
+            if (existingMax != null)
+            {
+                if (existingMax.Value.Date == DateTime.UtcNow.Date)
+                {
+                    shouldUpdate = DateTime.Now.Hour >= 16;
+                }
+                else
+                {
+                    shouldUpdate = existingMax.Value.Date < DateTime.UtcNow.Date;
+                }
+            }
+
+            return shouldUpdate;
+        }
+
         public async Task<bool> UpdateTariffRates()
         {
             _logger.LogInformation($"Updating tariff rates");
@@ -198,7 +228,8 @@ namespace Solarverse.Core.Control
                 _controlPlanFactory.SetDischargeTargets();
             }
 
-            return succeeded;
+            // always return true because this will be retried in 2 minutes anyway
+            return true;
         }
 
         public Task<bool> UpdatePlan()
@@ -241,12 +272,19 @@ namespace Solarverse.Core.Control
 
             if (agileRates != null)
             {
-                _logger.LogInformation($"Got tariff rates for mpan {meter.MPAN}");
-                process(agileRates);
-                return true;
-            }
-            _logger.LogWarning($"Did not get tariff rates for mpan {meter.MPAN}");
+                var isValid = agileRates.Any() && agileRates.Max(x => x.ValidFrom).Date > DateTime.UtcNow.Date;
+                if (isValid)
+                {
+                    _logger.LogInformation($"Got tariff rates for mpan {meter.MPAN}");
+                    process(agileRates);
+                    return true;
+                }
 
+                _logger.LogInformation($"Got tariff rates for mpan {meter.MPAN}, but the maximum date was still today");
+                return false;
+            }
+
+            _logger.LogWarning($"Did not get tariff rates for mpan {meter.MPAN}");
             return false;
         }
 

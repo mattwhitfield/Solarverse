@@ -6,6 +6,7 @@ namespace Solarverse.Core.Helper
     {
         private readonly ILogger _logger;
         private readonly Period _period;
+        private readonly Func<bool> _shouldExecute;
         private DateTime _due;
         private DateTime _lastSuccessfulDue;
         private readonly Func<Task<bool>> _execute;
@@ -17,9 +18,20 @@ namespace Solarverse.Core.Helper
             Func<Task<bool>> execute,
             string actionName,
             DateTime? current = null)
+            : this(logger, period, () => true, execute, actionName, current)
+        { }
+
+        public TimedAction(
+            ILogger logger,
+            Period period,
+            Func<bool> shouldExecute,
+            Func<Task<bool>> execute,
+            string actionName,
+            DateTime? current = null)
         {
             _logger = logger;
             _period = period;
+            _shouldExecute = shouldExecute;
             _lastSuccessfulDue = _due = _period.GetLast(current ?? DateTime.UtcNow);
             _execute = execute;
             _actionName = actionName;
@@ -29,6 +41,12 @@ namespace Solarverse.Core.Helper
         {
             if (current >= _due)
             {
+                if (!_shouldExecute())
+                {
+                    _lastSuccessfulDue = _due = _period.GetNext(_lastSuccessfulDue);
+                    return TimedActionResult.Skipped;
+                }
+
                 _logger.LogInformation($"Action {_actionName} due, executing...");
                 using var scope = _logger.BeginScope("Action {action} running", _actionName);
                 bool succeeded;
