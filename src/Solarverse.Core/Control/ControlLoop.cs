@@ -42,7 +42,7 @@ namespace Solarverse.Core.Control
             _predictionFactory = predictionFactory;
 
             var getSolarForecastDataPeriod = UpdatePeriods.SolarForecastUpdates;
-            _actions.Add(new TimedAction(_logger, getSolarForecastDataPeriod, UpdateSolcastData, "Update solar forecast data"));
+            _actions.Add(new TimedAction(_logger, getSolarForecastDataPeriod, ShouldUpdateSolarForecast, UpdateSolcastData, "Update solar forecast data"));
 
             var getTariffRatesPeriod = UpdatePeriods.TariffUpdates;
             _actions.Add(new TimedAction(_logger, getTariffRatesPeriod, ShouldUpdateTariffRates, UpdateTariffRates, "Update energy tariff rates"));
@@ -286,6 +286,11 @@ namespace Solarverse.Core.Control
 
             _logger.LogWarning($"Did not get tariff rates for mpan {meter.MPAN}");
             return false;
+        }
+
+        public bool ShouldUpdateSolarForecast()
+        {
+            return DateTime.Now.Hour >= 6 && DateTime.Now.Hour <= 18;
         }
 
         public async Task<bool> UpdateSolcastData()

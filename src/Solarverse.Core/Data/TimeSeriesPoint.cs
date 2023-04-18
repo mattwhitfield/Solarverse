@@ -1,9 +1,12 @@
 ﻿using Newtonsoft.Json;
+using Solarverse.Core.Helper;
 
 namespace Solarverse.Core.Data
 {
     public class TimeSeriesPoint
     {
+        private static Period HalfHourly = new Period(TimeSpan.FromMinutes(30));
+
         public TimeSeriesPoint(DateTime time)
         {
             Time = time;
@@ -32,6 +35,8 @@ namespace Solarverse.Core.Data
         public bool IsDischargeTarget { get; set; }
 
         public double? RequiredBatteryPowerKwh { get; set; }
+
+        public bool IsFuture => !ActualConsumptionKwh.HasValue && HalfHourly.GetLast(DateTime.UtcNow) < Time;
 
         [JsonIgnore]
         public double? RequiredPowerKwh => ForecastSolarKwh.HasValue && ForecastConsumptionKwh.HasValue ? ForecastConsumptionKwh.Value - ForecastSolarKwh.Value : null;

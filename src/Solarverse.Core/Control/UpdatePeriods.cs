@@ -6,7 +6,7 @@ namespace Solarverse.Core.Control
     {
         public static Period TariffUpdates { get; } = new Period(TimeSpan.FromMinutes(2));
 
-        public static Period SolarForecastUpdates { get; } = new Period(TimeSpan.FromHours(6));
+        public static Period SolarForecastUpdates { get; } = new Period(TimeSpan.FromHours(2));
 
         public static Period ConsumptionCacheUpdates { get; } = new Period(TimeSpan.FromDays(1));
 
