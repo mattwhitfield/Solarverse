@@ -46,8 +46,8 @@ namespace Solarverse.Core.Data
             var lastPoint = _points.First();
             foreach (var point in _points.Skip(1))
             {
-                if (lastPoint.ControlAction == ControlAction.Discharge &&
-                    point.ControlAction != ControlAction.Discharge &&
+                if (lastPoint.IsDischargeTarget &&
+                    !point.IsDischargeTarget &&
                     lastPoint.RequiredBatteryPowerKwh.HasValue)
                 {
                     var lastPointPercent =
@@ -68,7 +68,7 @@ namespace Solarverse.Core.Data
                         var dischargePoints = _points
                             .Where(x => x.Time >= lastPoint.Time)
                             .OrderBy(x => x.Time)
-                            .TakeWhile(x => x.ControlAction == ControlAction.Discharge && x.ExcessPowerKwh < 0)
+                            .TakeWhile(x => x.IsDischargeTarget)
                             .ToList();
 
                         action((lastPoint, lastPointPercent, dischargePoints));

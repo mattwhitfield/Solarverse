@@ -212,7 +212,7 @@ namespace Solarverse.Core.Control
             var lastPointPower = 0d;
             foreach (var point in forecastPoints)
             {
-                if (point.ControlAction == ControlAction.Discharge)
+                if (point.ControlAction == ControlAction.Discharge || point.IsDischargeTarget)
                 {
                     var pointPower = lastPointPower + (point.RequiredPowerKwh ?? 0);
                     point.RequiredBatteryPowerKwh = lastPointPower = pointPower;
@@ -305,7 +305,10 @@ namespace Solarverse.Core.Control
             }
 
             _logger.LogInformation($"(Pairing) Setting period {potentialChargePoint.Time} to charge to cater for targeted points");
-            dischargePoints.Each(x => x.ControlAction = ControlAction.Discharge);
+            dischargePoints.Each(x => {
+                x.ControlAction = ControlAction.Discharge;
+                x.IsDischargeTarget = true;
+            });
             potentialChargePoint.ControlAction = ControlAction.Charge;
             _currentDataService.RecalculateForecast();
 
