@@ -9,11 +9,13 @@ namespace Solarverse.Core.Data
     {
         private readonly ILogger<CurrentDataService> _logger;
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly ICurrentTimeProvider _currentTimeProvider;
 
-        public CurrentDataService(ILogger<CurrentDataService> logger, IConfigurationProvider configurationProvider)
+        public CurrentDataService(ILogger<CurrentDataService> logger, IConfigurationProvider configurationProvider, ICurrentTimeProvider currentTimeProvider)
         {
             _logger = logger;
             _configurationProvider = configurationProvider;
+            _currentTimeProvider = currentTimeProvider;
         }
 
         public ForecastTimeSeries GetForecastTimeSeries(ILogger logger)
@@ -33,7 +35,7 @@ namespace Solarverse.Core.Data
         {
             _logger.LogInformation($"Culling time series data older than {deleteOlderThan}");
 
-            var pointsRemoved = TimeSeries.Cull(deleteOlderThan);
+            var pointsRemoved = TimeSeries.Cull(deleteOlderThan, _currentTimeProvider);
             if (pointsRemoved)
             {
                 TimeSeriesUpdated?.Invoke(this, EventArgs.Empty);
@@ -78,7 +80,7 @@ namespace Solarverse.Core.Data
             _logger.LogInformation($"Updating household consumption - data from {consumption.DataPoints.Min(x => x.Time)} to {consumption.DataPoints.Max(x => x.Time)}");
 
             var min = TimeSeries.GetMinimumDate();
-            var max = Period.HalfHourly.GetLast(DateTime.UtcNow);
+            var max = _currentTimeProvider.CurrentPeriodStartUtc;
             _logger.LogInformation($"Minimum household consumption time is {min}");
 
             var source = consumption.DataPoints;
@@ -89,7 +91,7 @@ namespace Solarverse.Core.Data
 
             if (!source.Any(x => x.Time == max))
             {
-                if (CurrentState.UpdateTime > DateTime.UtcNow.AddMinutes(-5))
+                if (CurrentState.UpdateTime > _currentTimeProvider.UtcNow.AddMinutes(-5))
                 {
                     TimeSeries.Set(max, x => x.ActualBatteryPercentage = CurrentState.BatteryPercent);
                 }

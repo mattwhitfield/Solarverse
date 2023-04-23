@@ -55,6 +55,7 @@ namespace Solarverse.Core.Helper
             collection.AddTransient<IControlPlanFactory, ControlPlanFactory>();
             collection.AddTransient<IIntegrationProvider, IntegrationProvider>();
             collection.AddSingleton<IMemoryLog, MemoryLog>();
+            collection.AddTransient<ICurrentTimeProvider, CurrentTimeProvider>();
         }
     }
 }

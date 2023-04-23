@@ -20,7 +20,7 @@ namespace Solarverse.Core.Control
         private readonly IControlPlanFactory _controlPlanFactory;
         private readonly IControlPlanExecutor _controlPlanExecutor;
         private readonly IPredictionFactory _predictionFactory;
-
+        private readonly ICurrentTimeProvider _currentTimeProvider;
         private readonly List<TimedAction> _actions = new List<TimedAction>();
 
         public ControlLoop(ILogger<ControlLoop> logger,
@@ -30,7 +30,8 @@ namespace Solarverse.Core.Control
             ICurrentDataService currentDataService,
             IControlPlanFactory controlPlanFactory,
             IControlPlanExecutor controlPlanExecutor,
-            IPredictionFactory predictionFactory)
+            IPredictionFactory predictionFactory,
+            ICurrentTimeProvider currentTimeProvider)
         {
             _logger = logger;
             _configurationProvider = configurationProvider;
@@ -40,6 +41,7 @@ namespace Solarverse.Core.Control
             _controlPlanFactory = controlPlanFactory;
             _controlPlanExecutor = controlPlanExecutor;
             _predictionFactory = predictionFactory;
+            _currentTimeProvider = currentTimeProvider;
 
             var getSolarForecastDataPeriod = UpdatePeriods.SolarForecastUpdates;
             _actions.Add(new TimedAction(_logger, getSolarForecastDataPeriod, ShouldUpdateSolarForecast, UpdateSolcastData, "Update solar forecast data"));
@@ -79,7 +81,7 @@ namespace Solarverse.Core.Control
             {
                 foreach (var action in _actions)
                 {
-                    await action.Run(DateTime.UtcNow);
+                    await action.Run(_currentTimeProvider.UtcNow);
 
                     if (cancellation.IsCancellationRequested)
                     {
@@ -142,7 +144,7 @@ namespace Solarverse.Core.Control
 
         public bool ShouldGetConsumptionData()
         {
-            var current = new Period(TimeSpan.FromMinutes(30)).GetLast(DateTime.UtcNow).AddMinutes(-30);
+            var current = new Period(TimeSpan.FromMinutes(30)).GetLast(_currentTimeProvider.UtcNow).AddMinutes(-30);
             var from = _currentDataService.TimeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
 
             return current > from;
@@ -157,7 +159,7 @@ namespace Solarverse.Core.Control
 
             var from = timeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
 
-            foreach (var date in timeSeries.GetDates().Where(x => x.Date <= DateTime.UtcNow.Date))
+            foreach (var date in timeSeries.GetDates().Where(x => x.Date <= _currentTimeProvider.UtcNow.Date))
             {
                 _logger.LogInformation($"Getting household consumption for {date}");
 
@@ -200,13 +202,13 @@ namespace Solarverse.Core.Control
             var existingMax = _currentDataService.TimeSeries.GetMaximumDate(x => x.IncomingRate != null);
             if (existingMax != null)
             {
-                if (existingMax.Value.Date == DateTime.UtcNow.Date)
+                if (existingMax.Value.Date == _currentTimeProvider.UtcNow.Date)
                 {
-                    shouldUpdate = DateTime.Now.Hour >= 16;
+                    shouldUpdate = _currentTimeProvider.LocalNow.Hour >= 16;
                 }
                 else
                 {
-                    shouldUpdate = existingMax.Value.Date < DateTime.UtcNow.Date;
+                    shouldUpdate = existingMax.Value.Date < _currentTimeProvider.UtcNow.Date;
                 }
             }
 
@@ -272,7 +274,7 @@ namespace Solarverse.Core.Control
 
             if (agileRates != null)
             {
-                var isValid = agileRates.Any() && agileRates.Max(x => x.ValidFrom).Date > DateTime.UtcNow.Date;
+                var isValid = agileRates.Any() && agileRates.Max(x => x.ValidFrom).Date > _currentTimeProvider.UtcNow.Date;
                 if (isValid)
                 {
                     _logger.LogInformation($"Got tariff rates for mpan {meter.MPAN}");
@@ -290,7 +292,7 @@ namespace Solarverse.Core.Control
 
         public bool ShouldUpdateSolarForecast()
         {
-            return DateTime.Now.Hour >= 6 && DateTime.Now.Hour <= 18;
+            return _currentTimeProvider.LocalNow.Hour >= 6 && _currentTimeProvider.LocalNow.Hour <= 18;
         }
 
         public async Task<bool> UpdateSolcastData()

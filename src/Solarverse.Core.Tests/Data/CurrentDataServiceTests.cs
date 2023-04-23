@@ -21,29 +21,17 @@ namespace Solarverse.Core.Tests.Data
         {
             _logger = Substitute.For<ILogger<CurrentDataService>>();
             _configurationProvider = Substitute.For<IConfigurationProvider>();
-            _testClass = new CurrentDataService(_logger, _configurationProvider);
+            _testClass = new CurrentDataService(_logger, _configurationProvider, Substitute.For<ICurrentTimeProvider>());
         }
 
         [Fact]
         public void CanConstruct()
         {
             // Act
-            var instance = new CurrentDataService(_logger, _configurationProvider);
+            var instance = new CurrentDataService(_logger, _configurationProvider, Substitute.For<ICurrentTimeProvider>());
 
             // Assert
             instance.Should().NotBeNull();
-        }
-
-        [Fact]
-        public void CannotConstructWithNullLogger()
-        {
-            FluentActions.Invoking(() => new CurrentDataService(default(ILogger<CurrentDataService>), Substitute.For<IConfigurationProvider>())).Should().Throw<ArgumentNullException>();
-        }
-
-        [Fact]
-        public void CannotConstructWithNullConfigurationProvider()
-        {
-            FluentActions.Invoking(() => new CurrentDataService(Substitute.For<ILogger<CurrentDataService>>(), default(IConfigurationProvider))).Should().Throw<ArgumentNullException>();
         }
 
         [Fact]

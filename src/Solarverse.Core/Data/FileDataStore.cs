@@ -12,9 +12,10 @@ namespace Solarverse.Core.Data
     {
         private readonly IIntegrationProvider _integrationProvider;
         private readonly ILogger<FileDataStore> _logger;
+        private readonly ICurrentTimeProvider _currentTimeProvider;
         private string _cacheRoot;
 
-        public FileDataStore(IIntegrationProvider integrationProvider, ICachePathProvider cachePathProvider, ILogger<FileDataStore> logger)
+        public FileDataStore(IIntegrationProvider integrationProvider, ICachePathProvider cachePathProvider, ILogger<FileDataStore> logger, ICurrentTimeProvider currentTimeProvider)
         {
             _cacheRoot = Path.Combine(
                 cachePathProvider.CachePath,
@@ -22,6 +23,7 @@ namespace Solarverse.Core.Data
                 "Cache");
             _integrationProvider = integrationProvider;
             _logger = logger;
+            _currentTimeProvider = currentTimeProvider;
         }
 
         private async Task<TData> Get<TData, TCache>(
@@ -82,7 +84,7 @@ namespace Solarverse.Core.Data
                 x => x.FromCache(),
                 x => x.IsValid,
                 UpdatePeriods.SolarForecastUpdates,
-                DateTime.UtcNow,
+                _currentTimeProvider.UtcNow,
                 "SolarForecasts");
         }
 
@@ -98,9 +100,9 @@ namespace Solarverse.Core.Data
                 () => _integrationProvider.EnergySupplierClient.GetTariffRates(productCode, mpan),
                 x => x.ToCache(),
                 x => x.FromCache(),
-                x => x.Any() && x.Max(point => point.ValidFrom).Date > DateTime.UtcNow.Date,
+                x => x.Any() && x.Max(point => point.ValidFrom).Date > _currentTimeProvider.UtcNow.Date,
                 UpdatePeriods.TariffUpdates,
-                DateTime.UtcNow,
+                _currentTimeProvider.UtcNow,
                 "Tariff-" + mpan);
         }
 

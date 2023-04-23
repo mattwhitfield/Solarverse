@@ -6,6 +6,7 @@ namespace Solarverse.Core.Tests.Data
     using Microsoft.Extensions.Logging;
     using NSubstitute;
     using Solarverse.Core.Data;
+    using Solarverse.Core.Helper;
     using Solarverse.Core.Integration;
     using Xunit;
 
@@ -21,14 +22,14 @@ namespace Solarverse.Core.Tests.Data
             _integrationProvider = Substitute.For<IIntegrationProvider>();
             _cachePathProvider = Substitute.For<ICachePathProvider>();
             _logger = Substitute.For<ILogger<FileDataStore>>();
-            _testClass = new FileDataStore(_integrationProvider, _cachePathProvider, _logger);
+            _testClass = new FileDataStore(_integrationProvider, _cachePathProvider, _logger, Substitute.For<ICurrentTimeProvider>());
         }
 
         [Fact]
         public void CanConstruct()
         {
             // Act
-            var instance = new FileDataStore(_integrationProvider, _cachePathProvider, _logger);
+            var instance = new FileDataStore(_integrationProvider, _cachePathProvider, _logger, Substitute.For<ICurrentTimeProvider>());
 
             // Assert
             instance.Should().NotBeNull();

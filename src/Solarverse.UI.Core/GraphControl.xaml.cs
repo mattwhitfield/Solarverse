@@ -22,6 +22,8 @@ namespace Solarverse.UI.Core
 
         private TimeSeries? _currentSeries;
 
+        public bool ShowCurrentTime { get; set; } = true;
+
         public bool ShowDevelopmentDetail { get; set; }
 
         public double BatteryCapacityKwh { get; set; } = 5.2;
@@ -322,9 +324,9 @@ namespace Solarverse.UI.Core
             scatter.MarkerShape = MarkerShape.none;
         }
 
-        private static HSpan AddAndConfigureHspan(Plot plot, Color color)
+        private static HSpan AddAndConfigureHspan(Plot plot, Color color, DateTime dateTime)
         {
-            var span = plot.AddHorizontalSpan(DateTime.UtcNow.ToOADate(), DateTime.UtcNow.ToOADate(), Color.FromArgb(32, color));
+            var span = plot.AddHorizontalSpan(dateTime.ToOADate(), dateTime.ToOADate(), Color.FromArgb(32, color));
             span.IsVisible = false;
             return span;
         }
@@ -425,18 +427,22 @@ namespace Solarverse.UI.Core
             WpfPlot2.Plot.Clear();
             WpfPlot3.Plot.Clear();
 
-            _span1 = AddAndConfigureHspan(WpfPlot1.Plot, Color.Black);
-            _span2 = AddAndConfigureHspan(WpfPlot2.Plot, Color.Black);
-            _span3 = AddAndConfigureHspan(WpfPlot3.Plot, Color.Black);
+            var seriesMax = series.Any() ? series.Max(x => x.Time) : DateTime.UtcNow;
+            _span1 = AddAndConfigureHspan(WpfPlot1.Plot, Color.Black, seriesMax);
+            _span2 = AddAndConfigureHspan(WpfPlot2.Plot, Color.Black, seriesMax);
+            _span3 = AddAndConfigureHspan(WpfPlot3.Plot, Color.Black, seriesMax);
 
-            var currentTimeSpan1 = AddAndConfigureHspan(WpfPlot1.Plot, Color.Blue);
-            var currentTimeSpan2 = AddAndConfigureHspan(WpfPlot2.Plot, Color.Blue);
-            var currentTimeSpan3 = AddAndConfigureHspan(WpfPlot3.Plot, Color.Blue);
+            if (ShowCurrentTime)
+            {
+                var currentTimeSpan1 = AddAndConfigureHspan(WpfPlot1.Plot, Color.Blue, seriesMax);
+                var currentTimeSpan2 = AddAndConfigureHspan(WpfPlot2.Plot, Color.Blue, seriesMax);
+                var currentTimeSpan3 = AddAndConfigureHspan(WpfPlot3.Plot, Color.Blue, seriesMax);
 
-            var period = Period.HalfHourly;
-            currentTimeSpan1.X1 = currentTimeSpan2.X1 = currentTimeSpan3.X1 = period.GetLast(DateTime.UtcNow).ToOADate();
-            currentTimeSpan1.X2 = currentTimeSpan2.X2 = currentTimeSpan3.X2 = period.GetNext(DateTime.UtcNow).ToOADate();
-            currentTimeSpan1.IsVisible = currentTimeSpan2.IsVisible = currentTimeSpan3.IsVisible = true;
+                var period = Period.HalfHourly;
+                currentTimeSpan1.X1 = currentTimeSpan2.X1 = currentTimeSpan3.X1 = period.GetLast(DateTime.UtcNow).ToOADate();
+                currentTimeSpan1.X2 = currentTimeSpan2.X2 = currentTimeSpan3.X2 = period.GetNext(DateTime.UtcNow).ToOADate();
+                currentTimeSpan1.IsVisible = currentTimeSpan2.IsVisible = currentTimeSpan3.IsVisible = true;
+            }
 
             WpfPlot1.Plot.YAxis.LockLimits(false);
             WpfPlot2.Plot.YAxis.LockLimits(false);
@@ -525,6 +531,16 @@ namespace Solarverse.UI.Core
                     LogItems.Items.RemoveAt(MemoryLog.LogLength);
                 }
             }
+        }
+
+        public void ClearLogLines()
+        {
+            Dispatcher.BeginInvoke(new Action(() => ClearLogLinesSafe()));
+        }
+
+        public void ClearLogLinesSafe()
+        {
+            LogItems.Items.Clear();
         }
 
         public void UpdateCurrentState(InverterCurrentState currentState)
