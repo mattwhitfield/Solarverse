@@ -10,19 +10,21 @@ namespace Solarverse.Core.Control
         private readonly IInverterClient _inverterClient;
         private readonly ICurrentDataService _currentDataService;
         private readonly ILogger<ControlPlanExecutor> _logger;
+        private readonly ICurrentTimeProvider _currentTimeProvider;
 
-        public ControlPlanExecutor(IInverterClient inverterClient, ICurrentDataService currentDataService, ILogger<ControlPlanExecutor> logger)
+        public ControlPlanExecutor(IInverterClient inverterClient, ICurrentDataService currentDataService, ILogger<ControlPlanExecutor> logger, ICurrentTimeProvider currentTimeProvider)
         {
             _inverterClient = inverterClient;
             _currentDataService = currentDataService;
             _logger = logger;
+            _currentTimeProvider = currentTimeProvider;
         }
 
         public async Task<bool> ExecutePlan()
         {
             _logger.LogInformation("Executing control plan...");
 
-            var currentPeriod = Period.HalfHourly.GetLast(DateTime.UtcNow);
+            var currentPeriod = _currentTimeProvider.CurrentPeriodStartUtc;
             if (!_currentDataService.TimeSeries.TryGetDataPointFor(currentPeriod, out var currentDataPoint) ||
                 currentDataPoint?.ControlAction == null)
             {

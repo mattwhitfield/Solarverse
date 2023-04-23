@@ -13,10 +13,11 @@ namespace Solarverse.Core.Integration.GivEnergy
         private readonly HttpClient _httpClient;
         private readonly ILogger<GivEnergyClient> _logger;
         private readonly ICurrentDataService _currentDataService;
+        private readonly ICurrentTimeProvider _currentTimeProvider;
         private string? _inverterSerial;
         private CurrentSettingValues? _currentSettings;
 
-        public GivEnergyClient(ILogger<GivEnergyClient> logger, IConfigurationProvider configurationProvider, ICurrentDataService currentDataService)
+        public GivEnergyClient(ILogger<GivEnergyClient> logger, IConfigurationProvider configurationProvider, ICurrentDataService currentDataService, ICurrentTimeProvider currentTimeProvider)
         {
             _httpClient = new HttpClient();
 
@@ -30,6 +31,7 @@ namespace Solarverse.Core.Integration.GivEnergy
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _logger = logger;
             _currentDataService = currentDataService;
+            _currentTimeProvider = currentTimeProvider;
         }
 
         public async Task<string> FindInverterSerial()
@@ -111,7 +113,7 @@ namespace Solarverse.Core.Integration.GivEnergy
 
                     if (TimeSpan.TryParseExact(s, "hh\\:mm", CultureInfo.InvariantCulture, out var time))
                     {
-                        var offset = (DateTime.Now - DateTime.UtcNow);
+                        var offset = (_currentTimeProvider.LocalNow - _currentTimeProvider.UtcNow);
                         return new TimeSetting(id, time - offset);
                     }
                 }
@@ -281,13 +283,13 @@ namespace Solarverse.Core.Integration.GivEnergy
             // set start time if it's currently later than now or not set
             await SetSettingIfRequired(
                 SettingIds.Charge.StartTime,
-                x => !x.ChargeSettings.StartTime.Value.HasValue || x.ChargeSettings.StartTime.Value.Value > DateTime.UtcNow.TimeOfDay,
-                DateTime.Now.ToString("HH:mm"));
+                x => !x.ChargeSettings.StartTime.Value.HasValue || x.ChargeSettings.StartTime.Value.Value > _currentTimeProvider.LocalNow.TimeOfDay,
+                _currentTimeProvider.LocalNow.ToString("HH:mm"));
 
             // set until if it's not what we want or not set
             await SetSettingIfRequired(
                 SettingIds.Charge.EndTime,
-                x => !x.ChargeSettings.EndTime.Value.HasValue || x.ChargeSettings.EndTime.Value.Value != until.TimeOfDay,
+                x => !x.ChargeSettings.EndTime.Value.HasValue || x.ChargeSettings.EndTime.Value.Value != until.ToLocalTime().TimeOfDay,
                 until.ToLocalTime().ToString("HH:mm"));
 
             // enable charge if it's not enabled
@@ -356,14 +358,14 @@ namespace Solarverse.Core.Integration.GivEnergy
             // set start time if it's currently later than now or not set
             await SetSettingIfRequired(
                 SettingIds.Discharge.StartTime,
-                x => !x.DischargeSettings.StartTime.Value.HasValue || x.DischargeSettings.StartTime.Value.Value > DateTime.UtcNow.TimeOfDay,
-                DateTime.UtcNow.ToString("HH:mm"));
+                x => !x.DischargeSettings.StartTime.Value.HasValue || x.DischargeSettings.StartTime.Value.Value > _currentTimeProvider.LocalNow.TimeOfDay,
+                _currentTimeProvider.LocalNow.ToString("HH:mm"));
 
             // set until if it's not what we want or not set
             await SetSettingIfRequired(
                 SettingIds.Discharge.EndTime,
-                x => !x.DischargeSettings.EndTime.Value.HasValue || x.DischargeSettings.EndTime.Value.Value != until.TimeOfDay,
-                until.ToString("HH:mm"));
+                x => !x.DischargeSettings.EndTime.Value.HasValue || x.DischargeSettings.EndTime.Value.Value != until.ToLocalTime().TimeOfDay,
+                until.ToLocalTime().ToString("HH:mm"));
 
             // enable charge if it's not enabled
             await SetSettingIfRequired(

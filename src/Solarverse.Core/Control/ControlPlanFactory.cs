@@ -12,12 +12,14 @@ namespace Solarverse.Core.Control
         private readonly ICurrentDataService _currentDataService;
         private readonly ILogger<ControlPlanFactory> _logger;
         private readonly IConfigurationProvider _configurationProvider;
+        private readonly ICurrentTimeProvider _currentTimeProvider;
 
-        public ControlPlanFactory(ICurrentDataService currentDataService, ILogger<ControlPlanFactory> logger, IConfigurationProvider configurationProvider)
+        public ControlPlanFactory(ICurrentDataService currentDataService, ILogger<ControlPlanFactory> logger, IConfigurationProvider configurationProvider, ICurrentTimeProvider currentTimeProvider)
         {
             _currentDataService = currentDataService;
             _logger = logger;
             _configurationProvider = configurationProvider;
+            _currentTimeProvider = currentTimeProvider;
         }
 
         public void CheckForAdaptations(InverterCurrentState currentState)
@@ -29,12 +31,12 @@ namespace Solarverse.Core.Control
             }
 
             // happens after every current state update - here we check if the battery charge is on track and if we need another 1/2 hour charge period
-            if (_currentDataService.TimeSeries.Where(x => x.IncomingRate.HasValue && x.IsFuture).Any())
+            if (_currentDataService.TimeSeries.Where(x => x.IncomingRate.HasValue && x.IsFuture(_currentTimeProvider)).Any())
             {
                 using var updateLock = _currentDataService.LockForUpdate();
 
-                _currentDataService.TimeSeries.Where(x => x.IsFuture).Each(x => x.ControlAction = null);
-                _currentDataService.TimeSeries.Where(x => x.IsFuture && x.IsDischargeTarget && x.RequiredPowerKwh > 0).Each(x => x.ControlAction = ControlAction.Discharge);
+                _currentDataService.TimeSeries.Where(x => x.IsFuture(_currentTimeProvider)).Each(x => x.ControlAction = null);
+                _currentDataService.TimeSeries.Where(x => x.IsFuture(_currentTimeProvider) && x.IsDischargeTarget && x.RequiredPowerKwh > 0).Each(x => x.ControlAction = ControlAction.Discharge);
 
                 CreatePlanForDischargeTargets();
             }
@@ -51,7 +53,7 @@ namespace Solarverse.Core.Control
         public void SetDischargeTargets()
         {
             // happns after tariffs become available, so we look at solar forecast, predicted consumption and tariff rates
-            var firstTime = Period.HalfHourly.GetLast(DateTime.UtcNow);
+            var firstTime = _currentTimeProvider.CurrentPeriodStartUtc;
 
             if (!_currentDataService.TimeSeries
                                     .Where(x => x.Time >= firstTime)
@@ -146,7 +148,7 @@ namespace Solarverse.Core.Control
             var remainingPoints = series
                 .Where(x => x.ControlAction == ControlAction.Hold && 
                             x.IncomingRate.HasValue &&
-                            x.IsFuture)
+                            x.IsFuture(_currentTimeProvider))
                 .OrderBy(x => x.IncomingRate)
                 .ToList();
 
@@ -414,7 +416,7 @@ namespace Solarverse.Core.Control
                             _logger.LogInformation($"({passName}) {chargeLeft:N2} kWh left to fill");
 
                             var potentialDischargePoints =
-                                series.Where(x => x.IsFuture && (!x.ControlAction.HasValue || x.ControlAction == ControlAction.Hold) && x.RequiredPowerKwh < chargeLeft && x.RequiredPowerKwh > 0 && x.IncomingRate.HasValue).ToList();
+                                series.Where(x => x.IsFuture(_currentTimeProvider) && (!x.ControlAction.HasValue || x.ControlAction == ControlAction.Hold) && x.RequiredPowerKwh < chargeLeft && x.RequiredPowerKwh > 0 && x.IncomingRate.HasValue).ToList();
 
                             var eligibleDischargePointsPrior = potentialDischargePoints
                                 .Where(x => x.Time < selectedPoint.Time)

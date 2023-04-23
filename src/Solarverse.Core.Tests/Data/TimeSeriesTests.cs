@@ -4,7 +4,9 @@ namespace Solarverse.Core.Tests.Data
     using System.Collections;
     using System.Collections.Generic;
     using FluentAssertions;
+    using NSubstitute;
     using Solarverse.Core.Data;
+    using Solarverse.Core.Helper;
     using Xunit;
     using TSource = System.String;
     using TValue = System.String;
@@ -134,7 +136,7 @@ namespace Solarverse.Core.Tests.Data
             var deleteOlderThan = TimeSpan.FromSeconds(345);
 
             // Act
-            var result = _testClass.Cull(deleteOlderThan);
+            var result = _testClass.Cull(deleteOlderThan, Substitute.For<ICurrentTimeProvider>());
 
             // Assert
             throw new NotImplementedException("Create or modify test");

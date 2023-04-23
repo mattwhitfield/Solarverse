@@ -5,8 +5,6 @@ namespace Solarverse.Core.Data
 {
     public class TimeSeriesPoint
     {
-        private static Period HalfHourly = new Period(TimeSpan.FromMinutes(30));
-
         public TimeSeriesPoint(DateTime time)
         {
             Time = time;
@@ -36,7 +34,7 @@ namespace Solarverse.Core.Data
 
         public double? RequiredBatteryPowerKwh { get; set; }
 
-        public bool IsFuture => !ActualConsumptionKwh.HasValue && HalfHourly.GetLast(DateTime.UtcNow) < Time;
+        public bool IsFuture(ICurrentTimeProvider currentTimeProvider) => !ActualConsumptionKwh.HasValue && currentTimeProvider.CurrentPeriodStartUtc < Time;
 
         [JsonIgnore]
         public double? RequiredPowerKwh => ForecastSolarKwh.HasValue && ForecastConsumptionKwh.HasValue ? ForecastConsumptionKwh.Value - ForecastSolarKwh.Value : null;

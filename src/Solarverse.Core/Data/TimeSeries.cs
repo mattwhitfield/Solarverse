@@ -60,9 +60,9 @@ namespace Solarverse.Core.Data
             return _dataPoints.Select(x => x.Key.Date).Distinct().ToList();
         }
 
-        public bool Cull(TimeSpan deleteOlderThan)
+        public bool Cull(TimeSpan deleteOlderThan, ICurrentTimeProvider currentTimeProvider)
         {
-            var olderPoints = _dataPoints.Keys.Where(x => x < DateTime.UtcNow.Subtract(deleteOlderThan)).ToList();
+            var olderPoints = _dataPoints.Keys.Where(x => x < currentTimeProvider.UtcNow.Subtract(deleteOlderThan)).ToList();
             olderPoints.Each(key => _dataPoints.Remove(key));
             return olderPoints.Any();
         }
