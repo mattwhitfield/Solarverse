@@ -1,11 +1,10 @@
 namespace Solarverse.Core.Tests.Helper
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Xml.XPath;
     using FluentAssertions;
     using Solarverse.Core.Data;
     using Solarverse.Core.Helper;
+    using System;
+    using System.Linq;
     using Xunit;
 
     public static class BucketizerTests
@@ -20,7 +19,7 @@ namespace Solarverse.Core.Tests.Helper
             var kwhPerPeriod = 5;
 
             // Act
-            var result = Bucketizer.Bucketize(points, kwhPerPeriod);
+            var result = Bucketizer.Bucketize(points.Select(x => new ForecastTimeSeriesPoint(x, null)), kwhPerPeriod);
 
             // Assert
             result.Should().Equal(100);
@@ -38,7 +37,7 @@ namespace Solarverse.Core.Tests.Helper
             var kwhPerPeriod = 2;
 
             // Act
-            var result = Bucketizer.Bucketize(points, kwhPerPeriod);
+            var result = Bucketizer.Bucketize(points.Select(x => new ForecastTimeSeriesPoint(x, null)), kwhPerPeriod);
 
             // Assert
             result.Should().Equal(100, 100, 50, 50, 50, 25, 25, 25, 25);
@@ -56,7 +55,7 @@ namespace Solarverse.Core.Tests.Helper
             var kwhPerPeriod = 2;
 
             // Act
-            var result = Bucketizer.Bucketize(points, kwhPerPeriod);
+            var result = Bucketizer.Bucketize(points.Select(x => new ForecastTimeSeriesPoint(x, null)), kwhPerPeriod);
 
             // Assert
             result.Should().Equal(100, 75, 50, 30, 10);

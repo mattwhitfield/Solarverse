@@ -2,6 +2,8 @@
 using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Models;
+using System.Linq;
+using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Reflection;
 
@@ -129,6 +131,9 @@ namespace Solarverse.Core.Control
             // periods aren't fully covered, we sacrifice charge for less expensive periods
             PrioritizeDischargeTargetsByPrice(forecastPoints);
 
+            // see if we can utilize any stored charge to reduce fully charged export periods
+            ReduceFullyChargedExportPeriods(forecastPoints);
+
             // set the remaining points to hold/discharge
             SetTailPoints(forecastPoints);
 
@@ -137,6 +142,35 @@ namespace Solarverse.Core.Control
             RunPairingPass(forecastPoints);
 
             _currentDataService.RecalculateForecast();
+        }
+
+        private void ReduceFullyChargedExportPeriods(ForecastTimeSeries forecastPoints)
+        {
+            var anyUpdated = true;
+            while (anyUpdated)
+            {
+                anyUpdated = false;
+                forecastPoints.RunActionOnSolarExcessStarts(period =>
+                {
+                    var minBatteryKwh = period.PriorPoints.Select(x => x.ForecastBatteryKwh).Where(x => x != null).Min();
+                    var eligiblePoint = period.PriorPoints
+                        .Where(x => !x.ControlAction.HasValue || x.ControlAction == ControlAction.Hold)
+                        .Where(x => x.RequiredPowerKwh.HasValue && x.RequiredPowerKwh.Value > 0)
+                        .Where(x => minBatteryKwh > x.RequiredPowerKwh)
+                        .OrderByDescending(x => x.IncomingRate)
+                        .FirstOrDefault();
+
+                    if (eligiblePoint != null)
+                    {
+                        eligiblePoint.ControlAction = ControlAction.Discharge;
+                        anyUpdated = true;
+
+                        _logger.LogInformation($"Point at {eligiblePoint.Time} requires {eligiblePoint.RequiredPowerKwh:N2} kWh and battery has {eligiblePoint.ForecastBatteryKwh:N2} kWh, setting to discharge");
+
+                        _currentDataService.RecalculateForecast();
+                    }
+                });
+            }
         }
 
         private void RunPairingPass(ForecastTimeSeries series)
@@ -179,11 +213,6 @@ namespace Solarverse.Core.Control
             var pointWithControlActionPassed = false;
             foreach (var point in series)
             {
-                if (point.ActualConsumptionKwh.HasValue)
-                {
-                    continue;
-                }
-
                 if (!point.IncomingRate.HasValue)
                 {
                     continue;
@@ -209,7 +238,7 @@ namespace Solarverse.Core.Control
             }
         }
 
-        private void SetRequiredPower(IEnumerable<TimeSeriesPoint> forecastPoints)
+        private void SetRequiredPower(IEnumerable<ForecastTimeSeriesPoint> forecastPoints)
         {
             var lastPointPower = 0d;
             foreach (var point in forecastPoints)
@@ -236,7 +265,7 @@ namespace Solarverse.Core.Control
             _currentDataService.RecalculateForecast();
         }
 
-        private bool RunSinglePointPass(TimeSeriesPoint potentialChargePoint, List<TimeSeriesPoint> points, double efficiency, double capacity, double kwhPerPeriod, int reserve)
+        private bool RunSinglePointPass(ForecastTimeSeriesPoint potentialChargePoint, List<ForecastTimeSeriesPoint> points, double efficiency, double capacity, double kwhPerPeriod, int reserve)
         {
             var chargeSlotPercent = (kwhPerPeriod / capacity) * 100;
 
@@ -256,7 +285,7 @@ namespace Solarverse.Core.Control
                 .OrderByDescending(x => x.IncomingRate)
                 .ToList();
 
-            var dischargePoints = new List<TimeSeriesPoint>();
+            var dischargePoints = new List<ForecastTimeSeriesPoint>();
             var currentTotalKwh = 0.0;
             var totalCost = 0.0;
             var targetMet = false;
@@ -363,7 +392,7 @@ namespace Solarverse.Core.Control
             });
         }
 
-        private void RunPass(string passName, ForecastTimeSeries series, Func<TimeSeriesPoint, bool> selector)
+        private void RunPass(string passName, ForecastTimeSeries series, Func<ForecastTimeSeriesPoint, bool> selector)
         {
             series.RunActionOnDischargeStartPeriods(passName, period =>
             {
@@ -423,7 +452,7 @@ namespace Solarverse.Core.Control
 
                             var eligibleDischargePointsPrior = potentialDischargePoints
                                 .Where(x => x.Time < selectedPoint.Time)
-                                .TakeWhile(x => x.ForecastBatteryPercentage > ((x.RequiredPowerKwh / series.Capacity) * 100) + series.Reserve);
+                                .TakeWhile(x => x.ForecastBatteryKwh > x.RequiredPowerKwh);
 
                             var eligibleDischargePointsAfter = potentialDischargePoints
                                 .Where(x => x.Time > selectedPoint.Time)

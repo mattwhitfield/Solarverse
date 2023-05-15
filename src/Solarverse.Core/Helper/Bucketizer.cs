@@ -4,7 +4,7 @@
 
     public static class Bucketizer
     {
-        public static BucketedList Bucketize(IEnumerable<TimeSeriesPoint> points, double kwhPerPeriod)
+        public static BucketedList Bucketize(IEnumerable<ForecastTimeSeriesPoint> points, double kwhPerPeriod)
         {
             var dischargePoints = points
                 .OrderByDescending(x => x.IncomingRate)

@@ -52,7 +52,7 @@ namespace Solarverse.Core.Tests.Data
         {
             // Arrange
             var passName = "TestValue320130401";
-            Action<(TimeSeriesPoint Point, double PointPercentRequired, IList<TimeSeriesPoint> DischargePoints)> action = x => { };
+            Action<(ForecastTimeSeriesPoint Point, double PointPercentRequired, IList<ForecastTimeSeriesPoint> DischargePoints)> action = x => { };
 
             // Act
             _testClass.RunActionOnDischargeStartPeriods(passName, action);

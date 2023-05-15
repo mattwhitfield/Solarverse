@@ -99,6 +99,8 @@ namespace Solarverse.AlgorithmHarness
 
             _current = series.Where(x => x.ActualBatteryPercentage.HasValue).Max(x => x.Time);
 
+            _current = new DateTime(2023, 5, 14, 1, 0, 0, DateTimeKind.Utc);
+
             Modify(x => x);
         }
 
@@ -120,6 +122,18 @@ namespace Solarverse.AlgorithmHarness
             {
                 x.ControlAction = null;
                 x.IsDischargeTarget = false;
+            });
+
+            var nextCutoff = new Period(TimeSpan.FromDays(1), TimeSpan.FromHours(16));
+            var last4Pm = nextCutoff.GetLast(_current);
+            var timeUntil = last4Pm.AddDays(1).AddHours(7);
+
+            series.Where(x => x.Time >= timeUntil).Each(p =>
+            {
+                p.IncomingRate = null;
+                p.OutgoingRate = null;
+                p.ForecastBatteryPercentage = null;
+                p.ActualBatteryPercentage = null;
             });
 
             series.Where(x => x.Time >= _current).Each(p =>
