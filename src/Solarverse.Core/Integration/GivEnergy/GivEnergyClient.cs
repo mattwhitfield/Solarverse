@@ -128,7 +128,7 @@ namespace Solarverse.Core.Integration.GivEnergy
             }
         }
 
-        public async Task<InverterCurrentState> GetCurrentState()
+        public async Task<InverterCurrentState?> GetCurrentState()
         {
             var inverterSerial = await FindInverterSerial();
 
@@ -156,6 +156,11 @@ namespace Solarverse.Core.Integration.GivEnergy
                 ecoModeEnabled,
                 chargeSettings,
                 dischargeSettings);
+
+            if (dischargeSettings.PowerLimit.Value < 0 || chargeSettings.PowerLimit.Value < 0 || batteryReserve.Value < 0)
+            {
+                return null;
+            }
 
             var maxDischargeRateKw = Math.Max(dischargeSettings.PowerLimit.Value / 1000.0, 0);
             var maxChargeRateKw = Math.Max(chargeSettings.PowerLimit.Value / 1000.0, 0);

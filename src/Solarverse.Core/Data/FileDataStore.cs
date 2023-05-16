@@ -121,7 +121,7 @@ namespace Solarverse.Core.Data
             var file = GetTimeSeriesFile();
 
             _logger.LogInformation($"Caching data");
-            var cachable = new List<TimeSeriesPoint>(series);
+            var cachable = new List<TimeSeriesPoint>(series.OrderBy(x => x.Time));
             File.WriteAllText(file, JsonConvert.SerializeObject(cachable));
         }
 

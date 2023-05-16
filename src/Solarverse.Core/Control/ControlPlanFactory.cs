@@ -245,7 +245,7 @@ namespace Solarverse.Core.Control
             {
                 if (point.ControlAction == ControlAction.Discharge || point.IsDischargeTarget)
                 {
-                    var pointPower = lastPointPower + (point.RequiredPowerKwh ?? 0);
+                    var pointPower = lastPointPower + Math.Max(point.RequiredPowerKwh ?? 0, 0);
                     point.RequiredBatteryPowerKwh = lastPointPower = pointPower;
                     _logger.LogInformation($"Point at {point.Time} has ideal required power of {point.RequiredBatteryPowerKwh:N2} kWh");
                 }
