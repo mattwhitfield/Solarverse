@@ -152,11 +152,20 @@ namespace Solarverse.Core.Control
                 anyUpdated = false;
                 forecastPoints.RunActionOnSolarExcessStarts(period =>
                 {
-                    var minBatteryKwh = period.PriorPoints.Select(x => x.ForecastBatteryKwh).Where(x => x != null).Min();
+                    double GetMinBatteryAfterPoint(ForecastTimeSeriesPoint point)
+                    {
+                        var eligibleValues = period.PriorPoints.Where(p => p.Time > point.Time).Select(p => p.ForecastBatteryKwh).Where(p => p != null).ToList();
+                        if (eligibleValues.Count == 0)
+                        {
+                            return double.MaxValue;
+                        }
+                        return eligibleValues.Min() ?? double.MaxValue;
+                    }
+
                     var eligiblePoint = period.PriorPoints
                         .Where(x => !x.ControlAction.HasValue || x.ControlAction == ControlAction.Hold)
                         .Where(x => x.RequiredPowerKwh.HasValue && x.RequiredPowerKwh.Value > 0)
-                        .Where(x => minBatteryKwh > x.RequiredPowerKwh)
+                        .Where(x => GetMinBatteryAfterPoint(x) > x.RequiredPowerKwh)
                         .OrderByDescending(x => x.IncomingRate)
                         .FirstOrDefault();
 
