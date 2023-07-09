@@ -6,6 +6,7 @@ using System.Linq;
 using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Solarverse.Core.Control
 {
@@ -162,19 +163,28 @@ namespace Solarverse.Core.Control
                         return eligibleValues.Min() ?? double.MaxValue;
                     }
 
-                    var eligiblePoint = period.PriorPoints
-                        .Where(x => !x.ControlAction.HasValue || x.ControlAction == ControlAction.Hold)
-                        .Where(x => x.RequiredPowerKwh.HasValue && x.RequiredPowerKwh.Value > 0)
-                        .Where(x => GetMinBatteryAfterPoint(x) > x.RequiredPowerKwh)
-                        .OrderByDescending(x => x.IncomingRate)
-                        .FirstOrDefault();
-
-                    if (eligiblePoint != null)
+                    foreach (var periodPoint in period.PriorPoints.OrderByDescending(x => x.IncomingRate))
                     {
-                        eligiblePoint.ControlAction = ControlAction.Discharge;
+                        if (periodPoint.ControlAction.HasValue && periodPoint.ControlAction.Value != ControlAction.Hold)
+                        {
+                            continue;
+                        }
+
+                        if (!periodPoint.RequiredPowerKwh.HasValue || periodPoint.RequiredPowerKwh.Value < 0)
+                        {
+                            continue;
+                        }
+
+                        var minBattery = GetMinBatteryAfterPoint(periodPoint);
+                        if (minBattery < periodPoint.RequiredPowerKwh)
+                        {
+                            continue;
+                        }
+
+                        periodPoint.ControlAction = ControlAction.Discharge;
                         anyUpdated = true;
 
-                        _logger.LogInformation($"Point at {eligiblePoint.Time} requires {eligiblePoint.RequiredPowerKwh:N2} kWh and battery has {eligiblePoint.ForecastBatteryKwh:N2} kWh, setting to discharge");
+                        _logger.LogInformation($"Point at {periodPoint.Time} requires {periodPoint.RequiredPowerKwh:N2} kWh and battery has {periodPoint.ForecastBatteryKwh:N2} kWh, setting to discharge");
 
                         _currentDataService.RecalculateForecast();
                     }

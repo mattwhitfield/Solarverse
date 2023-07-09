@@ -1,7 +1,9 @@
 ﻿using Solarverse.Core.Helper;
+using System.Diagnostics;
 
 namespace Solarverse.Core.Data
 {
+    [DebuggerDisplay("{Time}")]
     public class ForecastTimeSeriesPoint
     {
         private readonly TimeSeriesPoint _point;
