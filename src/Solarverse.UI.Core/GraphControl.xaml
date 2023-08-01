@@ -588,6 +588,26 @@
                     x:Name="LogItems"
                     Margin="6"
                     BorderThickness="1">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.Template>
+                        <ControlTemplate TargetType="ItemsControl">
+                            <Border
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                                <ScrollViewer
+                                    Padding="{TemplateBinding Padding}"
+                                    CanContentScroll="True"
+                                    Focusable="False">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </ControlTemplate>
+                    </ItemsControl.Template>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="MemoryLogEntryModel">
                             <TextBlock Text="{Binding Message}" />

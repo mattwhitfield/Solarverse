@@ -199,7 +199,7 @@ namespace Solarverse.Core.Control
         public bool ShouldUpdateTariffRates()
         {
             bool shouldUpdate = false;
-            var existingMax = _currentDataService.TimeSeries.GetMaximumDate(x => x.IncomingRate != null);
+            var existingMax = _currentDataService.TimeSeries.GetMaximumDate(x => x.IncomingRate != null && x.OutgoingRate != null);
             if (existingMax != null)
             {
                 if (existingMax.Value.Date == _currentTimeProvider.UtcNow.Date)
@@ -221,9 +221,10 @@ namespace Solarverse.Core.Control
             var incoming = _configurationProvider.Configuration.IncomingMeter;
             var outgoing = _configurationProvider.Configuration.OutgoingMeter;
 
-            var succeeded =
-                await UpdateTariffRates(incoming, _currentDataService.UpdateIncomingRates) &&
-                await UpdateTariffRates(outgoing, _currentDataService.UpdateOutgoingRates);
+            var incomingSucceeded = await UpdateTariffRates(incoming, _currentDataService.UpdateIncomingRates, x => x.IncomingRate != null);
+            var outgoingSucceeded = await UpdateTariffRates(outgoing, _currentDataService.UpdateOutgoingRates, x => x.OutgoingRate != null);
+
+            var succeeded = incomingSucceeded && outgoingSucceeded;
 
             if (succeeded)
             {
@@ -262,7 +263,7 @@ namespace Solarverse.Core.Control
             return Task.FromResult(true);
         }
 
-        private async Task<bool> UpdateTariffRates(MeterPointConfiguration? meter, Action<IList<TariffRate>> process)
+        private async Task<bool> UpdateTariffRates(MeterPointConfiguration? meter, Action<IList<TariffRate>> process, Func<TimeSeriesPoint, bool> validationFunc)
         {
             if (meter?.TariffName == null || meter.MPAN == null)
             {
@@ -274,7 +275,11 @@ namespace Solarverse.Core.Control
 
             if (agileRates != null)
             {
-                var isValid = agileRates.Any() && agileRates.Max(x => x.ValidFrom).Date > _currentTimeProvider.UtcNow.Date;
+                var existingMax = _currentDataService.TimeSeries.GetMaximumDate(validationFunc);
+
+                var maxDate = existingMax.HasValue ? existingMax.Value.Date : _currentTimeProvider.UtcNow.Date;
+
+                var isValid = agileRates.Any() && agileRates.Max(x => x.ValidFrom).Date > maxDate;
                 if (isValid)
                 {
                     _logger.LogInformation($"Got tariff rates for mpan {meter.MPAN}");
@@ -292,7 +297,7 @@ namespace Solarverse.Core.Control
 
         public bool ShouldUpdateSolarForecast()
         {
-            return _currentTimeProvider.LocalNow.Hour >= 6 && _currentTimeProvider.LocalNow.Hour <= 18;
+            return _currentTimeProvider.LocalNow.Hour >= 0 && _currentTimeProvider.LocalNow.Hour < 18;
         }
 
         public async Task<bool> UpdateSolcastData()

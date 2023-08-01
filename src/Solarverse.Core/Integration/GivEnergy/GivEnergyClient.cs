@@ -257,7 +257,7 @@ namespace Solarverse.Core.Integration.GivEnergy
         {
             var inverterSerial = await FindInverterSerial();
 
-            var history = await _httpClient.Get<ConsumptionHistory>(_logger, $"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/data-points/{date.Year}-{date.Month}-{date.Day}?pageSize=288");
+            var history = await _httpClient.Get<ConsumptionHistory>(_logger, $"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/data-points/{date.Year}-{date.Month}-{date.Day}?pageSize=1000");
 
             var normalized = new NormalizedConsumption(history);
 
