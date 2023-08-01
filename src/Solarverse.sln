@@ -22,7 +22,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Solarverse.UI.Core", "Solar
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Solarverse.AlgorithmHarness", "Solarverse.AlgorithmHarness\Solarverse.AlgorithmHarness.csproj", "{D25F9427-7931-4CAA-8905-3C4CAEB315DA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Solarverse.WebApi", "Solarverse.WebApi\Solarverse.WebApi.csproj", "{ED06C005-3054-4121-8D8F-68E2F1D464BA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Solarverse.WebApi", "Solarverse.WebApi\Solarverse.WebApi.csproj", "{F84B3C68-C6DC-4198-87DC-F5FB588AF1BD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,10 +58,10 @@ Global
 		{D25F9427-7931-4CAA-8905-3C4CAEB315DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D25F9427-7931-4CAA-8905-3C4CAEB315DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D25F9427-7931-4CAA-8905-3C4CAEB315DA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ED06C005-3054-4121-8D8F-68E2F1D464BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ED06C005-3054-4121-8D8F-68E2F1D464BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ED06C005-3054-4121-8D8F-68E2F1D464BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ED06C005-3054-4121-8D8F-68E2F1D464BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F84B3C68-C6DC-4198-87DC-F5FB588AF1BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F84B3C68-C6DC-4198-87DC-F5FB588AF1BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F84B3C68-C6DC-4198-87DC-F5FB588AF1BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F84B3C68-C6DC-4198-87DC-F5FB588AF1BD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

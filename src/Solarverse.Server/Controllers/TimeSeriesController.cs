@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Solarverse.Core.Data;
 
-namespace Solarverse.Server
+namespace Solarverse.Server.Controllers
 {
     [Route("api/timeSeries")]
     [ApiController]

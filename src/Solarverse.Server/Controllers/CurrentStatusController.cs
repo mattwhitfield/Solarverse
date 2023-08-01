@@ -2,7 +2,7 @@
 using Solarverse.Core.Data;
 using Solarverse.Core.Models;
 
-namespace Solarverse.Server
+namespace Solarverse.Server.Controllers
 {
     [Route("api/currentState")]
     [ApiController]

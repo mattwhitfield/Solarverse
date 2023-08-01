@@ -3,10 +3,8 @@ using Solarverse.Core.Data;
 using Solarverse.Core.Data.Prediction;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Integration;
-using Solarverse.Core.Integration.Octopus.Models;
 using Solarverse.Core.Models;
 using Solarverse.Core.Models.Settings;
-using System.Diagnostics.Metrics;
 
 namespace Solarverse.Core.Control
 {
@@ -147,7 +145,7 @@ namespace Solarverse.Core.Control
             var current = new Period(TimeSpan.FromMinutes(30)).GetLast(_currentTimeProvider.UtcNow).AddMinutes(-30);
             var from = _currentDataService.TimeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
 
-            return current > from;
+            return !from.HasValue || current > from;
         }
 
         public async Task<bool> GetConsumptionData()
@@ -210,6 +208,10 @@ namespace Solarverse.Core.Control
                 {
                     shouldUpdate = existingMax.Value.Date < _currentTimeProvider.UtcNow.Date;
                 }
+            }
+            else
+            {
+                shouldUpdate = true;
             }
 
             return shouldUpdate;
@@ -297,6 +299,11 @@ namespace Solarverse.Core.Control
 
         public bool ShouldUpdateSolarForecast()
         {
+            if (!_currentDataService.TimeSeries.Any(x => x.ForecastSolarKwh.HasValue))
+            {
+                return true;
+            }
+
             return _currentTimeProvider.LocalNow.Hour >= 0 && _currentTimeProvider.LocalNow.Hour < 18;
         }
 

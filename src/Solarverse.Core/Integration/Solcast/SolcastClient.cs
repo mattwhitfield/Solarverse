@@ -2,7 +2,6 @@
 using Solarverse.Core.Helper;
 using Solarverse.Core.Integration.Solcast.Models;
 using Solarverse.Core.Models;
-using Solarverse.Core.Models.Settings;
 using System.Net.Http.Headers;
 
 namespace Solarverse.Core.Integration.Solcast

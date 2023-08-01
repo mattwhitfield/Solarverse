@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>2378a0a8-0e5d-4dcf-8b5a-e77da1ada4a4</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Solarverse.Server\ApiKeyMiddleware.cs" Link="ApiKeyMiddleware.cs" />
+    <Compile Include="..\Solarverse.Server\Controllers\CurrentStatusController.cs" Link="Controllers\CurrentStatusController.cs" />
+    <Compile Include="..\Solarverse.Server\Controllers\LogController.cs" Link="Controllers\LogController.cs" />
+    <Compile Include="..\Solarverse.Server\Controllers\TimeSeriesController.cs" Link="Controllers\TimeSeriesController.cs" />
+    <Compile Include="..\Solarverse.Server\ControlLoopService.cs" Link="ControlLoopService.cs" />
+    <Compile Include="..\Solarverse.Server\CurrentDataServiceMonitor.cs" Link="CurrentDataServiceMonitor.cs" />
+    <Compile Include="..\Solarverse.Server\DataHub.cs" Link="DataHub.cs" />
+    <Compile Include="..\Solarverse.Server\OptionsConfigurationProvider.cs" Link="OptionsConfigurationProvider.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Solarverse.Core\Solarverse.Core.csproj" />
+  </ItemGroup>
+
+</Project>

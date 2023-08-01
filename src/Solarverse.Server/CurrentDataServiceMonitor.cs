@@ -2,7 +2,6 @@
 using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
 using Solarverse.Core.Models;
-using System.Transactions;
 
 namespace Solarverse.Server
 {
