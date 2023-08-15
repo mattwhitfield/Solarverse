@@ -159,8 +159,6 @@ namespace Solarverse.Core.Control
             bool anyFailed = false;
             var timeSeries = _currentDataService.TimeSeries;
 
-            var from = timeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
-
             foreach (var date in timeSeries.GetDates().Where(x => x.Date <= _currentTimeProvider.UtcNow.Date))
             {
                 _logger.LogInformation($"Getting household consumption for {date}");
@@ -178,7 +176,7 @@ namespace Solarverse.Core.Control
                 }
             }
 
-
+            var from = timeSeries.GetMaximumDate(x => x.ForecastConsumptionKwh != null);
             var to = timeSeries.GetMaximumDate();
 
             if (from.HasValue && to.HasValue)
@@ -227,12 +225,11 @@ namespace Solarverse.Core.Control
             var incoming = _configurationProvider.Configuration.IncomingMeter;
             var outgoing = _configurationProvider.Configuration.OutgoingMeter;
 
-            var incomingSucceeded = await UpdateTariffRates(incoming, _currentDataService.UpdateIncomingRates, x => x.IncomingRate != null);
-            var outgoingSucceeded = await UpdateTariffRates(outgoing, _currentDataService.UpdateOutgoingRates, x => x.OutgoingRate != null);
+            await UpdateTariffRates(incoming, _currentDataService.UpdateIncomingRates, x => x.IncomingRate != null);
+            await UpdateTariffRates(outgoing, _currentDataService.UpdateOutgoingRates, x => x.OutgoingRate != null);
 
-            var succeeded = incomingSucceeded && outgoingSucceeded;
-
-            if (succeeded)
+            // we set discharge targets if we don't need to update rates any more
+            if (!ShouldUpdateTariffRates())
             {
                 _controlPlanFactory.SetDischargeTargets();
             }
