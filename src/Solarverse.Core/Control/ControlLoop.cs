@@ -50,6 +50,9 @@ namespace Solarverse.Core.Control
             var consumptionUpdatePeriod = UpdatePeriods.ConsumptionUpdates;
             _actions.Add(new TimedAction(_logger, consumptionUpdatePeriod, ShouldGetConsumptionData, GetConsumptionData, "Get consumption data"));
 
+            var projectionUpdatePeriod = UpdatePeriods.ProjectionUpdates;
+            _actions.Add(new TimedAction(_logger, projectionUpdatePeriod, ShouldUpdateProjection, UpdateProjection, "Update projection"));
+
             var planUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(5));
             _actions.Add(new TimedAction(_logger, planUpdatePeriod, UpdatePlan, "Update control plan"));
 
@@ -143,13 +146,42 @@ namespace Solarverse.Core.Control
             _logger.LogInformation($"Executing control plan");
             return _controlPlanExecutor.ExecutePlan();
         }
-
         public bool ShouldGetConsumptionData()
         {
             var current = new Period(TimeSpan.FromMinutes(30)).GetLast(_currentTimeProvider.UtcNow).AddMinutes(-30);
             var from = _currentDataService.TimeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
 
             return !from.HasValue || current > from;
+        }
+
+        public bool ShouldUpdateProjection()
+        {
+            var timeSeries = _currentDataService.TimeSeries;
+
+            var from = timeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
+            var to = timeSeries.GetMaximumDate();
+
+            return from.HasValue && to.HasValue && to.Value > from.Value && timeSeries.Any(x => x.Time > from && !x.ForecastConsumptionKwh.HasValue);
+        }
+
+        public async Task<bool> UpdateProjection()
+        {
+            var timeSeries = _currentDataService.TimeSeries;
+            var from = timeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
+            var to = timeSeries.GetMaximumDate();
+
+            if (from.HasValue && to.HasValue && to.Value > from.Value)
+            {
+                _logger.LogInformation($"Time series range after actual figures - from {from} to {to}, creating prediction");
+                var aggregateConsumption = await _predictionFactory.CreatePredictionFrom(from.Value, to.Value);
+                _currentDataService.Update(aggregateConsumption);
+
+                _controlPlanFactory.CheckForAdaptations(_currentDataService.CurrentState);
+
+                CacheTimeSeries();
+            }
+
+            return true;
         }
 
         public async Task<bool> GetConsumptionData()
@@ -176,10 +208,10 @@ namespace Solarverse.Core.Control
                 }
             }
 
-            var from = timeSeries.GetMaximumDate(x => x.ForecastConsumptionKwh != null);
+            var from = timeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
             var to = timeSeries.GetMaximumDate();
 
-            if (from.HasValue && to.HasValue)
+            if (from.HasValue && to.HasValue && to.Value > from.Value)
             {
                 _logger.LogInformation($"Time series range after actual figures - from {from} to {to}, creating prediction");
                 var aggregateConsumption = await _predictionFactory.CreatePredictionFrom(from.Value, to.Value);

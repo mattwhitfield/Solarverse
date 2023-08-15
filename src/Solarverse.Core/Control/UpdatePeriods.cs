@@ -11,5 +11,7 @@ namespace Solarverse.Core.Control
         public static Period ConsumptionCacheUpdates { get; } = new Period(TimeSpan.FromDays(1));
 
         public static Period ConsumptionUpdates { get; } = new Period(TimeSpan.FromMinutes(2));
+
+        public static Period ProjectionUpdates { get; } = new Period(TimeSpan.FromMinutes(2));
     }
 }
