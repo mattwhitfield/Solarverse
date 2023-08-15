@@ -61,6 +61,10 @@ namespace Solarverse.Core.Control
                 var executePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromSeconds(15));
                 _actions.Add(new TimedAction(_logger, executePeriod, ExecuteControlPlan, "Execute control plan"));
             }
+            else
+            {
+                _logger.LogWarning("Running in test mode");
+            }
 
             var dataCleanupPeriod = new Period(TimeSpan.FromHours(0.5));
             _actions.Add(new TimedAction(_logger, dataCleanupPeriod, CleanUpData, "Cleaning up old data"));

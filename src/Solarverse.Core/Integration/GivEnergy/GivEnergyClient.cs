@@ -113,7 +113,7 @@ namespace Solarverse.Core.Integration.GivEnergy
 
                     if (TimeSpan.TryParseExact(s, "hh\\:mm", CultureInfo.InvariantCulture, out var time))
                     {
-                        var offset = (_currentTimeProvider.LocalNow - _currentTimeProvider.UtcNow);
+                        var offset = _currentTimeProvider.Offset;
                         return new TimeSetting(id, time - offset);
                     }
                 }
@@ -292,10 +292,11 @@ namespace Solarverse.Core.Integration.GivEnergy
                 _currentTimeProvider.LocalNow.ToString("HH:mm"));
 
             // set until if it's not what we want or not set
+            var untilLocal = _currentTimeProvider.ToLocalTime(until);
             await SetSettingIfRequired(
                 SettingIds.Charge.EndTime,
-                x => !x.ChargeSettings.EndTime.Value.HasValue || x.ChargeSettings.EndTime.Value.Value != until.ToLocalTime().TimeOfDay,
-                until.ToLocalTime().ToString("HH:mm"));
+                x => !x.ChargeSettings.EndTime.Value.HasValue || x.ChargeSettings.EndTime.Value.Value != untilLocal.TimeOfDay,
+                untilLocal.ToString("HH:mm"));
 
             // enable charge if it's not enabled
             await SetSettingIfRequired(
@@ -367,10 +368,11 @@ namespace Solarverse.Core.Integration.GivEnergy
                 _currentTimeProvider.LocalNow.ToString("HH:mm"));
 
             // set until if it's not what we want or not set
+            var untilLocal = _currentTimeProvider.ToLocalTime(until);
             await SetSettingIfRequired(
                 SettingIds.Discharge.EndTime,
-                x => !x.DischargeSettings.EndTime.Value.HasValue || x.DischargeSettings.EndTime.Value.Value != until.ToLocalTime().TimeOfDay,
-                until.ToLocalTime().ToString("HH:mm"));
+                x => !x.DischargeSettings.EndTime.Value.HasValue || x.DischargeSettings.EndTime.Value.Value != untilLocal.TimeOfDay,
+                untilLocal.ToString("HH:mm"));
 
             // enable charge if it's not enabled
             await SetSettingIfRequired(

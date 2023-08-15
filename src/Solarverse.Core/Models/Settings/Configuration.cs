@@ -17,5 +17,7 @@
         public bool TestMode { get; set; }
 
         public Guid ApiKey { get; set; }
+
+        public string TimeZoneName { get; set; } = "Europe/London";
     }
 }

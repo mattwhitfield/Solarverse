@@ -6,6 +6,10 @@
 
         DateTime UtcNow { get; }
 
+        TimeSpan Offset { get; }
+
+        DateTime ToLocalTime(DateTime utcTime);
+
         DateTime CurrentPeriodStartUtc { get; }
     }
 }

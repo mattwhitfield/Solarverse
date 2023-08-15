@@ -531,26 +531,6 @@
                         FontSize="14" />
                 </Grid>
                 <ItemsControl x:Name="CurrentStateExtendedItems">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.Template>
-                        <ControlTemplate TargetType="ItemsControl">
-                            <Border
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                                <ScrollViewer
-                                    Padding="{TemplateBinding Padding}"
-                                    CanContentScroll="True"
-                                    Focusable="False">
-                                    <ItemsPresenter />
-                                </ScrollViewer>
-                            </Border>
-                        </ControlTemplate>
-                    </ItemsControl.Template>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="ExtendedPropertyModel">
                             <Grid>
@@ -583,38 +563,31 @@
             Grid.Column="0"
             Grid.ColumnSpan="2"
             Visibility="Collapsed">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <ItemsControl
-                    x:Name="LogItems"
-                    Margin="6"
-                    BorderThickness="1">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.Template>
-                        <ControlTemplate TargetType="ItemsControl">
-                            <Border
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                                <ScrollViewer
-                                    Padding="{TemplateBinding Padding}"
-                                    CanContentScroll="True"
-                                    Focusable="False">
-                                    <ItemsPresenter />
-                                </ScrollViewer>
-                            </Border>
-                        </ControlTemplate>
-                    </ItemsControl.Template>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="MemoryLogEntryModel">
-                            <TextBlock Text="{Binding Message}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+            <ItemsControl
+                x:Name="LogItems"
+                Margin="6"
+                BorderThickness="1">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.Template>
+                    <ControlTemplate TargetType="ItemsControl">
+                        <ScrollViewer
+                            Padding="{TemplateBinding Padding}"
+                            CanContentScroll="True"
+                            Focusable="False">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </ControlTemplate>
+                </ItemsControl.Template>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="MemoryLogEntryModel">
+                        <TextBlock Text="{Binding Message}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </Grid>
     </Grid>
 </UserControl>

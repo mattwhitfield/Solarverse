@@ -49,6 +49,8 @@ namespace Solarverse.AlgorithmHarness
 
         public DateTime CurrentPeriodStartUtc => _current;
 
+        public TimeSpan Offset => TimeSpan.Zero;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -184,6 +186,11 @@ namespace Solarverse.AlgorithmHarness
         private void PreviousDay(object sender, RoutedEventArgs e)
         {
             Modify(x => x.AddDays(-1));
+        }
+
+        public DateTime ToLocalTime(DateTime utcTime)
+        {
+            return utcTime.ToLocalTime();
         }
     }
 }

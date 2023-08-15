@@ -54,6 +54,8 @@ namespace Solarverse.Client
                 {
                     await _viewModel.Start();
                     await _solarverseApiClient.UpdateTimeSeries();
+                    await _solarverseApiClient.UpdateMemoryLog();
+                    await _solarverseApiClient.UpdateCurrentState();
                 }
                 catch (Exception e)
                 {
