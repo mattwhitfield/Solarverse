@@ -1,12 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
-using Solarverse.Core.Models;
-using System.Linq;
-using System.ComponentModel.DataAnnotations;
-using System.Drawing;
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Solarverse.Core.Control
 {
@@ -14,23 +8,28 @@ namespace Solarverse.Core.Control
     {
         private readonly ICurrentDataService _currentDataService;
         private readonly ILogger<ControlPlanFactory> _logger;
-        private readonly IConfigurationProvider _configurationProvider;
         private readonly ICurrentTimeProvider _currentTimeProvider;
 
-        public ControlPlanFactory(ICurrentDataService currentDataService, ILogger<ControlPlanFactory> logger, IConfigurationProvider configurationProvider, ICurrentTimeProvider currentTimeProvider)
+        public ControlPlanFactory(ICurrentDataService currentDataService, ILogger<ControlPlanFactory> logger, ICurrentTimeProvider currentTimeProvider)
         {
             _currentDataService = currentDataService;
             _logger = logger;
-            _configurationProvider = configurationProvider;
             _currentTimeProvider = currentTimeProvider;
         }
 
-        public void CheckForAdaptations(InverterCurrentState currentState)
+        public void CreatePlan()
         {
-            if (!_currentDataService.TimeSeries.Any(x => x.IsDischargeTarget))
+            var unsetCount = _currentDataService.TimeSeries.Where(x =>
+                x.IncomingRate.HasValue &&
+                x.Target == TargetType.Unset).Count();
+
+            if (unsetCount >= 36)
             {
-                _logger.LogInformation("Will not check for adaptations before discharge targets are set.");
-                return;
+                _logger.LogInformation($"{unsetCount} points have an incoming rate and no target - setting discharge targets.");
+
+                // happns after tariffs become available, so we look at solar forecast, predicted consumption and tariff rates
+                var firstTime = _currentTimeProvider.CurrentPeriodStartUtc;
+                SetDischargeTargets(firstTime);
             }
 
             // happens after every current state update - here we check if the battery charge is on track and if we need another 1/2 hour charge period
@@ -39,42 +38,17 @@ namespace Solarverse.Core.Control
                 using var updateLock = _currentDataService.LockForUpdate();
 
                 _currentDataService.TimeSeries.Where(x => x.IsFuture(_currentTimeProvider)).Each(x => x.ControlAction = null);
-                _currentDataService.TimeSeries.Where(x => x.IsFuture(_currentTimeProvider) && x.IsDischargeTarget && x.RequiredPowerKwh > 0).Each(x => x.ControlAction = ControlAction.Discharge);
+                _currentDataService.TimeSeries.Where(x => x.IsFuture(_currentTimeProvider) && x.ShouldDischarge() && x.RequiredPowerKwh > 0).Each(x => x.ControlAction = ControlAction.Discharge);
 
                 CreatePlanForDischargeTargets();
             }
-        }
-
-        public void CreatePlan()
-        {
-            SetDischargeTargets();
-
-            using var updateLock = _currentDataService.LockForUpdate();
-            CreatePlanForDischargeTargets();
-        }
-
-        public void SetDischargeTargets()
-        {
-            // happns after tariffs become available, so we look at solar forecast, predicted consumption and tariff rates
-            var firstTime = _currentTimeProvider.CurrentPeriodStartUtc;
-
-            if (!_currentDataService.TimeSeries
-                                    .Where(x => x.Time >= firstTime)
-                                    .Where(x => !x.ControlAction.HasValue && x.IncomingRate.HasValue)
-                                    .Any())
-            {
-                _logger.LogInformation($"Creating control plan firstTime = {firstTime} - no points to update");
-                return;
-            }
-
-            SetDischargeTargets(firstTime);
         }
 
         private void SetDischargeTargets(DateTime firstTime)
         {
             _currentDataService.TimeSeries.Set(x => x.RequiredBatteryPowerKwh = null);
 
-            _logger.LogInformation($"Creating control plan firstTime = {firstTime}");
+            _logger.LogInformation($"Setting discharge targets firstTime = {firstTime}");
 
             var tariffRates = _currentDataService.TimeSeries
                 .GetSeries(x => x.IncomingRate)
@@ -95,7 +69,7 @@ namespace Solarverse.Core.Control
                     {
                         _logger.LogInformation($"Targeting discharge for {point.Time}");
                         x.ControlAction = ControlAction.Discharge;
-                        x.IsDischargeTarget = true;
+                        x.Target = TargetType.TariffBasedDischargeRequired;
                     });
                     dischargeTimesSet++;
                 }
@@ -262,7 +236,7 @@ namespace Solarverse.Core.Control
             var lastPointPower = 0d;
             foreach (var point in forecastPoints)
             {
-                if (point.ControlAction == ControlAction.Discharge || point.IsDischargeTarget)
+                if (point.ControlAction == ControlAction.Discharge || point.ShouldDischarge())
                 {
                     var pointPower = lastPointPower + Math.Max(point.RequiredPowerKwh ?? 0, 0);
                     point.RequiredBatteryPowerKwh = lastPointPower = pointPower;
@@ -300,7 +274,7 @@ namespace Solarverse.Core.Control
 
             var eligibleDischargePoints = eligibleDischargePointsAfter
                 .Concat(eligibleDischargePointsPrior)
-                .Where(x => !x.IsDischargeTarget)
+                .Where(x => !x.ShouldDischarge())
                 .Where(x => x.RequiredPowerKwh > 0)
                 .OrderByDescending(x => x.IncomingRate)
                 .ToList();
@@ -358,9 +332,11 @@ namespace Solarverse.Core.Control
             _logger.LogInformation($"(Pairing) Setting period {potentialChargePoint.Time} to charge to cater for targeted points");
             dischargePoints.Each(x => {
                 x.ControlAction = ControlAction.Discharge;
-                x.IsDischargeTarget = true;
+                x.SetTarget(TargetType.PairingDischargeRequired);
             });
+
             potentialChargePoint.ControlAction = ControlAction.Charge;
+            potentialChargePoint.SetTarget(TargetType.PairingChargeRequired);
             _currentDataService.RecalculateForecast();
 
             return true;
@@ -443,7 +419,7 @@ namespace Solarverse.Core.Control
                         .Where(x => x.Time < dischargePoint.Time)
                         .TakeWhile(x => x.ForecastBatteryPercentage < 100)
                         .Where(selector)
-                        .Where(x => !x.IsDischargeTarget)
+                        .Where(x => !x.ShouldDischarge())
                         .OrderBy(x => x.IncomingRate)
                         .Take(1)
                         .ToList();

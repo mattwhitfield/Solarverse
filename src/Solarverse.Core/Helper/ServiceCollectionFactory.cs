@@ -6,6 +6,7 @@ using Solarverse.Core.Control;
 using Solarverse.Core.Data;
 using Solarverse.Core.Data.Prediction;
 using Solarverse.Core.Integration;
+using Solarverse.Core.Integration.ForecastSolar;
 using Solarverse.Core.Integration.GivEnergy;
 using Solarverse.Core.Integration.Octopus;
 using Solarverse.Core.Integration.Solcast;
@@ -47,7 +48,8 @@ namespace Solarverse.Core.Helper
             collection.AddSingleton<IDataStore, FileDataStore>();
             collection.AddTransient<IControlLoop, ControlLoop>();
             collection.AddSingleton<IInverterClient, GivEnergyClient>();
-            collection.AddSingleton<ISolarForecastClient, SolcastClient>();
+            //collection.AddSingleton<ISolarForecastClient, SolcastClient>();
+            collection.AddSingleton<ISolarForecastClient, ForecastSolarClient>();
             collection.AddSingleton<IEnergySupplierClient, OctopusClient>();
             collection.AddSingleton<ICurrentDataService, CurrentDataService>();
             collection.AddTransient<IControlPlanExecutor, ControlPlanExecutor>();

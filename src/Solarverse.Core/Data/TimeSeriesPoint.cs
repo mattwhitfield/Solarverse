@@ -30,11 +30,15 @@ namespace Solarverse.Core.Data
 
         public ControlAction? ControlAction { get; set; }
 
-        public bool IsDischargeTarget { get; set; }
+        public TargetType Target { get; set; }
 
         public double? RequiredBatteryPowerKwh { get; set; }
 
         public bool IsFuture(ICurrentTimeProvider currentTimeProvider) => !ActualConsumptionKwh.HasValue && currentTimeProvider.CurrentPeriodStartUtc < Time;
+
+        public bool ShouldDischarge() =>
+            Target == TargetType.TariffBasedDischargeRequired ||
+            Target == TargetType.PairingDischargeRequired;
 
         [JsonIgnore]
         public double? RequiredPowerKwh => ForecastSolarKwh.HasValue && ForecastConsumptionKwh.HasValue ? ForecastConsumptionKwh.Value - ForecastSolarKwh.Value : null;

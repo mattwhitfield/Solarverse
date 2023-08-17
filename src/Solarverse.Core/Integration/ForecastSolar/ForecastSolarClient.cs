@@ -27,7 +27,7 @@ namespace Solarverse.Core.Integration.ForecastSolar
                 apiKey += "/";
             }
 
-            var uri = $"https://api.forecast.solar/{apiKey}estimate/watts/50.933651/-1.301568/45/30/5?time=utc";
+            var uri = $"https://api.forecast.solar/{apiKey}estimate/watts/50.933651/-1.301568/32/30/5.6?time=utc";
             var forecastSet = await _httpClient.Get<Forecast>(_logger, uri);
 
             return forecastSet.ToSolarForecast();

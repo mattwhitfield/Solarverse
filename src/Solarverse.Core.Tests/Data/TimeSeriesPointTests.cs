@@ -150,19 +150,6 @@ namespace Solarverse.Core.Tests.Data
         }
 
         [Fact]
-        public void CanSetAndGetIsDischargeTarget()
-        {
-            // Arrange
-            var testValue = false;
-
-            // Act
-            _testClass.IsDischargeTarget = testValue;
-
-            // Assert
-            _testClass.IsDischargeTarget.Should().Be(testValue);
-        }
-
-        [Fact]
         public void CanSetAndGetRequiredBatteryPowerKwh()
         {
             // Arrange
@@ -201,6 +188,19 @@ namespace Solarverse.Core.Tests.Data
 
             // Assert
             _testClass.ExcessPowerKwh.Should().Be(1.5);
+        }
+
+        [Fact]
+        public void CanSetAndGetDischargeTarget()
+        {
+            // Arrange
+            var testValue = TargetType.NoDischargeRequired;
+
+            // Act
+            _testClass.Target = testValue;
+
+            // Assert
+            _testClass.Target.Should().Be(testValue);
         }
     }
 }

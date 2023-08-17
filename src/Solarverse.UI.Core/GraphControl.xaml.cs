@@ -498,9 +498,14 @@ namespace Solarverse.UI.Core
                         }
                     }
 
-                    if (point.IsDischargeTarget)
+                    if (point.Target == TargetType.TariffBasedDischargeRequired)
                     {
                         WpfPlot3.Plot.AddMarker(plottableTime, 55, MarkerShape.asterisk, 4, Color.FromArgb(64, Color.Red));
+                    }
+                    if (point.Target == TargetType.PairingDischargeRequired ||
+                        point.Target == TargetType.PairingChargeRequired)
+                    {
+                        WpfPlot3.Plot.AddMarker(plottableTime, 55, MarkerShape.asterisk, 4, Color.FromArgb(64, Color.Blue));
                     }
                 }
             }

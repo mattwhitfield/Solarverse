@@ -123,7 +123,7 @@ namespace Solarverse.AlgorithmHarness
             series.Each(x =>
             {
                 x.ControlAction = null;
-                x.IsDischargeTarget = false;
+                x.Target = TargetType.Unset;
             });
 
             var nextCutoff = new Period(TimeSpan.FromDays(1), TimeSpan.FromHours(16));
@@ -162,8 +162,6 @@ namespace Solarverse.AlgorithmHarness
             _serviceProvider.GetRequiredService<ICurrentDataService>().InitializeTimeSeries(series);
 
             var factory = _serviceProvider.GetRequiredService<IControlPlanFactory>();
-            factory.SetDischargeTargets();
-
             Graph.ClearLogLines();
             factory.CreatePlan();
         }

@@ -45,11 +45,13 @@ namespace Solarverse.Core.Data
 
         public ControlAction? ControlAction { get => _point.ControlAction; set => _point.ControlAction = value; }
 
-        public bool IsDischargeTarget { get => _point.IsDischargeTarget; set => _point.IsDischargeTarget = value; }
-
         public double? RequiredBatteryPowerKwh { get => _point.RequiredBatteryPowerKwh; set => _point.RequiredBatteryPowerKwh = value; }
 
         public bool IsFuture(ICurrentTimeProvider currentTimeProvider) => _point.IsFuture(currentTimeProvider);
+
+        public bool ShouldDischarge() => _point.ShouldDischarge();
+
+        public void SetTarget(TargetType targetType) => _point.Target = targetType;
 
         public double? RequiredPowerKwh => _point.RequiredPowerKwh;
 

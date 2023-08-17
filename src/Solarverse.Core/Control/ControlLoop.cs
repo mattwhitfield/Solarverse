@@ -113,11 +113,6 @@ namespace Solarverse.Core.Control
                 _logger.LogInformation($"Got current status update");
                 _currentDataService.Update(currentState);
 
-                _logger.LogInformation($"Checking for plan adaptations");
-                _controlPlanFactory.CheckForAdaptations(currentState);
-
-                CacheTimeSeries();
-
                 return true;
             }
 
@@ -176,7 +171,7 @@ namespace Solarverse.Core.Control
                 var aggregateConsumption = await _predictionFactory.CreatePredictionFrom(from.Value, to.Value);
                 _currentDataService.Update(aggregateConsumption);
 
-                _controlPlanFactory.CheckForAdaptations(_currentDataService.CurrentState);
+                _controlPlanFactory.CreatePlan();
 
                 CacheTimeSeries();
             }
@@ -206,18 +201,6 @@ namespace Solarverse.Core.Control
                     _logger.LogWarning($"Did not get household consumption for {date}");
                     anyFailed = true;
                 }
-            }
-
-            var from = timeSeries.GetMaximumDate(x => x.ActualConsumptionKwh != null);
-            var to = timeSeries.GetMaximumDate();
-
-            if (from.HasValue && to.HasValue && to.Value > from.Value)
-            {
-                _logger.LogInformation($"Time series range after actual figures - from {from} to {to}, creating prediction");
-                var aggregateConsumption = await _predictionFactory.CreatePredictionFrom(from.Value, to.Value);
-                _currentDataService.Update(aggregateConsumption);
-
-                _controlPlanFactory.CheckForAdaptations(_currentDataService.CurrentState);
             }
 
             if (!anyFailed)
@@ -259,12 +242,6 @@ namespace Solarverse.Core.Control
 
             await UpdateTariffRates(incoming, _currentDataService.UpdateIncomingRates, x => x.IncomingRate != null);
             await UpdateTariffRates(outgoing, _currentDataService.UpdateOutgoingRates, x => x.OutgoingRate != null);
-
-            // we set discharge targets if we don't need to update rates any more
-            if (!ShouldUpdateTariffRates())
-            {
-                _controlPlanFactory.SetDischargeTargets();
-            }
 
             // always return true because this will be retried in 2 minutes anyway
             return true;
