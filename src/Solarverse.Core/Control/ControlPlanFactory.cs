@@ -79,6 +79,11 @@ namespace Solarverse.Core.Control
                     break;
                 }
             }
+
+            foreach (var point in _currentDataService.TimeSeries.Where(x => x.Target == TargetType.Unset))
+            {
+                point.Target = TargetType.NoDischargeRequired;
+            }
         }
 
         private void CreatePlanForDischargeTargets()
