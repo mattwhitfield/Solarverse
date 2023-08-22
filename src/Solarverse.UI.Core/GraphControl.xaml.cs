@@ -502,6 +502,10 @@ namespace Solarverse.UI.Core
                     {
                         WpfPlot3.Plot.AddMarker(plottableTime, 55, MarkerShape.asterisk, 4, Color.FromArgb(64, Color.Red));
                     }
+                    if (point.Target == TargetType.NoDischargeRequired)
+                    {
+                        WpfPlot3.Plot.AddMarker(plottableTime, 55, MarkerShape.asterisk, 4, Color.FromArgb(64, Color.Green));
+                    }
                     if (point.Target == TargetType.PairingDischargeRequired ||
                         point.Target == TargetType.PairingChargeRequired)
                     {

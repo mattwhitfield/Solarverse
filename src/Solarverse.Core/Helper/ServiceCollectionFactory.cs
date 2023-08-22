@@ -48,8 +48,8 @@ namespace Solarverse.Core.Helper
             collection.AddSingleton<IDataStore, FileDataStore>();
             collection.AddTransient<IControlLoop, ControlLoop>();
             collection.AddSingleton<IInverterClient, GivEnergyClient>();
-            //collection.AddSingleton<ISolarForecastClient, SolcastClient>();
-            collection.AddSingleton<ISolarForecastClient, ForecastSolarClient>();
+            collection.AddSingleton<ISolarForecastClient, SolcastClient>();
+            //collection.AddSingleton<ISolarForecastClient, ForecastSolarClient>();
             collection.AddSingleton<IEnergySupplierClient, OctopusClient>();
             collection.AddSingleton<ICurrentDataService, CurrentDataService>();
             collection.AddTransient<IControlPlanExecutor, ControlPlanExecutor>();

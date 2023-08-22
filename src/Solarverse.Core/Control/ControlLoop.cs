@@ -53,9 +53,6 @@ namespace Solarverse.Core.Control
             var projectionUpdatePeriod = UpdatePeriods.ProjectionUpdates;
             _actions.Add(new TimedAction(_logger, projectionUpdatePeriod, ShouldUpdateProjection, UpdateProjection, "Update projection"));
 
-            var planUpdatePeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(5));
-            _actions.Add(new TimedAction(_logger, planUpdatePeriod, UpdatePlan, "Update control plan"));
-
             var currentStatusPeriod = new Period(TimeSpan.FromHours(0.5), TimeSpan.FromMinutes(29));
             _actions.Add(new TimedAction(_logger, currentStatusPeriod, UpdateCurrentStatus, "Update current inverter status"));
 
@@ -112,7 +109,6 @@ namespace Solarverse.Core.Control
             {
                 _logger.LogInformation($"Got current status update");
                 _currentDataService.Update(currentState);
-
                 return true;
             }
 
@@ -205,6 +201,7 @@ namespace Solarverse.Core.Control
 
             if (!anyFailed)
             {
+                _controlPlanFactory.CreatePlan();
                 CacheTimeSeries();
             }
 
@@ -245,34 +242,6 @@ namespace Solarverse.Core.Control
 
             // always return true because this will be retried in 2 minutes anyway
             return true;
-        }
-
-        public Task<bool> UpdatePlan()
-        {
-            _logger.LogInformation($"Updating plan");
-            if (_currentDataService.TimeSeries.Any(x => x.IncomingRate.HasValue && !x.ControlAction.HasValue && !x.ActualConsumptionKwh.HasValue))
-            {
-                _logger.LogInformation($"We have future points with an incoming rate but no control action");
-                if (_currentDataService.TimeSeries.Any(x => x.ActualBatteryPercentage.HasValue))
-                {
-                    _logger.LogInformation($"We have points with actual battery percentage");
-                    _controlPlanFactory.CreatePlan();
-                    CacheTimeSeries();
-
-                    return Task.FromResult(true);
-                }
-                else
-                {
-                    _logger.LogWarning($"We do not have points with actual battery percentage");
-                }
-                return Task.FromResult(false);
-            }
-            else
-            {
-                _logger.LogInformation($"No future points exist with an incoming rate but no control action, plan update not required");
-            }
-
-            return Task.FromResult(true);
         }
 
         private async Task<bool> UpdateTariffRates(MeterPointConfiguration? meter, Action<IList<TariffRate>> process, Func<TimeSeriesPoint, bool> validationFunc)

@@ -23,9 +23,11 @@ namespace Solarverse.Core.Control
                 x.IncomingRate.HasValue &&
                 x.Target == TargetType.Unset).Count();
 
+            _logger.LogInformation($"{unsetCount} points have an incoming rate and no target.");
+
             if (unsetCount >= 36)
             {
-                _logger.LogInformation($"{unsetCount} points have an incoming rate and no target - setting discharge targets.");
+                _logger.LogInformation($"Setting discharge targets.");
 
                 // happns after tariffs become available, so we look at solar forecast, predicted consumption and tariff rates
                 var firstTime = _currentTimeProvider.CurrentPeriodStartUtc;
@@ -80,7 +82,7 @@ namespace Solarverse.Core.Control
                 }
             }
 
-            foreach (var point in _currentDataService.TimeSeries.Where(x => x.Target == TargetType.Unset))
+            foreach (var point in _currentDataService.TimeSeries.Where(x => x.Target == TargetType.Unset && x.IncomingRate.HasValue))
             {
                 point.Target = TargetType.NoDischargeRequired;
             }
