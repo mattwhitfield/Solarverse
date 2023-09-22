@@ -1,22 +1,42 @@
-﻿using Newtonsoft.Json;
-using Solarverse.Core.Control;
-using Solarverse.Core.Data;
+﻿using Solarverse.Core.Data;
 using System;
+using System.ComponentModel;
 using System.Net.Http;
-using System.Security.Policy;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Solarverse.Client
 {
-    public class MainWindowViewModel
+    public class MainWindowViewModel : INotifyPropertyChanged
     {
         private readonly IDataHubClient _dataHubClient;
+        private readonly IUpdateHandler _updateHandler;
 
-        public MainWindowViewModel(IDataHubClient dataHubClient)
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public MainWindowViewModel(IDataHubClient dataHubClient, IUpdateHandler updateHandler)
         {
             _dataHubClient = dataHubClient;
+            _updateHandler = updateHandler;
+            _dataHubClient.ConnectedChanged += _dataHubClient_ConnectedChanged;
         }
+
+        private void _dataHubClient_ConnectedChanged(object? sender, EventArgs e)
+        {
+            if (_dataHubClient.IsConnected)
+            {
+                _updateHandler.SetConnectionState(ConnectionState.RemoteConnected);
+            }
+            else if (_dataHubClient.IsConnecting)
+            {
+                _updateHandler.SetConnectionState(ConnectionState.RemoteConnecting);
+            }
+            else
+            {
+                _updateHandler.SetConnectionState(ConnectionState.RemoteDisconnected);
+            }
+        }
+
+        public bool IsConnected => _dataHubClient.IsConnected;
 
         public async Task Start()
         {

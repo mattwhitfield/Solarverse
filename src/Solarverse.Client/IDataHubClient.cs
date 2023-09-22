@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Solarverse.Client
 {
@@ -6,7 +7,12 @@ namespace Solarverse.Client
     {
         bool IsConnected { get; }
 
+        bool IsConnecting { get; }
+
         Task CloseConnection();
+
         Task OpenConnection();
+
+        event EventHandler<EventArgs> ConnectedChanged;
     }
 }

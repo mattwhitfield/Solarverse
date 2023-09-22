@@ -2,6 +2,7 @@
 using ScottPlot.Plottable;
 using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
+using Solarverse.Core.Integration.GivEnergy.Models;
 using Solarverse.Core.Models;
 using System;
 using System.Collections.Generic;
@@ -570,6 +571,35 @@ namespace Solarverse.UI.Core
             foreach (var item in currentState.ExtendedProperties.OrderBy(x => x.Key))
             {
                 CurrentStateExtendedItems.Items.Add(new ExtendedPropertyModel(item.Key, item.Value));
+            }
+        }
+
+        public void SetConnectionState(ConnectionState connectionState)
+        {
+            Dispatcher.BeginInvoke(new Action(() => SetConnectionStateSafe(connectionState)));
+        }
+
+        public void SetConnectionStateSafe(ConnectionState connectionState)
+        {
+            if (connectionState == ConnectionState.Local)
+            {
+                ConnectionStateDisplay.Visibility = System.Windows.Visibility.Collapsed;
+            }
+            else
+            {
+                ConnectionStateDisplay.Visibility = System.Windows.Visibility.Visible;
+                if (connectionState == ConnectionState.RemoteConnected)
+                {
+                    ConnectionStateIndicator.Fill = System.Windows.Media.Brushes.DarkGreen;
+                }
+                else if (connectionState == ConnectionState.RemoteConnecting)
+                {
+                    ConnectionStateIndicator.Fill = System.Windows.Media.Brushes.DarkGoldenrod;
+                }
+                else
+                {
+                    ConnectionStateIndicator.Fill = System.Windows.Media.Brushes.Maroon;
+                }
             }
         }
     }

@@ -144,30 +144,38 @@ namespace Solarverse.Core.Control
                         return eligibleValues.Min() ?? double.MaxValue;
                     }
 
-                    foreach (var periodPoint in period.PriorPoints.OrderByDescending(x => x.IncomingRate))
+                    if (period.Point.ForecastBatteryPercentage >= 100)
                     {
-                        if (periodPoint.ControlAction.HasValue && periodPoint.ControlAction.Value != ControlAction.Hold)
+                        foreach (var periodPoint in period.PriorPoints.OrderByDescending(x => x.IncomingRate))
                         {
-                            continue;
+                            if (periodPoint.ControlAction.HasValue && periodPoint.ControlAction.Value != ControlAction.Hold)
+                            {
+                                continue;
+                            }
+
+                            if (!periodPoint.RequiredPowerKwh.HasValue || periodPoint.RequiredPowerKwh.Value < 0)
+                            {
+                                continue;
+                            }
+
+                            var minBattery = GetMinBatteryAfterPoint(periodPoint);
+                            if (minBattery < periodPoint.RequiredPowerKwh)
+                            {
+                                continue;
+                            }
+
+                            periodPoint.ControlAction = ControlAction.Discharge;
+                            anyUpdated = true;
+
+                            _logger.LogInformation($"Point at {periodPoint.Time} requires {periodPoint.RequiredPowerKwh:N2} kWh and battery has {periodPoint.ForecastBatteryKwh:N2} kWh, setting to discharge");
+
+                            _currentDataService.RecalculateForecast();
+
+                            if (period.Point.ForecastBatteryPercentage < 100)
+                            {
+                                break;
+                            }
                         }
-
-                        if (!periodPoint.RequiredPowerKwh.HasValue || periodPoint.RequiredPowerKwh.Value < 0)
-                        {
-                            continue;
-                        }
-
-                        var minBattery = GetMinBatteryAfterPoint(periodPoint);
-                        if (minBattery < periodPoint.RequiredPowerKwh)
-                        {
-                            continue;
-                        }
-
-                        periodPoint.ControlAction = ControlAction.Discharge;
-                        anyUpdated = true;
-
-                        _logger.LogInformation($"Point at {periodPoint.Time} requires {periodPoint.RequiredPowerKwh:N2} kWh and battery has {periodPoint.ForecastBatteryKwh:N2} kWh, setting to discharge");
-
-                        _currentDataService.RecalculateForecast();
                     }
                 });
             }

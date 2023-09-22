@@ -220,7 +220,14 @@ namespace Solarverse.Core.Control
                 }
                 else
                 {
-                    shouldUpdate = existingMax.Value.Date < _currentTimeProvider.UtcNow.Date;
+                    if (existingMax.Value.Date < _currentTimeProvider.UtcNow.Date)
+                    {
+                        shouldUpdate = true;
+                    }
+                    else if (existingMax.Value.Hour < 20)
+                    {
+                        shouldUpdate = true;
+                    }
                 }
             }
             else
@@ -258,9 +265,9 @@ namespace Solarverse.Core.Control
             {
                 var existingMax = _currentDataService.TimeSeries.GetMaximumDate(validationFunc);
 
-                var maxDate = existingMax.HasValue ? existingMax.Value.Date : _currentTimeProvider.UtcNow.Date;
+                var maxDate = existingMax.HasValue ? existingMax.Value : _currentTimeProvider.UtcNow;
 
-                var isValid = agileRates.Any() && agileRates.Max(x => x.ValidFrom).Date > maxDate;
+                var isValid = agileRates.Any() && agileRates.Max(x => x.ValidFrom) > maxDate;
                 if (isValid)
                 {
                     _logger.LogInformation($"Got tariff rates for mpan {meter.MPAN}");

@@ -9,5 +9,7 @@ namespace Solarverse.Core.Data
         public void AddLogLines(IEnumerable<MemoryLogEntry> entries);
 
         public void UpdateCurrentState(InverterCurrentState currentState);
+
+        public void SetConnectionState(ConnectionState connectionState);
     }
 }
