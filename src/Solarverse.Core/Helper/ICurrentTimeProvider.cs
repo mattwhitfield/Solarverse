@@ -10,6 +10,8 @@
 
         DateTime ToLocalTime(DateTime utcTime);
 
+        TimeSpan ToLocalTime(TimeSpan utcTime);
+
         DateTime CurrentPeriodStartUtc { get; }
     }
 }

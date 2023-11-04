@@ -35,15 +35,23 @@ namespace Solarverse.Core.Control
 
             _logger.LogInformation("Finding end time for current control state...");
 
+            Func<DateTime, DateTime> transformTime = x => x;
+
+            // if the inverter uses local time, then we need to transform the date to local time when evaluating boundaries
+            if (_inverterClient.UsesLocalTimeBoundary)
+            {
+                transformTime = x => _currentTimeProvider.ToLocalTime(x);
+            }
+
             var endTime = currentPeriod;
             var action = currentDataPoint.ControlAction.Value;
             while (currentDataPoint?.ControlAction == action)
             {
-                if (endTime.AddMinutes(30).Date != endTime.Date)
+                if (transformTime(endTime.AddMinutes(30)).Date != transformTime(endTime).Date)
                 {
                     // if we would cross a date boundary, then come back to 1 sec
-                    // before midnight
-                    endTime = endTime.AddMinutes(30).Date.AddSeconds(-1);
+                    // before where the boundary is
+                    endTime = endTime.AddMinutes(30).AddSeconds(-1);
                     break;
                 }
 

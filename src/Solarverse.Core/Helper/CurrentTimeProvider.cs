@@ -34,5 +34,10 @@
         }
 
         public DateTime ToLocalTime(DateTime utcTime) => TimeZoneInfo.ConvertTimeFromUtc(utcTime, _timeZone);
+
+        public TimeSpan ToLocalTime(TimeSpan utcTime)
+        {
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow.Date.Add(utcTime), _timeZone).TimeOfDay;
+        }
     }
 }

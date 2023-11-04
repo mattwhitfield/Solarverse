@@ -133,13 +133,14 @@ namespace Solarverse.Core.Data
             var capacity = _configurationProvider.Configuration.Battery.CapacityKwh ?? 5;
 
             var lastActual = TimeSeries.OrderBy(x => x.Time).LastOrDefault(x => x.ActualBatteryPercentage.HasValue);
+            var lastActualTime = lastActual?.Time ?? _currentTimeProvider.UtcNow;
             var lastPercentage = lastActual?.ActualBatteryPercentage ?? 4;
 
             _logger.LogInformation($"Forecast start - efficiency = {efficiency:N2}, maxChargeKwhPerPeriod = {maxChargeKwhPerPeriod:N2} kWh, capacity = {capacity:N2} kWh, lastPercentage = {lastPercentage:N1}%");
 
             var logBuilder = new StringBuilder();
 
-            foreach (var point in TimeSeries.Where(x => x == lastActual || (!x.ActualBatteryPercentage.HasValue && x.IncomingRate.HasValue)).OrderBy(x => x.Time))
+            foreach (var point in TimeSeries.Where(x => x == lastActual || (!x.ActualBatteryPercentage.HasValue && x.IncomingRate.HasValue && x.Time > lastActualTime)).OrderBy(x => x.Time))
             {
                 var currentPointCharge = point.ExcessPowerKwh ?? 0;
                 if (currentPointCharge < 0)

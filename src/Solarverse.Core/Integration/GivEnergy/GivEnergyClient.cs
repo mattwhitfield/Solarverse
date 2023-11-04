@@ -17,6 +17,8 @@ namespace Solarverse.Core.Integration.GivEnergy
         private string? _inverterSerial;
         private CurrentSettingValues? _currentSettings;
 
+        public bool UsesLocalTimeBoundary => true;
+
         public GivEnergyClient(ILogger<GivEnergyClient> logger, IConfigurationProvider configurationProvider, ICurrentDataService currentDataService, ICurrentTimeProvider currentTimeProvider)
         {
             _httpClient = new HttpClient();
@@ -114,7 +116,15 @@ namespace Solarverse.Core.Integration.GivEnergy
                     if (TimeSpan.TryParseExact(s, "hh\\:mm", CultureInfo.InvariantCulture, out var time))
                     {
                         var offset = _currentTimeProvider.Offset;
-                        return new TimeSetting(id, time - offset);
+                        var result = time - offset;
+                        if (result < TimeSpan.Zero)
+                        {
+                            result += TimeSpan.FromDays(1);
+                        }
+
+                        _logger.LogInformation($"Time setting - raw {s}, parsed {result}");
+
+                        return new TimeSetting(id, result);
                     }
                 }
 
@@ -288,14 +298,14 @@ namespace Solarverse.Core.Integration.GivEnergy
             // set start time if it's currently later than now or not set
             await SetSettingIfRequired(
                 SettingIds.Charge.StartTime,
-                x => !x.ChargeSettings.StartTime.Value.HasValue || x.ChargeSettings.StartTime.Value.Value > _currentTimeProvider.LocalNow.TimeOfDay,
+                x => !x.ChargeSettings.StartTime.Value.HasValue || _currentTimeProvider.ToLocalTime(x.ChargeSettings.StartTime.Value.Value) > _currentTimeProvider.LocalNow.TimeOfDay,
                 _currentTimeProvider.LocalNow.ToString("HH:mm"));
 
             // set until if it's not what we want or not set
             var untilLocal = _currentTimeProvider.ToLocalTime(until);
             await SetSettingIfRequired(
                 SettingIds.Charge.EndTime,
-                x => !x.ChargeSettings.EndTime.Value.HasValue || x.ChargeSettings.EndTime.Value.Value != untilLocal.TimeOfDay,
+                x => !x.ChargeSettings.EndTime.Value.HasValue || _currentTimeProvider.ToLocalTime(x.ChargeSettings.EndTime.Value.Value) != untilLocal.TimeOfDay,
                 untilLocal.ToString("HH:mm"));
 
             // enable charge if it's not enabled

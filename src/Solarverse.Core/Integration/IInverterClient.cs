@@ -6,6 +6,7 @@ namespace Solarverse.Core.Integration
     {
         Task<HouseholdConsumption> GetHouseholdConsumptionFor(DateTime date);
         Task<InverterCurrentState?> GetCurrentState();
+        bool UsesLocalTimeBoundary { get; }
         Task Charge(DateTime until);
         Task Hold(DateTime until);
         Task Discharge(DateTime until);

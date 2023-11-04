@@ -1,4 +1,5 @@
-﻿using ScottPlot;
+﻿using Newtonsoft.Json;
+using ScottPlot;
 using ScottPlot.Plottable;
 using Solarverse.Core.Data;
 using Solarverse.Core.Helper;
@@ -7,6 +8,7 @@ using Solarverse.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -375,6 +377,14 @@ namespace Solarverse.UI.Core
         public void UpdateTimeSeries(TimeSeries series)
         {
             Dispatcher.BeginInvoke(new Action(() => UpdateTimeSeriesSafe(series)));
+        }
+
+        private void TakeSnapshot(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (_currentSeries != null)
+            {
+                File.WriteAllText("C:\\stuff\\Solarverse\\Snapshots\\" + DateTime.UtcNow.ToString("yyyyMMddHHmmss") + ".json", JsonConvert.SerializeObject(_currentSeries));
+            }
         }
 
         private void ShowGraph(object sender, System.Windows.RoutedEventArgs e)

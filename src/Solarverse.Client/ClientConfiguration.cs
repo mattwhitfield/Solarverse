@@ -7,5 +7,7 @@ namespace Solarverse.Client
         public string? Url { get; set; }
 
         public Guid ApiKey { get; set; }
+
+        public bool DevMode { get; set; }
     }
 }

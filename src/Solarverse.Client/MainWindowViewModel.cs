@@ -1,4 +1,5 @@
-﻿using Solarverse.Core.Data;
+﻿using Microsoft.Extensions.Options;
+using Solarverse.Core.Data;
 using System;
 using System.ComponentModel;
 using System.Net.Http;
@@ -10,13 +11,15 @@ namespace Solarverse.Client
     {
         private readonly IDataHubClient _dataHubClient;
         private readonly IUpdateHandler _updateHandler;
+        private readonly IOptions<ClientConfiguration> _configuration;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public MainWindowViewModel(IDataHubClient dataHubClient, IUpdateHandler updateHandler)
+        public MainWindowViewModel(IDataHubClient dataHubClient, IUpdateHandler updateHandler, IOptions<ClientConfiguration> configuration)
         {
             _dataHubClient = dataHubClient;
             _updateHandler = updateHandler;
+            _configuration = configuration;
             _dataHubClient.ConnectedChanged += _dataHubClient_ConnectedChanged;
         }
 
@@ -35,6 +38,8 @@ namespace Solarverse.Client
                 _updateHandler.SetConnectionState(ConnectionState.RemoteDisconnected);
             }
         }
+
+        public bool DevMode => _configuration.Value.DevMode;
 
         public bool IsConnected => _dataHubClient.IsConnected;
 

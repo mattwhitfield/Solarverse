@@ -93,7 +93,7 @@ namespace Solarverse.AlgorithmHarness
         private void Load(object sender, RoutedEventArgs e)
         {
             // TODO - pick file name
-            _fileName = "C:\\Stuff\\current.json";
+            _fileName = "C:\\stuff\\Solarverse\\Snapshots\\need_to_sort_plunge_prices.json";
 
             var series = ReadFile();
             _min = series.Min(x => x.Time);
@@ -101,7 +101,7 @@ namespace Solarverse.AlgorithmHarness
 
             _current = series.Where(x => x.ActualBatteryPercentage.HasValue).Max(x => x.Time);
 
-            _current = new DateTime(2023, 5, 14, 1, 0, 0, DateTimeKind.Utc);
+            _current = new DateTime(2023, 10, 10, 15, 0, 0, DateTimeKind.Utc);
 
             Modify(x => x);
         }
@@ -189,6 +189,11 @@ namespace Solarverse.AlgorithmHarness
         public DateTime ToLocalTime(DateTime utcTime)
         {
             return utcTime.ToLocalTime();
+        }
+
+        public TimeSpan ToLocalTime(TimeSpan utcTime)
+        {
+            return DateTime.UtcNow.Add(utcTime).ToLocalTime().TimeOfDay;
         }
     }
 }

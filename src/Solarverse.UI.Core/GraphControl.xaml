@@ -5,6 +5,9 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="VisibilityConverter" />
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -96,6 +99,28 @@
             HorizontalAlignment="Right"
             VerticalAlignment="Center"
             Orientation="Horizontal">
+            <Button
+                x:Name="SnapshotButton"
+                Margin="3,2"
+                Click="TakeSnapshot"
+                Visibility="{Binding DevMode, Mode=OneTime, Converter={StaticResource VisibilityConverter}}">
+                <StackPanel Margin="6" Orientation="Horizontal">
+                    <Path
+                        Grid.Column="0"
+                        Width="20"
+                        Height="20"
+                        Margin="0,0,4,0"
+                        VerticalAlignment="Center"
+                        Data="M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z"
+                        Fill="Black"
+                        Stretch="Uniform" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontFamily="Segoe UI"
+                        FontSize="13"
+                        Text="Snapshot" />
+                </StackPanel>
+            </Button>
             <Button
                 x:Name="GraphButton"
                 Margin="3,2"
