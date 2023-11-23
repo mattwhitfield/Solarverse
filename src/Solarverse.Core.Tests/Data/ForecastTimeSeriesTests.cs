@@ -55,7 +55,7 @@ namespace Solarverse.Core.Tests.Data
             Action<(ForecastTimeSeriesPoint Point, double PointPercentRequired, IList<ForecastTimeSeriesPoint> DischargePoints)> action = x => { };
 
             // Act
-            _testClass.RunActionOnDischargeStartPeriods(passName, action);
+            _testClass.RunActionOnDischargeStartPeriodsThatNeedMoreCharge(passName, action);
 
             // Assert
             throw new NotImplementedException("Create or modify test");

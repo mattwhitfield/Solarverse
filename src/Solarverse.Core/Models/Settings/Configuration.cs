@@ -19,5 +19,11 @@
         public Guid ApiKey { get; set; }
 
         public string TimeZoneName { get; set; } = "Europe/London";
+
+        public int NumberOfEVChargePeriodsRequired { get; set; } = 6;
+
+        public int FirstHourForEVCharging { get; set; } = 22;
+
+        public int LastHourForEVCharging { get; set; } = 8;
     }
 }

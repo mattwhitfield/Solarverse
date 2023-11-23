@@ -23,6 +23,45 @@ namespace Solarverse.Core.Data
             return new ForecastTimeSeries(TimeSeries.Where(x => !x.ActualConsumptionKwh.HasValue), logger, this, _configurationProvider);
         }
 
+        public ForecastTimeSeries GetPointsForEVCharging(ILogger logger, DateTime firstTime)
+        {
+            Func<int, bool> isValidHour;
+            if (_configurationProvider.Configuration.LastHourForEVCharging >= _configurationProvider.Configuration.FirstHourForEVCharging)
+            {
+                isValidHour = hour => hour >= _configurationProvider.Configuration.FirstHourForEVCharging && hour <= _configurationProvider.Configuration.LastHourForEVCharging;
+            }
+            else
+            {
+                isValidHour = hour => hour >= _configurationProvider.Configuration.FirstHourForEVCharging || hour <= _configurationProvider.Configuration.LastHourForEVCharging;
+            }
+            Func<TimeSeriesPoint, bool> isValidPoint = point => isValidHour(_currentTimeProvider.ToLocalTime(point.Time).TimeOfDay.Hours);
+
+            var allOvernightRates =
+                TimeSeries
+                    .Where(x => x.Time >= firstTime)
+                    .Where(x => !x.ActualConsumptionKwh.HasValue)
+                    .Where(x => x.IncomingRate.HasValue)
+                    .OrderBy(x => x.Time)
+                    .ToList();
+
+            if (allOvernightRates.Count > 0)
+            {
+                if (!isValidPoint(allOvernightRates[0]))
+                {
+                    allOvernightRates = allOvernightRates.SkipWhile(x => !isValidPoint(x)).ToList();
+                }
+
+                allOvernightRates = allOvernightRates.TakeWhile(x => isValidPoint(x)).ToList();
+            }
+
+            var overnightRates = 
+                allOvernightRates
+                    .OrderBy(x => x.IncomingRate)
+                    .Take(_configurationProvider.Configuration.NumberOfEVChargePeriodsRequired);
+
+            return new ForecastTimeSeries(overnightRates, logger, this, _configurationProvider);
+        }
+
         public TimeSeries TimeSeries { get; private set; } = new TimeSeries();
 
         public InverterCurrentState CurrentState { get; private set; } = InverterCurrentState.Default;

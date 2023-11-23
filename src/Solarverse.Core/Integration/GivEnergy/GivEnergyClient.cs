@@ -8,13 +8,14 @@ using System.Net.Http.Headers;
 
 namespace Solarverse.Core.Integration.GivEnergy
 {
-    public class GivEnergyClient : IInverterClient
+    public class GivEnergyClient : IInverterClient, IEVChargerClient
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<GivEnergyClient> _logger;
         private readonly ICurrentDataService _currentDataService;
         private readonly ICurrentTimeProvider _currentTimeProvider;
         private string? _inverterSerial;
+        private string? _evChargerUuid;
         private CurrentSettingValues? _currentSettings;
 
         public bool UsesLocalTimeBoundary => true;
@@ -53,6 +54,23 @@ namespace Solarverse.Core.Integration.GivEnergy
             }
 
             return _inverterSerial;
+        }
+
+        public async Task<string> FindEVChargerUuid()
+        {
+            if (string.IsNullOrWhiteSpace(_evChargerUuid))
+            {
+                var evChargers = await _httpClient.Get<EVChargerList>(_logger, "https://api.givenergy.cloud/v1/ev-charger/");
+                if (evChargers == null || evChargers.EVChargers == null || !evChargers.EVChargers.Any(x => x.Online))
+                {
+                    throw new InvalidOperationException("Could not get EV Charger list from GivEnergy API");
+                }
+
+                _evChargerUuid = evChargers.EVChargers.Where(x => x.Online).Select(x => x.Uuid).FirstOrDefault() ?? string.Empty;
+                _logger.LogInformation($"EV Charger UUID is {_evChargerUuid}");
+            }
+
+            return _evChargerUuid;
         }
 
         private async Task<BoolSetting> GetBoolSetting(int id)
@@ -233,10 +251,11 @@ namespace Solarverse.Core.Integration.GivEnergy
             var inverterSerial = await FindInverterSerial();
 
             int attempts = 0;
+            int inverterTimeoutAttempts = 0;
             TimeSpan delayTime = TimeSpan.FromSeconds(0.75);
 
             SettingMutation? setting = null;
-            while (attempts < 10)
+            while (attempts < 10 && inverterTimeoutAttempts < 50)
             {
                 setting = await _httpClient.Post<SettingMutation>(_logger, $"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/settings/{id}/write", new SettingValue { Value = value });
 
@@ -254,6 +273,10 @@ namespace Solarverse.Core.Integration.GivEnergy
                 {
                     attempts++;
                 }
+                else
+                {
+                    inverterTimeoutAttempts++;
+                }
 
                 await Task.Delay(delayTime);
                 _logger.LogWarning($"Will delay {delayTime} until next retry");
@@ -261,6 +284,43 @@ namespace Solarverse.Core.Integration.GivEnergy
             }
 
             return setting?.Data;
+        }
+
+        public async Task SetEVChargerState(bool charge)
+        {
+            var evChargerUuid = await FindEVChargerUuid();
+
+            int attempts = 0;
+            int inverterTimeoutAttempts = 0;
+            TimeSpan delayTime = TimeSpan.FromSeconds(0.75);
+
+            var command = charge ? "start-charge" : "stop-charge";
+
+            SettingMutation? setting = null;
+            while (attempts < 10 && inverterTimeoutAttempts < 50)
+            {
+                setting = await _httpClient.Post<SettingMutation>(_logger, $"https://api.givenergy.cloud/v1/ev-charger/{evChargerUuid}/commands/{command}");
+
+                if (setting.Data != null && setting.Data.Success)
+                {
+                    return;
+                }
+
+                _logger.LogWarning($"Could not send command {command} to charge {evChargerUuid} - error was {setting?.Data?.Message}");
+
+                if (!string.Equals(setting?.Data?.Message, "Inverter Timeout", StringComparison.OrdinalIgnoreCase))
+                {
+                    attempts++;
+                }
+                else
+                {
+                    inverterTimeoutAttempts++;
+                }
+
+                await Task.Delay(delayTime);
+                _logger.LogWarning($"Will delay {delayTime} until next retry");
+                delayTime *= 1.5;
+            }
         }
 
         public async Task<HouseholdConsumption> GetHouseholdConsumptionFor(DateTime date)
@@ -395,6 +455,12 @@ namespace Solarverse.Core.Integration.GivEnergy
                 SettingIds.Charge.Enabled,
                 x => x.ChargeSettings.Enabled.Value,
                 false);
+        }
+
+        public Task SetChargingEnabled(bool enabled)
+        {
+            _logger.LogInformation($"Setting EV Charge enabled to {enabled}");
+            return SetEVChargerState(enabled);
         }
     }
 }

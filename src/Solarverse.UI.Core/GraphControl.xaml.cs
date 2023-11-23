@@ -522,6 +522,11 @@ namespace Solarverse.UI.Core
                     {
                         WpfPlot3.Plot.AddMarker(plottableTime, 55, MarkerShape.asterisk, 4, Color.FromArgb(64, Color.Blue));
                     }
+
+                    if (point.ShouldChargeEV)
+                    {
+                        WpfPlot3.Plot.AddMarker(plottableTime, 45, MarkerShape.filledCircle, 4, Color.FromArgb(128, Color.Purple));
+                    }
                 }
             }
 

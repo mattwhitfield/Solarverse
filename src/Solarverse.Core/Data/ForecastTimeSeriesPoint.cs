@@ -47,6 +47,8 @@ namespace Solarverse.Core.Data
 
         public double? RequiredBatteryPowerKwh { get => _point.RequiredBatteryPowerKwh; set => _point.RequiredBatteryPowerKwh = value; }
 
+        public bool ShouldChargeEV { get => _point.ShouldChargeEV; set => _point.ShouldChargeEV = value; }
+
         public bool IsFuture(ICurrentTimeProvider currentTimeProvider) => _point.IsFuture(currentTimeProvider);
 
         public bool ShouldDischarge() => _point.ShouldDischarge();

@@ -32,6 +32,8 @@ namespace Solarverse.Core.Data
 
         public TargetType Target { get; set; }
 
+        public bool ShouldChargeEV { get; set; }
+
         public double? RequiredBatteryPowerKwh { get; set; }
 
         public bool IsFuture(ICurrentTimeProvider currentTimeProvider) => !ActualConsumptionKwh.HasValue && currentTimeProvider.CurrentPeriodStartUtc < Time;

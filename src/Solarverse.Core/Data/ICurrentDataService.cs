@@ -10,6 +10,8 @@ namespace Solarverse.Core.Data
         event EventHandler<EventArgs> CurrentStateUpdated;
 
         ForecastTimeSeries GetForecastTimeSeries(ILogger logger);
+
+        ForecastTimeSeries GetPointsForEVCharging(ILogger logger, DateTime firstTime);
         InverterCurrentState CurrentState { get; }
         TimeSeries TimeSeries { get; }
         void Cull(TimeSpan deleteOlderThan);

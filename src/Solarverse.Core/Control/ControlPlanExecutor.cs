@@ -11,13 +11,15 @@ namespace Solarverse.Core.Control
         private readonly ICurrentDataService _currentDataService;
         private readonly ILogger<ControlPlanExecutor> _logger;
         private readonly ICurrentTimeProvider _currentTimeProvider;
+        private readonly IEVChargerClient _evChargerClient;
 
-        public ControlPlanExecutor(IInverterClient inverterClient, ICurrentDataService currentDataService, ILogger<ControlPlanExecutor> logger, ICurrentTimeProvider currentTimeProvider)
+        public ControlPlanExecutor(IInverterClient inverterClient, ICurrentDataService currentDataService, ILogger<ControlPlanExecutor> logger, ICurrentTimeProvider currentTimeProvider, IEVChargerClient evChargerClient)
         {
             _inverterClient = inverterClient;
             _currentDataService = currentDataService;
             _logger = logger;
             _currentTimeProvider = currentTimeProvider;
+            _evChargerClient = evChargerClient;
         }
 
         public async Task<bool> ExecutePlan()
@@ -25,8 +27,28 @@ namespace Solarverse.Core.Control
             _logger.LogInformation("Executing control plan...");
 
             var currentPeriod = _currentTimeProvider.CurrentPeriodStartUtc;
-            if (!_currentDataService.TimeSeries.TryGetDataPointFor(currentPeriod, out var currentDataPoint) ||
-                currentDataPoint?.ControlAction == null)
+            if (!_currentDataService.TimeSeries.TryGetDataPointFor(currentPeriod, out var currentDataPoint))
+            {
+                _logger.LogWarning("No data point for the current time.");
+                return true;
+            }
+
+            if (_currentDataService.TimeSeries.TryGetDataPointFor(currentPeriod.Add(TimeSpan.FromMinutes(-30)), out var lastDataPoint))
+            {
+                _logger.LogInformation($"Found prior data point - ShouldChargeEV {lastDataPoint.ShouldChargeEV} -> {currentDataPoint.ShouldChargeEV}...");
+
+                if (lastDataPoint.ShouldChargeEV != currentDataPoint.ShouldChargeEV)
+                {
+                    _logger.LogInformation($"EV Charge status changing to {currentDataPoint.ShouldChargeEV}...");
+                    await _evChargerClient.SetChargingEnabled(currentDataPoint.ShouldChargeEV);
+                }
+                else
+                {
+                    _logger.LogInformation("No change in EV Charge status");
+                }
+            }
+
+            if (currentDataPoint?.ControlAction == null)
             {
                 // no data point or control action for the current time
                 _logger.LogWarning("No data point or control action for the current time.");

@@ -1,0 +1,56 @@
+namespace Solarverse.Core.Tests.Integration.GivEnergy
+{
+    using System;
+    using System.Threading.Tasks;
+    using FluentAssertions;
+    using Microsoft.Extensions.Logging;
+    using NSubstitute;
+    using Solarverse.Core.Data;
+    using Solarverse.Core.Helper;
+    using Solarverse.Core.Integration.GivEnergy;
+    using Solarverse.Core.Integration.GivEnergy.Models;
+    using Solarverse.Core.Models;
+    using Xunit;
+
+    public class GivEnergyClientTests
+    {
+        private GivEnergyClient _testClass;
+        private ILogger<GivEnergyClient> _logger;
+        private IConfigurationProvider _configurationProvider;
+        private ICurrentDataService _currentDataService;
+        private ICurrentTimeProvider _currentTimeProvider;
+
+        public GivEnergyClientTests()
+        {
+            _logger = Substitute.For<ILogger<GivEnergyClient>>();
+            _configurationProvider = Substitute.For<IConfigurationProvider>();
+            _configurationProvider.Configuration.Returns(StaticConfigurationProvider.Configuration);
+            _currentDataService = Substitute.For<ICurrentDataService>();
+            _currentTimeProvider = new CurrentTimeProvider(_configurationProvider);
+            _testClass = new GivEnergyClient(_logger, _configurationProvider, _currentDataService, _currentTimeProvider);
+        }
+
+        [Fact]
+        public async Task CanCallFindEVChargerUuid()
+        {
+            // Act
+            var result = await _testClass.FindEVChargerUuid();
+
+            // Assert
+            Console.WriteLine(result);
+        }
+
+        [Fact]
+        public async Task CanCallSetChargingEnabled()
+        {
+            // Arrange
+            var enabled = true;
+
+            // Act
+            await _testClass.SetChargingEnabled(enabled);
+
+            // Assert
+
+        }
+    }
+}

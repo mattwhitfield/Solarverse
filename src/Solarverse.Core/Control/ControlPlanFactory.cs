@@ -32,6 +32,7 @@ namespace Solarverse.Core.Control
                 // happns after tariffs become available, so we look at solar forecast, predicted consumption and tariff rates
                 var firstTime = _currentTimeProvider.CurrentPeriodStartUtc;
                 SetDischargeTargets(firstTime);
+                SetEVChargePeriods(firstTime);
             }
 
             // happens after every current state update - here we check if the battery charge is on track and if we need another 1/2 hour charge period
@@ -85,6 +86,15 @@ namespace Solarverse.Core.Control
             foreach (var point in _currentDataService.TimeSeries.Where(x => x.Target == TargetType.Unset && x.IncomingRate.HasValue))
             {
                 point.Target = TargetType.NoDischargeRequired;
+            }
+        }
+
+        private void SetEVChargePeriods(DateTime firstTime)
+        {
+            var evChargePeriods = _currentDataService.GetPointsForEVCharging(_logger, firstTime);
+            foreach (var point in evChargePeriods)
+            {
+                point.ShouldChargeEV = true;
             }
         }
 
@@ -359,53 +369,52 @@ namespace Solarverse.Core.Control
 
         private void PrioritizeDischargeTargetsByPrice(ForecastTimeSeries points)
         {
-            points.RunActionOnDischargeStartPeriods("Prioritize", period =>
+            points.RunActionOnAllDischargeStartPeriods("Prioritize", period =>
             {
-                var dischargePoint = period.Point;
-                var dischargePointPercent = period.PointPercentRequired;
+                if (period.DischargePoints.Count < 2) 
+                {
+                    return;
+                }
+
                 var averageCost = period.DischargePoints.Average(x => x.IncomingRate);
 
-                while (true)
+                var pointsAboveAverageCost = period.DischargePoints.Where(x => x.IncomingRate > averageCost).ToList();
+                var pointsBelowAverageCost = period.DischargePoints.Where(x => x.IncomingRate <= averageCost).ToList();
+
+                foreach (var targetPoint in pointsAboveAverageCost.OrderByDescending(x => x.IncomingRate))
                 {
-                    var shortfallPercent = dischargePointPercent - (dischargePoint.ForecastBatteryPercentage ?? 0);
-                    var shortfallKwh = points.Capacity * shortfallPercent / 100;
+                    _logger.LogInformation($"(Prioritize) Point at {targetPoint.Time} has forecast of {targetPoint.ForecastBatteryKwh:N1} battery Kwh and required power of {targetPoint.RequiredPowerKwh:N1}");
 
-                    if (shortfallKwh <= 0)
+                    while (targetPoint.ForecastBatteryKwh < targetPoint.RequiredPowerKwh)
                     {
-                        break;
+                        var eligibleHoldPoints = pointsBelowAverageCost
+                            .Where(x => x.Time < targetPoint.Time)
+                            .Where(x => x.ControlAction != ControlAction.Hold && x.ControlAction != ControlAction.Charge)
+                            .Where(x => x.IncomingRate < averageCost)
+                            .OrderBy(x => x.IncomingRate)
+                            .Take(1)
+                            .ToList();
+
+                        if (!eligibleHoldPoints.Any())
+                        {
+                            _logger.LogInformation($"(Prioritize) No eligible points found");
+                            break;
+                        }
+
+                        var selectedPoint = eligibleHoldPoints[0];
+                        _logger.LogInformation($"(Prioritize) Setting period {selectedPoint.Time} to hold");
+                        selectedPoint.ControlAction = ControlAction.Hold;
+
+                        _currentDataService.RecalculateForecast();
                     }
-
-                    _logger.LogInformation($"(Prioritize) Point at {dischargePoint.Time} has forecast of {dischargePoint.ForecastBatteryPercentage:N1}% battery, charge required - shortfall of {shortfallPercent:N1}%, {shortfallKwh:N2} kWh");
-
-                    var eligibleHoldPoints = points
-                        .Where(x => x.Time < dischargePoint.Time)
-                        .TakeWhile(x => x.ForecastBatteryPercentage < 100)
-                        .Where(x => x.ControlAction != ControlAction.Hold && x.ControlAction != ControlAction.Charge)
-                        .Where(x => x.IncomingRate < averageCost)
-                        .OrderBy(x => x.IncomingRate)
-                        .Take(1)
-                        .ToList();
-
-                    if (!eligibleHoldPoints.Any())
-                    {
-                        _logger.LogInformation($"(Prioritize) No eligible points found");
-                        break;
-                    }
-
-                    // check if the point we're transforming has a rate low enough to make 
-                    // it worth charging
-                    var selectedPoint = eligibleHoldPoints[0];
-                    _logger.LogInformation($"(Prioritize) Setting period {selectedPoint.Time} to hold");
-                    selectedPoint.ControlAction = ControlAction.Hold;
-
-                    _currentDataService.RecalculateForecast();
                 }
+
             });
         }
 
         private void RunPass(string passName, ForecastTimeSeries series, Func<ForecastTimeSeriesPoint, bool> selector)
         {
-            series.RunActionOnDischargeStartPeriods(passName, period =>
+            series.RunActionOnDischargeStartPeriodsThatNeedMoreCharge(passName, period =>
             {
                 var dischargePoint = period.Point;
                 var dischargePointPercent = period.PointPercentRequired;

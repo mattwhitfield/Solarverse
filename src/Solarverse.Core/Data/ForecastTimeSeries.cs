@@ -72,7 +72,34 @@ namespace Solarverse.Core.Data
             }
         }
 
-        public void RunActionOnDischargeStartPeriods(string passName, Action<(ForecastTimeSeriesPoint Point, double PointPercentRequired, IList<ForecastTimeSeriesPoint> DischargePoints)> action)
+        public void RunActionOnAllDischargeStartPeriods(string passName, Action<(ForecastTimeSeriesPoint Point, IList<ForecastTimeSeriesPoint> DischargePoints)> action)
+        {
+            var lastPoint = _points.First();
+            for (var index = 1; index < _points.Count; index++)
+            {
+                var point = _points[index];
+                var isBoundary = lastPoint.ShouldDischarge() && !point.ShouldDischarge();
+                var isLast = lastPoint.ShouldDischarge() && index >= _points.Count - 1;
+
+                if (isBoundary || isLast)
+                {
+                    _logger.LogInformation($"({passName}) Point at {lastPoint.Time} is the start of a discharge period");
+
+                    var dischargePoints = _points
+                        .Where(x => x.Time >= lastPoint.Time)
+                        .OrderBy(x => x.Time)
+                        .TakeWhile(x => x.ShouldDischarge())
+                        .ToList();
+
+                    action((lastPoint, dischargePoints));
+                }
+
+                lastPoint = point;
+            }
+        }
+
+
+        public void RunActionOnDischargeStartPeriodsThatNeedMoreCharge(string passName, Action<(ForecastTimeSeriesPoint Point, double PointPercentRequired, IList<ForecastTimeSeriesPoint> DischargePoints)> action)
         {
             var lastPoint = _points.First();
             foreach (var point in _points.Skip(1))
