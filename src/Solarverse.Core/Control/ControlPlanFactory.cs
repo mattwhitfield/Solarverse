@@ -263,7 +263,8 @@ namespace Solarverse.Core.Control
             {
                 if (point.ControlAction == ControlAction.Discharge || point.ShouldDischarge())
                 {
-                    var pointPower = lastPointPower + Math.Max(point.RequiredPowerKwh ?? 0, 0);
+                    // todo - need to limit RequiredPowerKwh to maximum charge - because if there is excess - we need to limit that excess to what we can capture in the battery
+                    var pointPower = Math.Max(lastPointPower + (point.RequiredPowerKwh ?? 0), 0);
                     point.RequiredBatteryPowerKwh = lastPointPower = pointPower;
                     _logger.LogInformation($"Point at {point.Time} has ideal required power of {point.RequiredBatteryPowerKwh:N2} kWh");
                 }
@@ -432,7 +433,7 @@ namespace Solarverse.Core.Control
                     var shortfallPercent = dischargePointPercent - (dischargePoint.ForecastBatteryPercentage ?? 0);
                     var shortfallKwh = series.Capacity * shortfallPercent / 100;
 
-                    if (shortfallKwh <= 0)
+                    if (shortfallKwh <= 0.01)
                     {
                         break;
                     }
@@ -482,6 +483,7 @@ namespace Solarverse.Core.Control
                             var potentialDischargePoint = eligibleDischargePointsPrior
                                 .Concat(eligibleDischargePointsAfter)
                                 .OrderByDescending(x => x.IncomingRate)
+                                .Where(x => x.IncomingRate * series.Efficiency > selectedPoint.IncomingRate)
                                 .FirstOrDefault();
 
                             if (potentialDischargePoint == null)
