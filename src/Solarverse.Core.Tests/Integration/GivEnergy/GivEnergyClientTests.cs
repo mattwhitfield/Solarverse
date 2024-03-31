@@ -2,14 +2,11 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy
 {
     using System;
     using System.Threading.Tasks;
-    using FluentAssertions;
     using Microsoft.Extensions.Logging;
     using NSubstitute;
     using Solarverse.Core.Data;
     using Solarverse.Core.Helper;
     using Solarverse.Core.Integration.GivEnergy;
-    using Solarverse.Core.Integration.GivEnergy.Models;
-    using Solarverse.Core.Models;
     using Xunit;
 
     public class GivEnergyClientTests
@@ -28,6 +25,17 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy
             _currentDataService = Substitute.For<ICurrentDataService>();
             _currentTimeProvider = new CurrentTimeProvider(_configurationProvider);
             _testClass = new GivEnergyClient(_logger, _configurationProvider, _currentDataService, _currentTimeProvider);
+        }
+
+
+        [Fact]
+        public async Task CanCallGetData()
+        {
+            // Act
+            var result = await _testClass.GetHouseholdConsumptionFor(new DateTime(2024, 3, 31));
+
+            // Assert
+            Console.WriteLine(result);
         }
 
         [Fact]

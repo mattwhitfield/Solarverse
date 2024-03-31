@@ -196,5 +196,10 @@ namespace Solarverse.AlgorithmHarness
         {
             return DateTime.UtcNow.Add(utcTime).ToLocalTime().TimeOfDay;
         }
+
+        public DateTime FromLocalTime(DateTime localTime)
+        {
+            return localTime;
+        }
     }
 }

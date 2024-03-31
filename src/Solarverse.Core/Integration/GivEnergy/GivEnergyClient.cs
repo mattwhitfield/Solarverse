@@ -329,7 +329,7 @@ namespace Solarverse.Core.Integration.GivEnergy
 
             var history = await _httpClient.Get<ConsumptionHistory>(_logger, $"https://api.givenergy.cloud/v1/inverter/{inverterSerial}/data-points/{date.Year}-{date.Month}-{date.Day}?pageSize=1000");
 
-            var normalized = new NormalizedConsumption(history);
+            var normalized = new NormalizedConsumption(history, _currentTimeProvider);
 
             return new HouseholdConsumption(
                 normalized.IsValid,

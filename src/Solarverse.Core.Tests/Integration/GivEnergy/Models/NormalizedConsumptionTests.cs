@@ -3,6 +3,8 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy.Models
     using System;
     using System.Collections.Generic;
     using FluentAssertions;
+    using NSubstitute;
+    using Solarverse.Core.Helper;
     using Solarverse.Core.Integration.GivEnergy.Models;
     using Xunit;
 
@@ -14,7 +16,7 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy.Models
         public NormalizedConsumptionTests()
         {
             _history = new ConsumptionHistory { DataPoints = new List<ConsumptionDataPoint>() };
-            _testClass = new NormalizedConsumption(_history);
+            _testClass = new NormalizedConsumption(_history, Substitute.For<ICurrentTimeProvider>());
 
             // TODO - proper tests
         }
@@ -23,7 +25,7 @@ namespace Solarverse.Core.Tests.Integration.GivEnergy.Models
         public void CanConstruct()
         {
             // Act
-            var instance = new NormalizedConsumption(_history);
+            var instance = new NormalizedConsumption(_history, Substitute.For<ICurrentTimeProvider>());
 
             // Assert
             instance.Should().NotBeNull();

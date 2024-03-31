@@ -1,16 +1,23 @@
-﻿using System.Diagnostics;
+﻿using Solarverse.Core.Helper;
+using System.Diagnostics;
 
 namespace Solarverse.Core.Integration.GivEnergy.Models
 {
     [DebuggerDisplay("IsValid = {IsValid}, DataPoints: {DataPoints.Count}")]
     public class NormalizedConsumption
     {
-        public NormalizedConsumption(ConsumptionHistory history)
+        public NormalizedConsumption(ConsumptionHistory history, ICurrentTimeProvider currentTimeProvider)
         {
             if (history.DataPoints == null || !history.DataPoints.Any())
             {
                 IsValid = false;
                 return;
+            }
+
+            foreach (var dataPoint in history.DataPoints)
+            {
+                var local = new DateTime(dataPoint.Time.Year, dataPoint.Time.Month, dataPoint.Time.Day, dataPoint.Time.Hour, dataPoint.Time.Minute, dataPoint.Time.Second, DateTimeKind.Unspecified);
+                dataPoint.Time = currentTimeProvider.FromLocalTime(local);
             }
 
             var orderedPoints = history.DataPoints.OrderBy(x => x.Time).ToList();
