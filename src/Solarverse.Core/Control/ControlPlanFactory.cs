@@ -138,6 +138,8 @@ namespace Solarverse.Core.Control
 
         private void ReduceFullyChargedExportPeriods(ForecastTimeSeries forecastPoints)
         {
+            _logger.LogInformation($"Reducing fully charged export periods");
+
             var anyUpdated = true;
             while (anyUpdated)
             {
@@ -154,23 +156,28 @@ namespace Solarverse.Core.Control
                         return eligibleValues.Min() ?? double.MaxValue;
                     }
 
+                    _logger.LogInformation($"Point at {period.Point.Time} being considered as the start of fully charged export period");
+
                     if (period.Point.ForecastBatteryPercentage >= 100)
                     {
                         foreach (var periodPoint in period.PriorPoints.OrderByDescending(x => x.IncomingRate))
                         {
                             if (periodPoint.ControlAction.HasValue && periodPoint.ControlAction.Value != ControlAction.Hold)
                             {
+                                _logger.LogInformation($"Point at {periodPoint.Time} had an existing control action of {periodPoint.ControlAction}");
                                 continue;
                             }
 
                             if (!periodPoint.RequiredPowerKwh.HasValue || periodPoint.RequiredPowerKwh.Value < 0)
                             {
+                                _logger.LogInformation($"Point at {periodPoint.Time} had a required power of '{periodPoint.RequiredPowerKwh}'");
                                 continue;
                             }
 
                             var minBattery = GetMinBatteryAfterPoint(periodPoint);
                             if (minBattery < periodPoint.RequiredPowerKwh)
                             {
+                                _logger.LogInformation($"Point at {periodPoint.Time} had a required power of '{periodPoint.RequiredPowerKwh}' but minBattery was '{minBattery}'");
                                 continue;
                             }
 

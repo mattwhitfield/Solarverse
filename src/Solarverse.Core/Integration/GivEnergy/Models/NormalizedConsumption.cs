@@ -14,11 +14,11 @@ namespace Solarverse.Core.Integration.GivEnergy.Models
                 return;
             }
 
-            foreach (var dataPoint in history.DataPoints)
-            {
-                var local = new DateTime(dataPoint.Time.Year, dataPoint.Time.Month, dataPoint.Time.Day, dataPoint.Time.Hour, dataPoint.Time.Minute, dataPoint.Time.Second, DateTimeKind.Unspecified);
-                dataPoint.Time = currentTimeProvider.FromLocalTime(local);
-            }
+            //foreach (var dataPoint in history.DataPoints)
+            //{
+            //    var local = new DateTime(dataPoint.Time.Year, dataPoint.Time.Month, dataPoint.Time.Day, dataPoint.Time.Hour, dataPoint.Time.Minute, dataPoint.Time.Second, DateTimeKind.Unspecified);
+            //    dataPoint.Time = currentTimeProvider.FromLocalTime(local);
+            //}
 
             var orderedPoints = history.DataPoints.OrderBy(x => x.Time).ToList();
             int i = 0;
