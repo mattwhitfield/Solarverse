@@ -444,7 +444,7 @@ namespace Solarverse.Core.Integration.GivEnergy
                 x => !x.DischargeSettings.EndTime.Value.HasValue || x.DischargeSettings.EndTime.Value.Value != untilLocal.TimeOfDay,
                 untilLocal.ToString("HH:mm"));
 
-            // enable charge if it's not enabled
+            // enable discharge if it's not enabled
             await SetSettingIfRequired(
                 SettingIds.Discharge.Enabled,
                 x => !x.DischargeSettings.Enabled.Value,
@@ -454,6 +454,12 @@ namespace Solarverse.Core.Integration.GivEnergy
             await SetSettingIfRequired(
                 SettingIds.Charge.Enabled,
                 x => x.ChargeSettings.Enabled.Value,
+                false);
+
+            // disable eco if it's enabled
+            await SetSettingIfRequired(
+                SettingIds.EcoMode,
+                x => x.EcoModeEnabled.Value,
                 false);
         }
 

@@ -26,8 +26,8 @@ namespace Solarverse.Core.Data
             _points = points.OrderByDescending(x => x.Time).Select(x => new ForecastTimeSeriesPoint(x, this)).ToList();
             for (int i = 0; i < _points.Count; i++)
             {
-                _points[i].Previous = i > 0 ? _points[i - 1] : null;
-                _points[i].Next = i < _points.Count - 1 ? _points[i + 1] : null;
+                _points[i].Next = i > 0 ? _points[i - 1] : null;
+                _points[i].Previous = i < _points.Count - 1 ? _points[i + 1] : null;
             }
 
             _logger = logger;
@@ -47,7 +47,7 @@ namespace Solarverse.Core.Data
             return GetEnumerator();
         }
 
-        public void RunActionOnSolarExcessStarts(Action<(ForecastTimeSeriesPoint Point, IList<ForecastTimeSeriesPoint> PriorPoints)> action)
+        public void RunActionOnSolarExcessStarts(Action<(ForecastTimeSeriesPoint Point, Func<IList<ForecastTimeSeriesPoint>> PriorPoints)> action)
         {
             for (int i = _points.Count - 2; i > 0; i--)
             {
@@ -61,13 +61,13 @@ namespace Solarverse.Core.Data
                     current.ForecastBatteryPercentage >= 100 &&
                     next.ForecastBatteryPercentage >= 100)
                 {
-                    var priorPoints = _points
+                    var priorPoints = () => _points
                             .Where(x => x.Time < current.Time)
-                            .OrderBy(x => x.Time)
-                            .TakeWhile(x => x.ForecastBatteryPercentage > _reserve && x.ForecastBatteryPercentage < 100)
+                            .OrderByDescending(x => x.Time)
+                            .TakeWhile(x => x.ForecastBatteryPercentage > _reserve)// && x.ForecastBatteryPercentage < 100)
                             .ToList();
 
-                    action((_points[i], priorPoints));
+                    action((current, priorPoints));
                 }
             }
         }

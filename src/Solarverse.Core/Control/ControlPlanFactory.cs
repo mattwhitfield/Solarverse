@@ -146,39 +146,39 @@ namespace Solarverse.Core.Control
                 anyUpdated = false;
                 forecastPoints.RunActionOnSolarExcessStarts(period =>
                 {
-                    double GetMinBatteryAfterPoint(ForecastTimeSeriesPoint point)
-                    {
-                        var eligibleValues = period.PriorPoints.Where(p => p.Time > point.Time).Select(p => p.ForecastBatteryKwh).Where(p => p != null).ToList();
-                        if (eligibleValues.Count == 0)
-                        {
-                            return double.MaxValue;
-                        }
-                        return eligibleValues.Min() ?? double.MaxValue;
-                    }
-
                     _logger.LogInformation($"Point at {period.Point.Time} being considered as the start of fully charged export period");
+
+                    void ProcessPoints(Func<ForecastTimeSeriesPoint, bool> pointAction)
+                    {
+                        var pointsUsed = new HashSet<DateTime>();
+
+                        ForecastTimeSeriesPoint? periodPoint;
+                        while ((periodPoint = period.PriorPoints().Where(x => !pointsUsed.Contains(x.Time)).OrderByDescending(x => x.IncomingRate).FirstOrDefault()) != null)
+                        {
+                            var continueProcessing = pointAction(periodPoint);
+                            if (!continueProcessing)
+                            {
+                                break;
+                            }
+
+                            pointsUsed.Add(periodPoint.Time);
+                        }
+                    }
 
                     if (period.Point.ForecastBatteryPercentage >= 100)
                     {
-                        foreach (var periodPoint in period.PriorPoints.OrderByDescending(x => x.IncomingRate))
+                        ProcessPoints(periodPoint =>
                         {
                             if (periodPoint.ControlAction.HasValue && periodPoint.ControlAction.Value != ControlAction.Hold)
                             {
                                 _logger.LogInformation($"Point at {periodPoint.Time} had an existing control action of {periodPoint.ControlAction}");
-                                continue;
+                                return true;
                             }
 
                             if (!periodPoint.RequiredPowerKwh.HasValue || periodPoint.RequiredPowerKwh.Value < 0)
                             {
                                 _logger.LogInformation($"Point at {periodPoint.Time} had a required power of '{periodPoint.RequiredPowerKwh}'");
-                                continue;
-                            }
-
-                            var minBattery = GetMinBatteryAfterPoint(periodPoint);
-                            if (minBattery < periodPoint.RequiredPowerKwh)
-                            {
-                                _logger.LogInformation($"Point at {periodPoint.Time} had a required power of '{periodPoint.RequiredPowerKwh}' but minBattery was '{minBattery}'");
-                                continue;
+                                return true;
                             }
 
                             periodPoint.ControlAction = ControlAction.Discharge;
@@ -188,11 +188,30 @@ namespace Solarverse.Core.Control
 
                             _currentDataService.RecalculateForecast();
 
-                            if (period.Point.ForecastBatteryPercentage < 100)
+                            return period.Point.ForecastBatteryPercentage >= 100;
+                        });
+                    }
+
+                    // run a second pass, setting points to export if we're at maximum capacity and we're dealing with points where the incoming rate is negative
+                    if (period.Point.ForecastBatteryPercentage >= 100 && forecastPoints.Any(x => x.IncomingRate < 0))
+                    {
+                        ProcessPoints(periodPoint =>
+                        {
+                            if (periodPoint.ControlAction.HasValue && periodPoint.ControlAction.Value != ControlAction.Hold && periodPoint.ControlAction.Value != ControlAction.Discharge)
                             {
-                                break;
+                                _logger.LogInformation($"Point at {periodPoint.Time} had an existing control action of {periodPoint.ControlAction}");
+                                return true;
                             }
-                        }
+
+                            periodPoint.ControlAction = ControlAction.Export;
+                            anyUpdated = true;
+
+                            _logger.LogInformation($"Point at {periodPoint.Time} requires {periodPoint.RequiredPowerKwh:N2} kWh and battery has {periodPoint.ForecastBatteryKwh:N2} kWh, setting to discharge");
+
+                            _currentDataService.RecalculateForecast();
+
+                            return period.Point.ForecastBatteryPercentage >= 100;
+                        });
                     }
                 });
             }
