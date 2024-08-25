@@ -53,6 +53,8 @@ namespace Solarverse.Core.Data
 
         public bool ShouldDischarge() => _point.ShouldDischarge();
 
+        public TargetType Target => _point.Target;
+
         public void SetTarget(TargetType targetType) => _point.Target = targetType;
 
         public double? RequiredPowerKwh => _point.RequiredPowerKwh;

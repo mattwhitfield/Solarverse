@@ -94,7 +94,7 @@ namespace Solarverse.AlgorithmHarness
         {
             // TODO - pick file name
             _fileName = "C:\\stuff\\Solarverse\\Snapshots\\need_to_sort_plunge_prices.json";
-            _fileName = "C:\\stuff\\Solarverse\\Snapshots\\20240824152136.json";
+            _fileName = "C:\\stuff\\Solarverse\\Snapshots\\20240825172317.json";
 
             var series = ReadFile();
             _min = series.Min(x => x.Time);

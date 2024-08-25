@@ -49,6 +49,16 @@ namespace Solarverse.Core.Data
 
         public void RunActionOnSolarExcessStarts(Action<(ForecastTimeSeriesPoint Point, Func<IList<ForecastTimeSeriesPoint>> PriorPoints)> action)
         {
+            bool HasEnoughBatteryForTargetedDischarge(ForecastTimeSeriesPoint x)
+            {
+                if (x.Target == TargetType.TariffBasedDischargeRequired)
+                {
+                    return x.ForecastBatteryKwh >= x.RequiredBatteryPowerKwh + 0.25;
+                }
+
+                return true;
+            }
+
             for (int i = _points.Count - 2; i > 0; i--)
             {
                 var current = _points[i];
@@ -64,7 +74,7 @@ namespace Solarverse.Core.Data
                     var priorPoints = () => _points
                             .Where(x => x.Time < current.Time)
                             .OrderByDescending(x => x.Time)
-                            .TakeWhile(x => x.ForecastBatteryPercentage > _reserve)// && x.ForecastBatteryPercentage < 100)
+                            .TakeWhile(x => x.ForecastBatteryPercentage > _reserve && HasEnoughBatteryForTargetedDischarge(x))// && x.ForecastBatteryPercentage < 100)
                             .ToList();
 
                     action((current, priorPoints));
