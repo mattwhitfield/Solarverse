@@ -119,6 +119,9 @@ namespace Solarverse.Core.Control
             // slots to charge if we have a shortfall somewhere
             RunPass("Second pass", forecastPoints, x => x.ControlAction != ControlAction.Charge);
 
+            // now, make sure that we have all of the top priority points covered
+            CoverTopPriorityPoints(forecastPoints);
+
             // now make sure that the covered discharge periods are catered for - if more expensive
             // periods aren't fully covered, we sacrifice charge for less expensive periods
             PrioritizeDischargeTargetsByPrice(forecastPoints);
@@ -134,6 +137,26 @@ namespace Solarverse.Core.Control
             RunPairingPass(forecastPoints);
 
             _currentDataService.RecalculateForecast();
+        }
+
+        private void CoverTopPriorityPoints(ForecastTimeSeries forecastPoints)
+        {
+            var targetPoints = forecastPoints.Where(x => x.Target == TargetType.TariffBasedDischargeRequired).OrderByDescending(x => x.IncomingRate).ToList();
+            for (int i = 0; i < targetPoints.Count / 2; i++)
+            {
+                var currentPoint = targetPoints[i];
+                if (currentPoint.ForecastBatteryPercentage <= forecastPoints.Reserve)
+                {
+                    var priorPoint = forecastPoints.Where(x => x.Time < currentPoint.Time).TakeWhile(x => x.ForecastBatteryPercentage < 100).Where(x => x.ControlAction == ControlAction.Discharge || x.ControlAction == ControlAction.Export).OrderBy(x => x.IncomingRate).FirstOrDefault();
+                    if (priorPoint != null)
+                    {
+                        _logger.LogInformation($"Point at {currentPoint.Time} is a high priority point with no charge - sacrificing point at {priorPoint.Time}");
+
+                        priorPoint.ControlAction = ControlAction.Hold;
+                        _currentDataService.RecalculateForecast();
+                    }
+                }
+            }
         }
 
         private void ReduceFullyChargedExportPeriods(ForecastTimeSeries forecastPoints)
