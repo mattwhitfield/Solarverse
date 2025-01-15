@@ -115,6 +115,9 @@ namespace Solarverse.Core.Control
             // and try to fill them in from points that don't have a current control action
             RunPass("First pass", forecastPoints, x => !x.ControlAction.HasValue);
 
+            // Export when the price is less than zero in an upcoming slot and we have spare capacity
+            ExoortWhenPriceIsLessThanZero(forecastPoints);
+
             // now we make a second pass - the point of this pass is to turn any discharge
             // slots to charge if we have a shortfall somewhere
             RunPass("Second pass", forecastPoints, x => x.ControlAction != ControlAction.Charge);
@@ -145,7 +148,7 @@ namespace Solarverse.Core.Control
             for (int i = 0; i < targetPoints.Count / 2; i++)
             {
                 var currentPoint = targetPoints[i];
-                if (currentPoint.ForecastBatteryPercentage <= forecastPoints.Reserve)
+                if (currentPoint.Next != null && currentPoint.Next.ForecastBatteryPercentage <= forecastPoints.Reserve)
                 {
                     var priorPoint = forecastPoints.Where(x => x.Time < currentPoint.Time).TakeWhile(x => x.ForecastBatteryPercentage < 100).Where(x => x.ControlAction == ControlAction.Discharge || x.ControlAction == ControlAction.Export).OrderBy(x => x.IncomingRate).FirstOrDefault();
                     if (priorPoint != null)
@@ -214,29 +217,60 @@ namespace Solarverse.Core.Control
                             return period.Point.ForecastBatteryPercentage >= 100;
                         });
                     }
-
-                    // run a second pass, setting points to export if we're at maximum capacity and we're dealing with points where the incoming rate is negative
-                    if (period.Point.ForecastBatteryPercentage >= 100 && forecastPoints.Any(x => x.IncomingRate < 0))
-                    {
-                        ProcessPoints(periodPoint =>
-                        {
-                            if (periodPoint.ControlAction.HasValue && periodPoint.ControlAction.Value != ControlAction.Hold && periodPoint.ControlAction.Value != ControlAction.Discharge)
-                            {
-                                _logger.LogInformation($"Point at {periodPoint.Time} had an existing control action of {periodPoint.ControlAction}");
-                                return true;
-                            }
-
-                            periodPoint.ControlAction = ControlAction.Export;
-                            anyUpdated = true;
-
-                            _logger.LogInformation($"Point at {periodPoint.Time} requires {periodPoint.RequiredPowerKwh:N2} kWh and battery has {periodPoint.ForecastBatteryKwh:N2} kWh, setting to discharge");
-
-                            _currentDataService.RecalculateForecast();
-
-                            return period.Point.ForecastBatteryPercentage >= 100;
-                        });
-                    }
                 });
+            }
+        }
+
+        private void ExoortWhenPriceIsLessThanZero(ForecastTimeSeries forecastPoints)
+        {
+            if (!forecastPoints.Any(x => x.IncomingRate < 0))
+            {
+                return;
+            }
+
+            _logger.LogInformation($"Setting export when possible");
+
+            var pointsOrderedByTime = forecastPoints.OrderBy(x => x.Time).ToList();
+            var pointsOrderedByOutgoingRateDescending = forecastPoints.OrderByDescending(x => x.OutgoingRate).ToList();
+
+            foreach (var point in pointsOrderedByOutgoingRateDescending) 
+            {
+                // we want to export when
+                // The current export rate is > 0
+                // The battery is fully charged for at least 2 consecutive periods ahead
+                // There is a period ahead where incoming rate <= 0
+
+                if (point.OutgoingRate <= 0)// || point.IncomingRate < 0)
+                {
+                    continue;
+                }
+
+                // don't set to export if we don't have any power
+                if (point.ForecastBatteryPercentage < forecastPoints.Reserve + 1)
+                {
+                    continue;
+                }
+
+                var pointsUntilEmptyOrTargeted = pointsOrderedByTime.Where(x => x.Time > point.Time).TakeWhile(x => x.ForecastBatteryPercentage > forecastPoints.Reserve + 1 && x.Target != TargetType.TariffBasedDischargeRequired).ToList();
+                var anyWithFullCharge = pointsUntilEmptyOrTargeted.Any(x => x.ForecastBatteryPercentage >= 100 && x.Next != null && x.Next.ForecastBatteryPercentage >= 100);
+                if (!anyWithFullCharge)
+                {
+                    // if there are no periods ahead with more than 1 fully charged consecutive point, then continue
+                    continue;
+                }
+
+                var anyAheadWithNegativeImport = pointsUntilEmptyOrTargeted.Any(x => x.Time > point.Time && x.IncomingRate <= 0);
+                if (!anyAheadWithNegativeImport)
+                {
+                    // if there are no periods ahead with negative rate, then iterating forward any more is pointless
+                    continue;
+                }
+
+
+                point.ControlAction = ControlAction.Export;
+                _logger.LogInformation($"Point at {point.Time} has points ahead that can cater for export, setting to export");
+
+                _currentDataService.RecalculateForecast();
             }
         }
 
@@ -512,7 +546,7 @@ namespace Solarverse.Core.Control
                         _logger.LogInformation($"({passName}) Setting period {selectedPoint.Time} to charge");
                         selectedPoint.ControlAction = ControlAction.Charge;
 
-                        var chargeLeft = series.MaxChargeKwhPerPeriod - shortfallKwh;
+                        var chargeLeft = series.MaxChargeKwhPerPeriod - (shortfallKwh - 0.5);
                         while (chargeLeft > 0)
                         {
                             _logger.LogInformation($"({passName}) {chargeLeft:N2} kWh left to fill");

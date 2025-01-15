@@ -119,7 +119,7 @@ namespace Solarverse.Core.Data
                     lastPoint.RequiredBatteryPowerKwh.HasValue)
                 {
                     var lastPointPercent =
-                        (((lastPoint.RequiredBatteryPowerKwh.Value / Efficiency) / Capacity) * 100) + Reserve;
+                        (((lastPoint.RequiredBatteryPowerKwh.Value / Efficiency) / Capacity) * 100) + Reserve + 5; // add a buffer of 5%
                     if (lastPointPercent > 100)
                     {
                         lastPointPercent = 100;
