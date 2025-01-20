@@ -57,7 +57,32 @@ namespace Solarverse.Core.Integration.Octopus
                 throw new InvalidDataException("Data returned from Octopus client is invalid");
             }
 
-            return rates.Rates.Select(x => x.ToTariffRate()).ToList();
+            var rawRates = rates.Rates.Select(x => x.ToTariffRate()).Where(x => x.ValidFrom.Date >= DateTime.UtcNow.Date.AddDays(-1)).OrderBy(x => x.ValidFrom).ToList();
+            var processedRates = new List<TariffRate>();
+
+            foreach (var rawRate in rawRates)
+            {
+                if (rawRate.ValidFrom > DateTime.UtcNow.AddDays(3))
+                {
+                    break;
+                }
+
+                if (rawRate.ValidTo > rawRate.ValidFrom.AddMinutes(30))
+                {
+                    var current = rawRate.ValidFrom;
+                    while (current < rawRate.ValidTo)
+                    {
+                        processedRates.Add(new TariffRate(rawRate.Value, current, current.AddMinutes(30)));
+                        current = current.AddMinutes(30);
+                    }
+                }
+                else
+                {
+                    processedRates.Add(rawRate);
+                }
+            }
+            
+            return processedRates;
         }
 
         private async Task<string> GetRatesUriForTariffAndGridSupplyPoint(string productCode, string gridSupplyPoint)
