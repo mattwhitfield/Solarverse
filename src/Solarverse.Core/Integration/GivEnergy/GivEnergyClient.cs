@@ -465,8 +465,10 @@ namespace Solarverse.Core.Integration.GivEnergy
 
         public Task SetChargingEnabled(bool enabled)
         {
-            _logger.LogInformation($"Setting EV Charge enabled to {enabled}");
-            return SetEVChargerState(enabled);
+            _logger.LogInformation($"Skipping setting EV Charge enabled to {enabled}");
+            return Task.CompletedTask;
+            //_logger.LogInformation($"Setting EV Charge enabled to {enabled}");
+            //return SetEVChargerState(enabled);
         }
     }
 }
